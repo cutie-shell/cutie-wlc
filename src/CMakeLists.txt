@@ -34,4 +34,5 @@ ${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v1.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v2.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v3.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/protocols/virtual-keyboard-unstable-v1.xml
 )
