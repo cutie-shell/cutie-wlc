@@ -31,4 +31,7 @@ ${PROJECT_NAME}
     FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-layer-shell-unstable-v1.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/cutie-shell-private.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v1.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v2.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v3.xml
 )

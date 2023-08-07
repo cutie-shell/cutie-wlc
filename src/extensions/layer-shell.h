@@ -28,7 +28,7 @@ signals:
 public Q_SLOTS:
 
 protected:
-	virtual void zwlr_layer_shell_v1_get_layer_surface(Resource *resource, uint32_t id, struct ::wl_resource *surface, struct ::wl_resource *output, uint32_t layer, const QString &scope) override;
+	void zwlr_layer_shell_v1_get_layer_surface(Resource *resource, uint32_t id, struct ::wl_resource *surface, struct ::wl_resource *output, uint32_t layer, const QString &scope) override;
 
 private:
 	QWaylandCompositor *m_compositor;
