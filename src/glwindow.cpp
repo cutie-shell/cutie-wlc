@@ -86,6 +86,7 @@ void GlWindow::touchEvent(QTouchEvent *ev)
     } else if (ev->isEndEvent() && ev->points().size() == 1 && !m_evPoint.empty() && ev->points().first().globalPosition().x() < width()*0.49) {
         m_evPoint.clear();
         m_appswitcher->activate();
+        requestUpdate();
     } else if (ev->isEndEvent() && ev->points().size() == 1 && !m_evPoint.empty()) {
         QEventPoint *evP = new QEventPoint(ev->points().first());
         m_evPoint << evP;
