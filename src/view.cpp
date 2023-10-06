@@ -63,6 +63,12 @@ bool CwlView::isToplevel()
         return false;
 }
 
+QWaylandXdgToplevel *CwlView::getTopLevel()
+{
+    if(isToplevel())
+        return m_xdgSurface->toplevel();
+}
+
 LayerSurfaceV1 *CwlView::getLayerSurface()
 {
     return m_layerSurface;

@@ -86,11 +86,31 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWayland
 
     view->setPosition(m_workspace->availableGeometry().topLeft());
 
-    m_workspace->removeView(view);
-    view->layer = TOP;
-    m_workspace->addView(view);
+    view->m_toplevel = toplevel;
 
-    defaultSeat()->setKeyboardFocus(view->surface());
+    connect(view->m_toplevel, &QWaylandXdgToplevel::appIdChanged, this, &CwlCompositor::onTlAppIdChanged);
+}
+
+void CwlCompositor::onTlAppIdChanged()
+{
+    QWaylandXdgToplevel *tl = qobject_cast<QWaylandXdgToplevel*>(sender());
+    qDebug()<<"TopLevel with AppId: "<<tl->appId();
+
+    CwlView* v;
+
+    for (CwlView* view : getViews()) {
+        if (view->m_toplevel == tl)
+            v = view;
+    }
+
+    m_workspace->removeView(v);
+
+    if(v->m_toplevel->appId() != "cutie-launcher"){
+        v->layer = TOP;
+        m_workspace->addView(v);
+
+        defaultSeat()->setKeyboardFocus(v->surface());
+    }
 }
 
 void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface)

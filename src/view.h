@@ -45,6 +45,8 @@ public:
     bool isHidden();
     void setHidden(bool hide);
 
+    QWaylandXdgToplevel *getTopLevel();
+
 signals:
 
 protected:
@@ -59,6 +61,7 @@ private:
     QSize m_size;
     QWaylandXdgSurface *m_xdgSurface = nullptr;
     QWaylandXdgPopup *m_xdgPopup = nullptr;
+    QWaylandXdgToplevel *m_toplevel = nullptr;
     LayerSurfaceV1 *m_layerSurface = nullptr;
     CwlView *m_parentView = nullptr;
     bool m_hidden = false;
