@@ -43,21 +43,18 @@ void GlWindow::paintGL()
     int counter = 0;
 
     QList<CwlView*> renderViews;
-
-    if(!m_cwlcompositor->launcherOpened && m_cwlcompositor->launcherClosed){
-        renderViews = m_cwlcompositor->getViews();
-    } else if(!m_cwlcompositor->launcherClosed && m_cwlcompositor->launcherOpened){
-        renderViews = renderViews<<m_cwlcompositor->m_launcherView;
-    } else if(!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened){
+    
+    if(m_cwlcompositor->m_launcherView != nullptr)
         renderViews = m_cwlcompositor->getViews()<<m_cwlcompositor->m_launcherView;
-    }
+    else
+        renderViews = m_cwlcompositor->getViews();
 
     for (CwlView *view : renderViews) {
         QString appId;
         if(view != nullptr && view->isToplevel())
             appId = view->getTopLevel()->appId();
 
-        if(!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened){
+        if(!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened && view->isToplevel()){
             if(appId == "cutie-launcher"){
                 m_textureBlitter.setOpacity(1.0 - (m_cwlcompositor->m_launcherView->getPosition().y()/height()));
             } else {
@@ -66,7 +63,10 @@ void GlWindow::paintGL()
         } else {
             m_textureBlitter.setOpacity(1.0);
         }
-        
+
+        if(m_cwlcompositor->launcherOpened && view->layer == 2)
+            continue;
+
         QOpenGLTexture *texture = view->getTexture();
         if (!texture)
             continue;

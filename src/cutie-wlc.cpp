@@ -40,9 +40,16 @@ void CwlCompositor::create()
     connect(this, &QWaylandCompositor::surfaceCreated, this, &CwlCompositor::onSurfaceCreated);
 
     qputenv("WAYLAND_DISPLAY", QByteArray("wayland-1"));
+
     QStringList args = QStringList();
     args.append("-c");
     args.append(launcher);
+    if (!QProcess::startDetached("bash", args))
+        qDebug() << "Failed to run";
+
+    args = QStringList();
+    args.append("-c");
+    args.append("examples/cutie-panel/cutie-panel");
     if (!QProcess::startDetached("bash", args))
         qDebug() << "Failed to run";
 }
@@ -212,9 +219,17 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
 
 void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
 {
+    qDebug()<<"EDGE: "<<edge;
+
     if(ev->isEndEvent() && edge == EDGE_RIGHT && 
             ev->points().first().globalPosition().x() < m_workspace->availableGeometry().size().width() * 0.8 && 
             !m_appswitcher->isActive()){
+        if(launcherOpened){
+            launcherClosed = true;
+            launcherOpened = false;
+            m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
+            triggerRender();
+        }
         m_appswitcher->activate();
         triggerRender();
     }
