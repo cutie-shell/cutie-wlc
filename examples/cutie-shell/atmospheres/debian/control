@@ -1,0 +1,12 @@
+Source: cutie-atmospheres
+Section: libs
+Maintainer: Erik Inkinen <erik.inkinen@gmail.com>
+Priority: optional
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.5.1
+
+Package: cutie-atmospheres
+Architecture: all
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: This package contains Cutie's default Atmosphere selection.

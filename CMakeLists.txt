@@ -12,6 +12,7 @@ qt_standard_project_setup()
 add_subdirectory(src)
 add_subdirectory(examples/cutie-launcher)
 add_subdirectory(examples/cutie-panel)
+add_subdirectory(examples/cutie-shell)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/src)

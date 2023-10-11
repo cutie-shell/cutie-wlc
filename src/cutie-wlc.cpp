@@ -52,6 +52,12 @@ void CwlCompositor::create()
     args.append("examples/cutie-panel/cutie-panel");
     if (!QProcess::startDetached("bash", args))
         qDebug() << "Failed to run";
+
+    args = QStringList();
+    args.append("-c");
+    args.append("examples/cutie-shell/cutie-ui-io");
+    if (!QProcess::startDetached("bash", args))
+        qDebug() << "Failed to run";
 }
 
 QList<CwlView*> CwlCompositor::getViews() const

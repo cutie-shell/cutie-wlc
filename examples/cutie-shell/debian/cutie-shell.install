@@ -1,0 +1,2 @@
+etc/systemd/logind.conf.d/10-cutie.conf
+usr/bin/cutie-ui-io
