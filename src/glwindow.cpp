@@ -13,6 +13,7 @@ GlWindow::GlWindow()
 void GlWindow::setCompositor(CwlCompositor *cwlcompositor)
 {
     m_cwlcompositor = cwlcompositor;
+    m_gesture = new CwlGesture(cwlcompositor, QSize(width(), height()));
 }
 
 void GlWindow::setAppswitcher(CwlAppswitcher *appswitcher)
@@ -41,7 +42,31 @@ void GlWindow::paintGL()
 
     int counter = 0;
 
-    for (CwlView *view : m_cwlcompositor->getViews()) {
+    QList<CwlView*> renderViews;
+
+    if(!m_cwlcompositor->launcherOpened && m_cwlcompositor->launcherClosed){
+        renderViews = m_cwlcompositor->getViews();
+    } else if(!m_cwlcompositor->launcherClosed && m_cwlcompositor->launcherOpened){
+        renderViews = renderViews<<m_cwlcompositor->m_launcherView;
+    } else if(!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened){
+        renderViews = m_cwlcompositor->getViews()<<m_cwlcompositor->m_launcherView;
+    }
+
+    for (CwlView *view : renderViews) {
+        QString appId;
+        if(view != nullptr && view->isToplevel())
+            appId = view->getTopLevel()->appId();
+
+        if(!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened){
+            if(appId == "cutie-launcher"){
+                m_textureBlitter.setOpacity(1.0 - (m_cwlcompositor->m_launcherView->getPosition().y()/height()));
+            } else {
+                m_textureBlitter.setOpacity(m_cwlcompositor->m_launcherView->getPosition().y()/height());
+            }
+        } else {
+            m_textureBlitter.setOpacity(1.0);
+        }
+        
         QOpenGLTexture *texture = view->getTexture();
         if (!texture)
             continue;
@@ -76,28 +101,5 @@ void GlWindow::paintGL()
 
 void GlWindow::touchEvent(QTouchEvent *ev)
 {
-    if(ev->isBeginEvent() && ev->points().size() == 1 && ev->points().first().globalPosition().x() > width() - 150){
-        m_evPoint.clear();
-        QEventPoint *evP = new QEventPoint(ev->points().first());
-        m_evPoint << evP;
-    } else if (ev->isUpdateEvent() && ev->points().size() == 1 && !m_evPoint.empty()){
-        QEventPoint *evP = new QEventPoint(ev->points().first());
-        m_evPoint << evP;
-    } else if (ev->isEndEvent() && ev->points().size() == 1 && !m_evPoint.empty() && ev->points().first().globalPosition().x() < width()*0.49) {
-        m_evPoint.clear();
-        m_appswitcher->activate();
-        requestUpdate();
-    } else if (ev->isEndEvent() && ev->points().size() == 1 && !m_evPoint.empty()) {
-        QEventPoint *evP = new QEventPoint(ev->points().first());
-        m_evPoint << evP;
-        for (QEventPoint *evP : m_evPoint) {
-            m_cwlcompositor->handleTouchPointEvent(evP);
-        }
-        m_evPoint.clear();
-    } else {
-        if(!m_evPoint.empty())
-            m_evPoint.clear();
-        
-        m_cwlcompositor->handleTouchEvent(ev);
-    }
+    m_gesture->handleTouchEvent(ev);
 }

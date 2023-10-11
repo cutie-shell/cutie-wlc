@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     QScreen *screen = QGuiApplication::primaryScreen();
 
     GlWindow glwindow;
-    glwindow.resize(screen->size().width(), screen->size().height() - 150);
+    glwindow.resize(screen->size().width(), screen->size().height() - 30);
     CwlCompositor cwlcompositor(&glwindow);
     glwindow.show();
 

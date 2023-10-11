@@ -10,6 +10,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui WaylandCompositor)
 qt_standard_project_setup()
 
 add_subdirectory(src)
+add_subdirectory(examples/cutie-launcher)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/src)

@@ -6,7 +6,9 @@
 #include <workspace.h>
 #include <appswitcher.h>
 #include <cutie-shell.h>
+#include <gesture.h>
 #include <QEventPoint>
+#include <QProcess>
 
 QT_BEGIN_NAMESPACE
 
@@ -29,11 +31,18 @@ public:
     void handleTouchEvent(QTouchEvent *ev);
     void handleTouchPointEvent(QEventPoint *evP);
 
+    void handleGesture(QTouchEvent *ev, int edge, int corner);
+
     void handleKeyPress(quint32 nativeScanCode);
     void handleKeyRelease(quint32 nativeScanCode);
 
     void startRender();
     void endRender();
+
+    bool launcherClosed = true;
+    bool launcherOpened = false;
+    CwlView *m_launcherView = nullptr;
+    CwlWorkspace *m_workspace = nullptr;
 
 public slots:
     void appSwitcherAnimate();
@@ -57,11 +66,12 @@ private:
     QWaylandXdgShell *m_xdgShell = nullptr;
     QPointer<CwlView> m_mouseView;
     LayerShellV1 *m_layerShell = nullptr;
-    CwlWorkspace *m_workspace = nullptr;
     CwlAppswitcher *m_appswitcher = nullptr;
     QPointF *m_appPointStart = nullptr;
     CwlView *m_appView = nullptr;
     CutieShell *m_cutieshell = nullptr;
+    
+    QString launcher = "examples/cutie-launcher/src/cutie-launcher";
 };
 
 QT_END_NAMESPACE

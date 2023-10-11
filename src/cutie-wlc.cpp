@@ -38,6 +38,13 @@ void CwlCompositor::create()
     m_glwindow->setAppswitcher(m_appswitcher);
 
     connect(this, &QWaylandCompositor::surfaceCreated, this, &CwlCompositor::onSurfaceCreated);
+
+    qputenv("WAYLAND_DISPLAY", QByteArray("wayland-1"));
+    QStringList args = QStringList();
+    args.append("-c");
+    args.append(launcher);
+    if (!QProcess::startDetached("bash", args))
+        qDebug() << "Failed to run";
 }
 
 QList<CwlView*> CwlCompositor::getViews() const
@@ -89,6 +96,11 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWayland
     view->m_toplevel = toplevel;
 
     connect(view->m_toplevel, &QWaylandXdgToplevel::appIdChanged, this, &CwlCompositor::onTlAppIdChanged);
+
+    launcherClosed = true;
+    launcherOpened = false;
+    if(m_launcherView != nullptr)
+        m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
 }
 
 void CwlCompositor::onTlAppIdChanged()
@@ -110,6 +122,9 @@ void CwlCompositor::onTlAppIdChanged()
         m_workspace->addView(v);
 
         defaultSeat()->setKeyboardFocus(v->surface());
+    } else if(v->m_toplevel->appId() == "cutie-launcher"){
+        m_launcherView = v;
+        m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
     }
 }
 
@@ -156,17 +171,15 @@ void CwlCompositor::raise(CwlView *view)
 void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
 {
     if(!m_appswitcher->isActive()){
-        CwlView *view = viewAt(ev->points().first().globalPosition().toPoint());
-        if(view == nullptr)
-            return;
-
-        QRectF geom(view->getPosition(), view->size());
-
-        for (QEventPoint pt : ev->points()) {
-            defaultSeat()->sendTouchPointEvent(view->surface(), pt.id(), pt.globalPosition()-view->getPosition(), (Qt::TouchPointState) pt.state());
-            defaultSeat()->sendTouchFrameEvent(view->surface()->client());
-        }
-    } else if(ev->points().size() == 1) {
+        if(launcherOpened){
+            defaultSeat()->sendFullTouchEvent(m_launcherView->surface(), ev);
+        } else {
+            CwlView *view = viewAt(ev->points().first().globalPosition().toPoint());
+            if(view == nullptr)
+                return;
+            defaultSeat()->sendFullTouchEvent(view->surface(), ev);
+        }       
+    } else {
         if(ev->points().first().state() == QEventPoint::Pressed){
             CwlView *view  = m_appswitcher->findViewAt(ev->points().first().globalPosition());
             if(view != nullptr){
@@ -177,7 +190,7 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
             CwlView *view = m_appswitcher->findViewAt(ev->points().first().globalPosition());
             if(view != nullptr){
                 if(view == m_appView && m_appPointStart->y() - ev->points().first().globalPosition().y() > 150){
-                    
+
                     if(view->m_xdgSurface->toplevel() != nullptr){
                         view->m_xdgSurface->toplevel()->sendClose();
                         m_appView = nullptr;
@@ -197,25 +210,34 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
     }
 }
 
-void CwlCompositor::handleTouchPointEvent(QEventPoint *evP)
+void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
 {
-    if(!m_appswitcher->isActive()){
-        CwlView *view = viewAt(evP->globalPosition().toPoint());
-        if(view == nullptr)
-            return;
+    if(ev->isEndEvent() && edge == EDGE_RIGHT && 
+            ev->points().first().globalPosition().x() < m_workspace->availableGeometry().size().width() * 0.8 && 
+            !m_appswitcher->isActive()){
+        m_appswitcher->activate();
+        triggerRender();
+    }
 
-        QRectF geom(view->getPosition(), view->size());
+    if(edge == EDGE_BOTTOM){
+        if(ev->isBeginEvent() || ev->isUpdateEvent()){
+            launcherClosed = false;
+            QPointF newPos = m_launcherView->getPosition();
+            newPos.setY(ev->points().first().globalPosition().y());
+            m_launcherView->setPosition(newPos);
+            triggerRender();
+        }
 
-        defaultSeat()->sendTouchPointEvent(view->surface(), evP->id(), evP->globalPosition()-view->getPosition(), (Qt::TouchPointState) evP->state());
-        defaultSeat()->sendTouchFrameEvent(view->surface()->client());
-
-    } else {
-        if(evP->state() == QEventPoint::Released &&
-            evP->globalPosition().x() < m_workspace->availableGeometry().size().width() - 50){
-            CwlView *view  = m_appswitcher->findViewAt(evP->globalPosition());
-            if(view != nullptr){
-                raise(view);
-                m_appswitcher->deactivate();
+        if(ev->isEndEvent()){
+            if(ev->points().first().globalPosition().y() < m_workspace->availableGeometry().size().height() * 0.8){
+                m_launcherView->setPosition(m_workspace->availableGeometry().topLeft());
+                launcherOpened = true;
+                triggerRender();
+            } else {
+                launcherClosed = true;
+                launcherOpened = false;
+                m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
+                triggerRender();
             }
         }
     }

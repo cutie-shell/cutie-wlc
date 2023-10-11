@@ -6,6 +6,7 @@
 
 #include <QEventPoint>
 #include <cutie-wlc.h>
+#include <gesture.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -33,6 +34,8 @@ private:
     CwlCompositor *m_cwlcompositor = nullptr;
     CwlAppswitcher *m_appswitcher = nullptr;
     QList<QEventPoint*> m_evPoint;
+
+    CwlGesture *m_gesture = nullptr;
 };
 
 QT_END_NAMESPACE
