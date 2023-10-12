@@ -301,13 +301,14 @@ void CwlCompositor::viewSurfaceDestroyed()
 
     m_workspace->removeView(view);
     delete view;
-    m_appswitcher->updateViewMap();
+    //m_appswitcher->updateViewMap();
     triggerRender();
 }
 
 void CwlCompositor::triggerRender()
 {
-    m_glwindow->requestUpdate();
+    if(!m_appswitcher->animationRunning)
+        m_glwindow->requestUpdate();
 }
 
 void CwlCompositor::appSwitcherAnimate()

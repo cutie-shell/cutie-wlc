@@ -25,7 +25,12 @@ public:
 
     CwlView* findViewAt(QPointF point);
 
+    bool animationRunning = false;
+
 public slots:
+
+private slots:
+    void animationRun();
 
 signals:
     void redraw();
@@ -34,6 +39,8 @@ private:
     CwlWorkspace *m_workspace;
     QMap<CwlView*, QRectF> m_toplevelViews;
     bool m_active = false;
+    qreal m_animationFactor = 0.0;
+    qreal m_gridSpacing = 40.0;
 };
 
 #endif //CWL_APPSWITCHER_H

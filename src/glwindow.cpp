@@ -19,6 +19,7 @@ void GlWindow::setCompositor(CwlCompositor *cwlcompositor)
 void GlWindow::setAppswitcher(CwlAppswitcher *appswitcher)
 {
     m_appswitcher = appswitcher;
+    connect(m_appswitcher, &CwlAppswitcher::redraw, this, &GlWindow::requestUpdate);
 }
 
 void GlWindow::initializeGL()
