@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
 import Cutie
+import Cutie.CutieWlc
 
 CutieWindow {
     id: window
@@ -67,7 +68,7 @@ CutieWindow {
                     }
 
                     onClicked: {
-                        launcher.execApp(model["Desktop Entry/Exec"]);
+                        CutieShell.execApp(model["Desktop Entry/Exec"]);
                         launcherContainer.state = "closed"
                         if (root.state === "homeScreen")
                             wallpaperBlur.opacity = 0;

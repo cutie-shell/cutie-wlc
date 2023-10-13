@@ -19,9 +19,17 @@ set(APP_SOURCES
 set(APP_HEADERS
 		launcher.h)
 
+add_subdirectory(extensions)
+
 qt_add_executable(${PROJECT_NAME} ${APP_SOURCES} ${APP_HEADERS})
 
 qt_add_resources(${PROJECT_NAME} "resource"
 	PREFIX /
 	FILES
 		${qml_SRC})
+		
+qt6_generate_wayland_protocol_client_sources(
+${PROJECT_NAME}
+    FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/protocols/cutie-shell-private.xml
+)

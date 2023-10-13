@@ -1,7 +1,9 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlEngine>
 #include <QQmlContext>
 #include <launcher.h>
+#include <extensions/cutie-shell.h>
 
 int main(int argc, char *argv[])
 {
@@ -12,6 +14,9 @@ int main(int argc, char *argv[])
 
     Launcher *launcher = new Launcher(&engine);
     engine.rootContext()->setContextProperty("launcher", launcher);
+
+    CutieShell shellProtocol;
+    qmlRegisterSingletonInstance<CutieShell>("Cutie.CutieWlc", 1, 0, "CutieShell", &shellProtocol);
 
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
