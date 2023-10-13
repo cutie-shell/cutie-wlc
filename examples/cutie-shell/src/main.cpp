@@ -9,8 +9,8 @@
 #include <QLoggingCategory>
 #include <QIcon>
 #include <QQuickView>
-#include <LayerShellQt/shell.h>
-#include <LayerShellQt/window.h>
+#include <LayerShellQt6/shell.h>
+#include <LayerShellQt6/window.h>
 #include "extensions/cutie-shell.h"
 
 int main(int argc, char *argv[])
