@@ -47,6 +47,12 @@ public:
 
     QWaylandXdgToplevel *getTopLevel();
 
+    QList<CwlView*> getChildViews();
+    void removeChildView(CwlView *view);
+    void addChildView(CwlView *view);
+    CwlView* parentView();
+    void setParentView(CwlView* view);
+
 signals:
 
 protected:
@@ -65,6 +71,7 @@ private:
     LayerSurfaceV1 *m_layerSurface = nullptr;
     CwlView *m_parentView = nullptr;
     bool m_hidden = false;
+    QList<CwlView*> m_childViewList;
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);

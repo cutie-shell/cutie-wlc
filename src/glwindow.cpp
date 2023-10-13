@@ -94,6 +94,29 @@ void GlWindow::paintGL()
             QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(targetRect, QRect(QPoint(), size()));
             m_textureBlitter.blit(texture->textureId(), targetTransform, surfaceOrigin);
         }
+
+        for (CwlView *childView : view->getChildViews()) {
+            QOpenGLTexture *texture = childView->getTexture();
+            if (!texture)
+                continue;
+            if (texture->target() != currentTarget) {
+                currentTarget = texture->target();
+                m_textureBlitter.bind(currentTarget);
+            }
+
+            QWaylandSurface *surface = childView->surface();
+            if (surface && surface->hasContent()) {
+                QSize s = childView->size();
+                QPointF pos = childView->getPosition();
+                QRectF surfaceGeometry(pos, s);
+                auto surfaceOrigin = childView->textureOrigin();
+                QRectF targetRect;
+
+                targetRect = QRectF(surfaceGeometry.topLeft(), surfaceGeometry.size());
+                QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(targetRect, QRect(QPoint(), size()));
+                m_textureBlitter.blit(texture->textureId(), targetTransform, surfaceOrigin);
+            }
+        }
     }
 
     m_textureBlitter.release();

@@ -95,3 +95,25 @@ void CwlView::onAvailableGeometryChanged(QRect geometry)
         }
     }
 }
+
+QList<CwlView*> CwlView::getChildViews() {
+    return m_childViewList;
+}
+
+void CwlView::removeChildView(CwlView *view)
+{
+	m_childViewList.removeAll(view);
+}
+
+void CwlView::addChildView(CwlView *view)
+{
+	m_childViewList << view;
+}
+
+CwlView *CwlView::parentView() {
+    return m_parentView;
+}
+
+void CwlView::setParentView(CwlView *view) {
+    m_parentView = view;
+}

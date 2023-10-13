@@ -146,11 +146,19 @@ void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurfac
     CwlView *view = findView(xdgSurface->surface());
     Q_ASSERT(view);
 
+    CwlView *parent_view = findView(popup->parentXdgSurface()->surface());
+
     view->setPosition(popup->unconstrainedPosition()+m_workspace->availableGeometry().topLeft());
+
+    qDebug()<<"Popup "<<(uint64_t)view<<" created";
 
     m_workspace->removeView(view);
     view->layer = TOP;
-    m_workspace->addView(view);
+    if (parent_view) {
+        parent_view->addChildView(view);
+        view->setParentView(parent_view);
+        qDebug()<<"Popup "<<(uint64_t)view << " parented to "<<(uint64_t)parent_view;
+    } else m_workspace->addView(view);
 }
 
 void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
@@ -299,7 +307,8 @@ void CwlCompositor::viewSurfaceDestroyed()
 {
     CwlView *view = qobject_cast<CwlView*>(sender());
 
-    m_workspace->removeView(view);
+    if (view->parentView()) view->parentView()->removeChildView(view);
+    else m_workspace->removeView(view);
     delete view;
     //m_appswitcher->updateViewMap();
     triggerRender();
