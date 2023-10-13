@@ -8,50 +8,38 @@
 
 QuickSettings::QuickSettings(QObject *parent) : QObject(parent) {
     this->settingsStore = new QSettings("Cutie Community Project", "Cutie Shell");
-    this->backlight = new org::cutie_shell::SettingsDaemon::Backlight(
-        "org.cutie_shell.SettingsDaemon", "/backlight",
-        QDBusConnection::systemBus());
-    this->atmosphere = new org::cutie_shell::SettingsDaemon::Atmosphere(
-        "org.cutie_shell.SettingsDaemon", "/atmosphere",
-        QDBusConnection::systemBus());
     this->battery = new org::freedesktop::DBus::Properties(
         "org.freedesktop.UPower", "/org/freedesktop/UPower/devices/DisplayDevice",
         QDBusConnection::systemBus());    
     connect(this->battery, SIGNAL(PropertiesChanged(QString, QVariantMap, QStringList)), this, SLOT(onUPowerInfoChanged(QString, QVariantMap, QStringList)));
-    connect(this->atmosphere, SIGNAL(PathChanged()), this, SLOT(onAtmospherePathChanged()));
-    connect(this->atmosphere, SIGNAL(VariantChanged()), this, SLOT(onAtmosphereVariantChanged()));
-    setAtmospherePath(this->settingsStore->value("atmospherePath", "/usr/share/atmospheres/city").toString());
-    setAtmosphereVariant(this->settingsStore->value("atmosphereVariant", "dark").toString());
-    onAtmospherePathChanged();
-    onAtmosphereVariantChanged();
+    
+    udevInstance = udev_new();
+    udevEnumerator = udev_enumerate_new(udevInstance);
+    udev_enumerate_add_match_subsystem(udevEnumerator, "backlight");
+    udev_enumerate_scan_devices(udevEnumerator);
+    udevEntry = udev_enumerate_get_list_entry(udevEnumerator);
+    const char *udevPath = udev_list_entry_get_name(udevEntry);
+    udevDevice = udev_device_new_from_syspath(udevInstance, udevPath);
+    if (!udevDevice)
+        udevDevice = udev_device_new_from_syspath(udevInstance, "/sys/class/leds/lcd-backlight");
+    p_maxBrightness = QString(udev_device_get_sysattr_value(udevDevice, "max_brightness")).toInt();
+
     ((QQmlApplicationEngine *)parent)->rootContext()->setContextProperty("screenBrightness", this->settingsStore->value("screenBrightness", 100));
 }
 
 QuickSettings::~QuickSettings() {}
 
 unsigned int QuickSettings::GetMaxBrightness() {
-    QDBusPendingReply<unsigned int> maxBrightnessReply = backlight->GetMaxBrightness();
-    maxBrightnessReply.waitForFinished();
-    if (maxBrightnessReply.isValid()) {
-        return maxBrightnessReply.value();
-    } else {
-        return 0;
-    }
+    return p_maxBrightness;
 }
 
 unsigned int QuickSettings::GetBrightness() {
-    QDBusPendingReply<unsigned int> brightnessReply = backlight->GetBrightness();
-    brightnessReply.waitForFinished();
-    if (brightnessReply.isValid()) {
-        return brightnessReply.value();
-    } else {
-        return 0;
-    }
-
+    return udevDevice ? QString(udev_device_get_sysattr_value(udevDevice, "brightness")).toInt() : 0;
 }
 
 void QuickSettings::SetBrightness(unsigned int value) {
-    backlight->SetBrightness(value);
+    if (udevDevice)
+        udev_device_set_sysattr_value(udevDevice, "brightness", std::to_string(value).c_str());
 	QPlatformScreen *pscreen = ((QGuiApplication *)QCoreApplication::instance())
 			->screens().first()->handle();
 	if (value == 0) {
@@ -77,30 +65,4 @@ void QuickSettings::onUPowerInfoChanged(QString interface, QVariantMap, QStringL
 void QuickSettings::refreshBatteryInfo() {
     QVariantMap upower_display = this->battery->GetAll("org.freedesktop.UPower.Device");
     ((QQmlApplicationEngine *)parent())->rootContext()->setContextProperty("batteryStatus", upower_display);
-}
-
-void QuickSettings::onAtmospherePathChanged() {
-    QString apath = this->atmosphere->GetPath();
-    ((QQmlApplicationEngine *)parent())->rootContext()->setContextProperty("atmospherePath", apath);
-    settingsStore->setValue("atmospherePath", apath);
-    settingsStore->sync();
-}
-
-void QuickSettings::onAtmosphereVariantChanged() {
-    QString avar = this->atmosphere->GetVariant();
-    ((QQmlApplicationEngine *)parent())->rootContext()->setContextProperty("atmosphereVariant", avar);
-    settingsStore->setValue("atmosphereVariant", avar);
-    settingsStore->sync();
-}
-
-void QuickSettings::setAtmospherePath(QString path) {
-    this->atmosphere->SetPath(path);
-    settingsStore->setValue("atmospherePath", path);
-    settingsStore->sync();
-}
-
-void QuickSettings::setAtmosphereVariant(QString variant) {
-    this->atmosphere->SetVariant(variant);
-    settingsStore->setValue("atmosphereVariant", variant);
-    settingsStore->sync();
 }

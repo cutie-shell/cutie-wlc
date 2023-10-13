@@ -43,7 +43,7 @@ Item {
 
 
 
-    Connections {
+    /*Connections {
         target: settings
         function onAddApp (name, exec, icon)  { 
             launcherApps.append({
@@ -52,7 +52,7 @@ Item {
                         appIcon: icon
                     })
         }
-    }
+    }*/
     
     SoundEffect {
         id: notifSound

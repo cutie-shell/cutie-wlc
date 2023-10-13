@@ -323,8 +323,7 @@ Rectangle {
                         MouseArea{
                             anchors.fill: parent
                             onClicked:{
-                                quicksettings.setAtmosphereVariant(modelData.variant);
-                                quicksettings.setAtmospherePath(modelData.path);
+                                Atmosphere.path = modelData.path;
                                 atmosphereTimer.start();
                             }
                         }
@@ -452,7 +451,7 @@ Rectangle {
                 width: parent.height
                 height: width
                 visible: false
-                state: atmosphereVariant
+                state: Atmosphere.variant
                 color: Atmosphere.textColor
                 transitions: Transition {
                     ColorAnimation { properties: "color"; duration: 500; easing.type: Easing.InOutQuad }
@@ -533,7 +532,7 @@ Rectangle {
                     let maxB = quicksettings.GetMaxBrightness();
                     quicksettings.SetBrightness(maxB / 6 + maxB * vol / 120);
                 }
-                state: atmosphereVariant
+                state: Atmosphere.variant
                 color: Atmosphere.textColor
                 transitions: Transition {
                     ColorAnimation { properties: "color"; duration: 500; easing.type: Easing.InOutQuad }

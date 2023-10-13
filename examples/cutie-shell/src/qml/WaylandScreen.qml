@@ -35,7 +35,7 @@ Item{
         // }
     }
 
-    NumberAnimation { 
+    /*NumberAnimation { 
         id: closeBl
         target: settings
         property: "brightness"
@@ -51,13 +51,13 @@ Item{
         id: openBl
         target: settings
         property: "brightness"
-        to: settings.GetMaxBrightness() * unlockBrightness
+        //to: settings.GetMaxBrightness() * unlockBrightness
         duration: 200
 
         onFinished: {
             //screenLockState.state = "locked";
         }
-    }   
+    }   */
 
     Item {
         id: root
@@ -144,7 +144,7 @@ Item{
                     Image {
                         id: wallpaper
                         anchors.fill: parent
-                        source: "file:/" + atmospherePath + "/wallpaper.jpg"
+                        source: "file:/" + Atmosphere.path + "/wallpaper.jpg"
                         fillMode: Image.PreserveAspectCrop
                     }
 

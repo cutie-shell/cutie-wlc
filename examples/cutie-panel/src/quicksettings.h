@@ -5,7 +5,8 @@
 #include <QQmlContext>
 #include <QSettings>
 
-#include "cutie_shell_interface.h"
+#include <libudev.h>
+
 #include "dbus_interface.h"
 
 class QuickSettings : public QObject
@@ -21,23 +22,20 @@ public:
     Q_INVOKABLE unsigned int GetBrightness();
     Q_INVOKABLE void SetBrightness(unsigned int value);
     Q_INVOKABLE void StoreBrightness(unsigned int value);
-    // Q_INVOKABLE void execApp(QString command);
-    Q_INVOKABLE void setAtmospherePath(QString path);
-    Q_INVOKABLE void setAtmosphereVariant(QString variant);
     void refreshBatteryInfo();
-    // void autostart();
-    // Q_INVOKABLE void loadAppList();
 
 private:
-    org::cutie_shell::SettingsDaemon::Backlight *backlight;
-    org::cutie_shell::SettingsDaemon::Atmosphere *atmosphere;
     org::freedesktop::DBus::Properties *battery;
     QSettings *settingsStore;
 
+    struct udev *udevInstance;
+    struct udev_enumerate *udevEnumerator;
+    struct udev_list_entry *udevEntry;
+    struct udev_device *udevDevice;
+    int p_maxBrightness;
+
 public Q_SLOTS:
     void onUPowerInfoChanged(QString interface, QVariantMap, QStringList);
-    void onAtmospherePathChanged();
-    Q_INVOKABLE void onAtmosphereVariantChanged();
 
 signals:
     void brightnessChanged(unsigned int brightness);

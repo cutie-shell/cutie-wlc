@@ -4,16 +4,23 @@
 #include <QObject>
 #include <QDebug>
 
+#include "dbus_interface.h"
+#include <libudev.h>
+
 class Settings : public QObject
-{<
+{
     Q_OBJECT
     Q_PROPERTY (unsigned int brightness READ GetBrightness WRITE SetBrightness NOTIFY brightnessChanged)
     Q_PROPERTY (unsigned int maxBrightness READ GetMaxBrightness)
-private:<
-    org::cutie_shell::SettingsDaemon::Backlight *backlight;
-    org::cutie_shell::SettingsDaemon::Atmosphere *atmosphere;
+private:
     org::freedesktop::DBus::Properties *battery;
     QSettings *settingsStore;
+
+    struct udev *udevInstance;
+    struct udev_enumerate *udevEnumerator;
+    struct udev_list_entry *udevEntry;
+    struct udev_device *udevDevice;
+    int p_maxBrightness;
     
 public:
     Settings(QObject* parent = 0);
@@ -21,13 +28,9 @@ public:
     Q_INVOKABLE unsigned int GetBrightness();
     Q_INVOKABLE void SetBrightness(unsigned int value);
     Q_INVOKABLE void StoreBrightness(unsigned int value);
-    Q_INVOKABLE void setAtmospherePath(QString path);
-    Q_INVOKABLE void setAtmosphereVariant(QString variant);
     void refreshBatteryInfo();
 public Q_SLOTS:
     void onUPowerInfoChanged(QString interface, QVariantMap, QStringList);
-    void onAtmospherePathChanged();
-    Q_INVOKABLE void onAtmosphereVariantChanged();
 signals:
     void brightnessChanged(unsigned int brightness);
 };

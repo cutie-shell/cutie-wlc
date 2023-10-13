@@ -9,6 +9,7 @@ include( GNUInstallDirs )
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Quick Network Qml DBus WaylandClient)
 find_package(LayerShellQt6 REQUIRED)
+find_package(Libudev)
 
 set(cutie-shell_SOURCES 
         src/settings.cpp 
@@ -27,7 +28,6 @@ qt6_add_resources(APP_RESOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/icons/icons.qrc 
     ${CMAKE_CURRENT_SOURCE_DIR}/sounds/sounds.qrc)
 
-qt_add_dbus_interface(cutie-shell_SOURCES src/org.cutie_shell.xml cutie_shell_interface)
 qt_add_dbus_interface(cutie-shell_SOURCES src/org.freedesktop.DBus.xml dbus_interface)
 qt_add_dbus_interface(cutie-shell_SOURCES src/org.freedesktop.Notifications.xml notifications_interface)
 qt_add_dbus_adaptor(cutie-shell_SOURCES src/org.freedesktop.Notifications.xml notifications.h Notifications NotificationsAdaptor)
@@ -44,7 +44,7 @@ target_include_directories(cutie-ui-io  PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/extensions)
 
-target_link_libraries(cutie-ui-io PUBLIC LayerShellQtInterface6 Qt::Core Qt::Gui Qt::GuiPrivate Qt::DBus Qt::Quick Qt::Network Qt::Qml Qt::WaylandClient)
+target_link_libraries(cutie-ui-io PUBLIC LayerShellQtInterface6 PkgConfig::Libudev Qt::Core Qt::Gui Qt::GuiPrivate Qt::DBus Qt::Quick Qt::Network Qt::Qml Qt::WaylandClient)
 
 qt6_add_qml_module(cutie-ui-io
   URI "CutieShell"
