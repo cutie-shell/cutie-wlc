@@ -33,6 +33,8 @@ void CwlCompositor::create()
     QWaylandCompositor::create();
     output->setCurrentMode(mode);
 
+    m_xdgdecoration->setExtensionContainer(this);
+    m_xdgdecoration->initialize();
     m_xdgdecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
 
     m_workspace = new CwlWorkspace(this);
