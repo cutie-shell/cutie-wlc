@@ -40,6 +40,9 @@ public:
     void startRender();
     void endRender();
 
+    int scaleFactor();
+    void setScaleFactor(int scale);
+
     bool launcherClosed = true;
     bool launcherOpened = false;
     CwlView *m_launcherView = nullptr;
@@ -71,8 +74,10 @@ private:
     QPointF *m_appPointStart = nullptr;
     CwlView *m_appView = nullptr;
     CutieShell *m_cutieshell = nullptr;
+    QWaylandOutput *m_output = nullptr;
     QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
     
+    int m_scaleFactor = 1;
     QString launcher = "examples/cutie-launcher/src/cutie-launcher";
 };
 

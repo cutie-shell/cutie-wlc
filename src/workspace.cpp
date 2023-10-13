@@ -4,6 +4,10 @@
 CwlWorkspace::CwlWorkspace(CwlCompositor *compositor)
 {
 	m_outputGeometry = compositor->defaultOutput()->geometry();
+	m_outputGeometry = QRect(
+		m_outputGeometry.topLeft() / compositor->scaleFactor(),
+		m_outputGeometry.size() / compositor->scaleFactor()
+	);
 	m_availableGeometry = m_outputGeometry;
 
 	m_viewList.clear();

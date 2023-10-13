@@ -85,13 +85,17 @@ void CwlGesture::handleTouchEvent(QTouchEvent *ev)
 
 void CwlGesture::updateGestureRect()
 {
-	m_topEdge = QRect(m_gestureOffset, 0, m_screenSize.width() - (2 * m_gestureOffset), m_gestureOffset);
-	m_bottomEdge = QRect(m_gestureOffset, m_screenSize.height() - m_gestureOffset, m_screenSize.width() - (2 * m_gestureOffset), m_gestureOffset);
-	m_leftEdge = QRect(0, m_gestureOffset, m_gestureOffset, m_screenSize.height() - (2 * m_gestureOffset));
-	m_rightEdge = QRect(m_screenSize.width() - m_gestureOffset, m_gestureOffset, m_gestureOffset, m_screenSize.height() - (2 * m_gestureOffset));
+	m_topEdge = QRect(scaledGestureOffset(), 0, m_screenSize.width() - (2 * scaledGestureOffset()), scaledGestureOffset());
+	m_bottomEdge = QRect(scaledGestureOffset(), m_screenSize.height() - scaledGestureOffset(), m_screenSize.width() - (2 * scaledGestureOffset()), scaledGestureOffset());
+	m_leftEdge = QRect(0, scaledGestureOffset(), scaledGestureOffset(), m_screenSize.height() - (2 * scaledGestureOffset()));
+	m_rightEdge = QRect(m_screenSize.width() - scaledGestureOffset(), scaledGestureOffset(), scaledGestureOffset(), m_screenSize.height() - (2 * scaledGestureOffset()));
 
-	m_tlCorner = QRect(0, 0, m_gestureOffset, m_gestureOffset);
-	m_trCorner = QRect(m_screenSize.width() - m_gestureOffset, 0, m_gestureOffset, m_gestureOffset);
-	m_blCorner = QRect(0, m_screenSize.height() - m_gestureOffset, m_gestureOffset, m_gestureOffset);
-	m_brCorner = QRect(m_screenSize.width() - m_gestureOffset, m_screenSize.height() - m_gestureOffset, m_gestureOffset, m_gestureOffset);
+	m_tlCorner = QRect(0, 0, scaledGestureOffset(), scaledGestureOffset());
+	m_trCorner = QRect(m_screenSize.width() - scaledGestureOffset(), 0, scaledGestureOffset(), scaledGestureOffset());
+	m_blCorner = QRect(0, m_screenSize.height() - scaledGestureOffset(), scaledGestureOffset(), scaledGestureOffset());
+	m_brCorner = QRect(m_screenSize.width() - scaledGestureOffset(), m_screenSize.height() - scaledGestureOffset(), scaledGestureOffset(), scaledGestureOffset());
+}
+
+int CwlGesture::scaledGestureOffset() {
+	return m_gestureOffset * m_cwlcompositor->scaleFactor();
 }

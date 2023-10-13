@@ -78,9 +78,8 @@ void GlWindow::paintGL()
 
         QWaylandSurface *surface = view->surface();
         if (surface && surface->hasContent()) {
-            QSize s = view->size();
-            QPointF pos = view->getPosition();
-            QRectF surfaceGeometry(pos, s);
+            QSize viewSize = view->size();
+            QPointF viewPosition = view->getPosition();
             auto surfaceOrigin = view->textureOrigin();
             QRectF targetRect;
 
@@ -88,7 +87,10 @@ void GlWindow::paintGL()
                 QRectF geom = m_appswitcher->getRecentViews().value(view);
                 targetRect = QRectF(geom.topLeft(), geom.size());
             } else {
-                targetRect = QRectF(surfaceGeometry.topLeft(), surfaceGeometry.size());
+                targetRect = QRectF(
+                    viewPosition * m_cwlcompositor->scaleFactor(),
+                    viewSize * m_cwlcompositor->scaleFactor()
+                );
             }
 
             QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(targetRect, QRect(QPoint(), size()));
@@ -106,13 +108,13 @@ void GlWindow::paintGL()
 
             QWaylandSurface *surface = childView->surface();
             if (surface && surface->hasContent()) {
-                QSize s = childView->size();
-                QPointF pos = childView->getPosition();
-                QRectF surfaceGeometry(pos, s);
+                QSize viewSize = childView->size();
+                QPointF viewPosition = childView->getPosition();
                 auto surfaceOrigin = childView->textureOrigin();
-                QRectF targetRect;
-
-                targetRect = QRectF(surfaceGeometry.topLeft(), surfaceGeometry.size());
+                QRectF targetRect = QRectF(
+                    viewPosition * m_cwlcompositor->scaleFactor(),
+                    viewSize * m_cwlcompositor->scaleFactor()
+                );
                 QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(targetRect, QRect(QPoint(), size()));
                 m_textureBlitter.blit(texture->textureId(), targetTransform, surfaceOrigin);
             }

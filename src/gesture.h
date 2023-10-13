@@ -37,6 +37,7 @@ signals:
 
 private:
     void updateGestureRect();
+    int scaledGestureOffset();
 
     CwlCompositor *m_cwlcompositor = nullptr;
     EdgeSwipe edge = EDGE_UNDEFINED;

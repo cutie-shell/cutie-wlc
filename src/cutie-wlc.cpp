@@ -27,11 +27,12 @@ CwlCompositor::~CwlCompositor()
 
 void CwlCompositor::create()
 {
-    QWaylandOutput *output = new QWaylandOutput(this, m_glwindow);
+    m_output = new QWaylandOutput(this, m_glwindow);
     QWaylandOutputMode mode(m_glwindow->size(), 60000);
-    output->addMode(mode, true);
+    m_output->addMode(mode, true);
     QWaylandCompositor::create();
-    output->setCurrentMode(mode);
+    m_output->setCurrentMode(mode);
+    m_output->setScaleFactor(m_scaleFactor);
 
     m_xdgdecoration->setExtensionContainer(this);
     m_xdgdecoration->initialize();
@@ -81,7 +82,7 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
     CwlView *ret = nullptr;
     for (auto it = getViews().crbegin(); it != getViews().crend(); ++it) {
         CwlView *view = *it;
-        QRectF geom(view->getPosition(), view->size());
+        QRectF geom(view->getPosition(), view->size() * scaleFactor());
         if (geom.contains(position)){
             ret = view;
             return ret;
@@ -203,22 +204,19 @@ void CwlCompositor::raise(CwlView *view)
 void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
 {
     if(!m_appswitcher->isActive()){
-        if(launcherOpened){
-            defaultSeat()->sendFullTouchEvent(m_launcherView->surface(), ev);
-        } else {
-            CwlView *view = viewAt(ev->points().first().globalPosition().toPoint());
-            if(view == nullptr)
-                return;
-            foreach (QEventPoint point, ev->points()) {
-                seatFor(ev)->touch()->sendTouchPointEvent(
-                    view->surface(),
-                    point.id(),
-                    point.position() - view->getPosition(),
-                    (Qt::TouchPointState) point.state()
-                );
-            }
-            seatFor(ev)->touch()->sendFrameEvent(view->surface()->client());
-        }       
+        CwlView *view = m_launcherView;
+        if (!launcherOpened) view = viewAt(ev->points().first().globalPosition().toPoint());
+        if(view == nullptr)
+            return;
+        foreach (QEventPoint point, ev->points()) {
+            seatFor(ev)->touch()->sendTouchPointEvent(
+                view->surface(),
+                point.id(),
+                point.position() / scaleFactor() - view->getPosition(),
+                (Qt::TouchPointState) point.state()
+            );
+        }
+        seatFor(ev)->touch()->sendFrameEvent(view->surface()->client()); 
     } else {
         if(ev->points().first().state() == QEventPoint::Pressed){
             CwlView *view  = m_appswitcher->findViewAt(ev->points().first().globalPosition());
@@ -269,7 +267,7 @@ void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
         if(ev->isBeginEvent() || ev->isUpdateEvent()){
             launcherClosed = false;
             QPointF newPos = m_launcherView->getPosition();
-            newPos.setY(ev->points().first().globalPosition().y());
+            newPos.setY(ev->points().first().globalPosition().y() / scaleFactor());
             m_launcherView->setPosition(newPos);
             triggerRender();
         }
@@ -379,4 +377,14 @@ void CwlCompositor::endRender()
     QWaylandOutput *out = defaultOutput();
     if (out)
         out->sendFrameCallbacks();
+}
+
+int CwlCompositor::scaleFactor() {
+    return m_scaleFactor;
+}
+
+void CwlCompositor::setScaleFactor(int scale) {
+    m_scaleFactor = scale;
+    if (m_output)
+        m_output->setScaleFactor(m_scaleFactor);
 }
