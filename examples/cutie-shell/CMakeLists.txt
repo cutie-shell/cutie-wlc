@@ -8,7 +8,7 @@ set(CMAKE_AUTOMOC ON)
 include( GNUInstallDirs )
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Quick Network Qml DBus WaylandClient)
-find_package(LayerShellQt REQUIRED)
+find_package(LayerShellQt6 REQUIRED)
 
 set(cutie-shell_SOURCES 
         src/settings.cpp 
