@@ -2,6 +2,7 @@
 #include <glwindow.h>
 
 #include <QtWaylandCompositor/QWaylandSeat>
+#include <QWaylandTouch>
 #include <QTouchEvent>
 
 CwlCompositor::CwlCompositor(GlWindow *glwindow)
@@ -198,7 +199,15 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
             CwlView *view = viewAt(ev->points().first().globalPosition().toPoint());
             if(view == nullptr)
                 return;
-            defaultSeat()->sendFullTouchEvent(view->surface(), ev);
+            foreach (QEventPoint point, ev->points()) {
+                seatFor(ev)->touch()->sendTouchPointEvent(
+                    view->surface(),
+                    point.id(),
+                    point.position() - view->getPosition(),
+                    (Qt::TouchPointState) point.state()
+                );
+            }
+            seatFor(ev)->touch()->sendFrameEvent(view->surface()->client());
         }       
     } else {
         if(ev->points().first().state() == QEventPoint::Pressed){
