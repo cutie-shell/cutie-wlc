@@ -9,6 +9,7 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
     : m_glwindow(glwindow)
     , m_xdgShell(new QWaylandXdgShell(this))
     , m_layerShell(new LayerShellV1(this))
+    , m_xdgdecoration(new QWaylandXdgDecorationManagerV1())
 {
     m_glwindow->setCompositor(this);
     connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
@@ -31,6 +32,8 @@ void CwlCompositor::create()
     output->addMode(mode, true);
     QWaylandCompositor::create();
     output->setCurrentMode(mode);
+
+    m_xdgdecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
 
     m_workspace = new CwlWorkspace(this);
     m_appswitcher = new CwlAppswitcher(m_workspace);

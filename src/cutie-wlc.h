@@ -9,6 +9,7 @@
 #include <gesture.h>
 #include <QEventPoint>
 #include <QProcess>
+#include <QWaylandXdgDecorationManagerV1>
 
 QT_BEGIN_NAMESPACE
 
@@ -70,6 +71,7 @@ private:
     QPointF *m_appPointStart = nullptr;
     CwlView *m_appView = nullptr;
     CutieShell *m_cutieshell = nullptr;
+    QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
     
     QString launcher = "examples/cutie-launcher/src/cutie-launcher";
 };
