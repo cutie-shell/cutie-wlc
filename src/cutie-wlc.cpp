@@ -40,7 +40,12 @@ void CwlCompositor::create()
 
     connect(this, &QWaylandCompositor::surfaceCreated, this, &CwlCompositor::onSurfaceCreated);
 
-    qputenv("WAYLAND_DISPLAY", QByteArray("wayland-1"));
+    qputenv("CUTIE_SHELL", QByteArray("true"));
+    qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
+    qputenv("EGL_PLATFORM", QByteArray("wayland"));
+    qunsetenv("QT_QPA_GENERIC_PLUGINS");
+    qunsetenv("QT_SCALE_FACTOR");
+    qputenv("WAYLAND_DISPLAY", socketName());
 
     QStringList args = QStringList();
     args.append("-c");
