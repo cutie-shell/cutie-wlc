@@ -248,19 +248,19 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
     }
 }
 
-void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
+bool CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
 {
-    if(ev->isEndEvent() && edge == EDGE_RIGHT && 
-            ev->points().first().globalPosition().x() < m_workspace->availableGeometry().size().width() * 0.8 && 
-            !m_appswitcher->isActive()){
-        if(launcherOpened){
-            launcherClosed = true;
-            launcherOpened = false;
-            m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
-            triggerRender();
+    if (edge == EDGE_RIGHT) {
+        if(ev->isBeginEvent() || ev->isUpdateEvent()){
+            return !m_appswitcher->isActive() && launcherClosed;
         }
-        m_appswitcher->activate();
-        triggerRender();
+
+        if(ev->isEndEvent() && 
+            ev->points().first().globalPosition().x() < m_glwindow->width() * 0.8){
+            m_appswitcher->activate();
+            triggerRender();
+            return true;
+        }
     }
 
     if(edge == EDGE_BOTTOM){
@@ -270,10 +270,11 @@ void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
             newPos.setY(ev->points().first().globalPosition().y() / scaleFactor());
             m_launcherView->setPosition(newPos);
             triggerRender();
+            return true;
         }
 
         if(ev->isEndEvent()){
-            if(ev->points().first().globalPosition().y() < m_workspace->availableGeometry().size().height() * 0.8){
+            if(ev->points().first().globalPosition().y() < m_glwindow->height() * 0.8){
                 m_launcherView->setPosition(m_workspace->availableGeometry().topLeft());
                 launcherOpened = true;
                 triggerRender();
@@ -283,6 +284,7 @@ void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
                 m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
                 triggerRender();
             }
+            return true;
         }
     }
 
@@ -297,7 +299,7 @@ void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
             }
 
             if(ev->isEndEvent()){
-                if(ev->points().first().globalPosition().y() < m_workspace->availableGeometry().size().height() * 0.2){
+                if(ev->points().first().globalPosition().y() < m_glwindow->height() * 0.2){
                     m_launcherView->setPosition(m_workspace->availableGeometry().topLeft());
                     launcherOpened = true;
                     triggerRender();
@@ -308,8 +310,12 @@ void CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
                     triggerRender();
                 }
             }
+
+            return true;
         }
     }
+    
+    return false;
 }
 
 void CwlCompositor::onSurfaceCreated(QWaylandSurface *surface)

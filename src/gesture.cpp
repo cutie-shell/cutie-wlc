@@ -24,6 +24,8 @@ void CwlGesture::handleTouchEvent(QTouchEvent *ev)
 		return;
 	}
 
+	bool handled = false;
+
 	if(ev->isBeginEvent()){
 		point = ev->points().first().globalPosition();
 
@@ -48,38 +50,29 @@ void CwlGesture::handleTouchEvent(QTouchEvent *ev)
 			edge = EDGE_UNDEFINED;
 		}
 
-		if(edge<4 || corner<4){
-			m_cwlcompositor->handleGesture(ev, edge, corner);
-			return;
-		} else {
-			corner = CORNER_UNDEFINED;
-			edge = EDGE_UNDEFINED;
-			m_cwlcompositor->handleTouchEvent(ev);
-			return;
+		if(edge<EDGE_UNDEFINED || corner<CORNER_UNDEFINED){
+			handled = m_cwlcompositor->handleGesture(ev, edge, corner);
 		}
 	}
 
 	if(ev->isUpdateEvent()){
-		if(edge<4 || corner<4){
-			m_cwlcompositor->handleGesture(ev, edge, corner);
-			return;
-		} else {
-			m_cwlcompositor->handleTouchEvent(ev);
-			return;
+		if(edge<EDGE_UNDEFINED || corner<CORNER_UNDEFINED){
+			handled = m_cwlcompositor->handleGesture(ev, edge, corner);
 		}
 	}
 
 	if(ev->isEndEvent()){
-		if(edge<4 || corner<4){
-			m_cwlcompositor->handleGesture(ev, edge, corner);
+		if(edge<EDGE_UNDEFINED || corner<CORNER_UNDEFINED){
+			handled = m_cwlcompositor->handleGesture(ev, edge, corner);
 			corner = CORNER_UNDEFINED;
 			edge = EDGE_UNDEFINED;
-			return;
-		} else {
-			m_cwlcompositor->handleTouchEvent(ev);
-			return;
 		}
-		
+	}
+
+	if (!handled) {
+		corner = CORNER_UNDEFINED;
+		edge = EDGE_UNDEFINED;
+		m_cwlcompositor->handleTouchEvent(ev);
 	}
 }
 
