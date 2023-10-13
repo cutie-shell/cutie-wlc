@@ -352,7 +352,7 @@ void CwlCompositor::viewSurfaceDestroyed()
     if (view->parentView()) view->parentView()->removeChildView(view);
     else m_workspace->removeView(view);
     delete view;
-    //m_appswitcher->updateViewMap();
+    m_appswitcher->update();
     triggerRender();
 }
 

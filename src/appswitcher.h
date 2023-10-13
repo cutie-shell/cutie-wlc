@@ -19,6 +19,7 @@ public:
     bool isActive();
 
     void activate();
+    void update();
     void deactivate();
 
     void updateViewMap();
@@ -30,7 +31,8 @@ public:
 public slots:
 
 private slots:
-    void animationRun();
+    void animationOpen();
+    void animationUpdate();
 
 signals:
     void redraw();
