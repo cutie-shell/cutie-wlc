@@ -32,6 +32,7 @@ qt6_generate_wayland_protocol_server_sources(
 ${PROJECT_NAME}
     FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-layer-shell-unstable-v1.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-screencopy-unstable-v1.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/cutie-shell-private.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v1.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/text-input-unstable-v2.xml

@@ -1,5 +1,6 @@
 #include <cutie-wlc.h>
 #include <glwindow.h>
+#include <screencopy.h>
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandTouch>
@@ -41,6 +42,7 @@ void CwlCompositor::create()
     m_workspace = new CwlWorkspace(this);
     m_appswitcher = new CwlAppswitcher(m_workspace);
     m_cutieshell = new CutieShell(this);
+    m_screencopyManager = new ScreencopyManagerV1(this);
     
     m_glwindow->setAppswitcher(m_appswitcher);
 
@@ -393,4 +395,8 @@ void CwlCompositor::setScaleFactor(int scale) {
     m_scaleFactor = scale;
     if (m_output)
         m_output->setScaleFactor(m_scaleFactor);
+}
+
+GlWindow *CwlCompositor::glWindow() {
+    return m_glwindow;
 }
