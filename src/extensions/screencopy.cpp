@@ -15,10 +15,16 @@ void ScreencopyManagerV1::initialize()
     init(compositor->display(), 3);
 }
 
-void ScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output(Resource *resource, uint32_t id, int32_t overlay_cursor, struct ::wl_resource *output)
-{
+void ScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output(Resource *resource, uint32_t id, int32_t overlay_cursor, struct ::wl_resource *output) {
+	GlWindow *window = m_compositor->glWindow();
+	zwlr_screencopy_manager_v1_capture_output_region(resource, id, overlay_cursor, output,
+		0, 0, window->width(), window->height());
+}
+
+void ScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output_region(
+		Resource *resource, uint32_t id, int32_t overlay_cursor, struct ::wl_resource *output, int32_t x, int32_t y, int32_t width, int32_t height) {
 	ScreencopyFrameV1 *frame = new ScreencopyFrameV1(resource->client(), id, resource->version());
-	QImage fb = m_compositor->glWindow()->grabFramebuffer();
+	QImage fb = m_compositor->glWindow()->grabFramebuffer().copy(x, y, width, height);
 	fb.convertTo(QImage::Format_ARGB32_Premultiplied);
 	frame->setFrameBuffer(fb, QDateTime::currentSecsSinceEpoch(), (QDateTime::currentMSecsSinceEpoch()%1000)*1000000);
 	frame->send_buffer(0 /* 0 = ARGB32 */, fb.width(), fb.height(), fb.bytesPerLine());

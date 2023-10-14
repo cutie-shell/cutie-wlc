@@ -22,6 +22,8 @@ public:
 
 protected:
 	void zwlr_screencopy_manager_v1_capture_output(Resource *resource, uint32_t id, int32_t overlay_cursor, struct ::wl_resource *output) override;
+	void zwlr_screencopy_manager_v1_capture_output_region(
+		Resource *resource, uint32_t id, int32_t overlay_cursor, struct ::wl_resource *output, int32_t x, int32_t y, int32_t width, int32_t height) override;
 
 private:
 	CwlCompositor *m_compositor;
