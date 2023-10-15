@@ -69,7 +69,7 @@ void CwlCompositor::create()
 
     args = QStringList();
     args.append("-c");
-    args.append("examples/cutie-shell/cutie-ui-io");
+    args.append("cutie-home");
     if (!QProcess::startDetached("bash", args))
         qDebug() << "Failed to run";
 }
