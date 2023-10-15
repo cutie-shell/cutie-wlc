@@ -63,7 +63,7 @@ void CwlCompositor::create()
 
     args = QStringList();
     args.append("-c");
-    args.append("examples/cutie-panel/cutie-panel");
+    args.append("cutie-panel");
     if (!QProcess::startDetached("bash", args))
         qDebug() << "Failed to run";
 
