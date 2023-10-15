@@ -356,6 +356,7 @@ void CwlCompositor::viewSurfaceDestroyed()
     CwlView *view = qobject_cast<CwlView*>(sender());
 
     if (view->parentView()) view->parentView()->removeChildView(view);
+    else if (view == m_launcherView) m_launcherView = nullptr;
     else m_workspace->removeView(view);
     delete view;
     m_appswitcher->update();
