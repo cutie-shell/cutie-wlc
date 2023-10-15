@@ -82,7 +82,7 @@ private:
     QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
     
     int m_scaleFactor = 1;
-    QString launcher = "examples/cutie-launcher/src/cutie-launcher";
+    QString launcher = "cutie-launcher";
 };
 
 QT_END_NAMESPACE
