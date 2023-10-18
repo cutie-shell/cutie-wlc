@@ -1,6 +1,7 @@
 #include <cutie-wlc.h>
 #include <glwindow.h>
 #include <screencopy.h>
+#include <foreign-toplevel-management.h>
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandTouch>
@@ -43,6 +44,7 @@ void CwlCompositor::create()
     m_appswitcher = new CwlAppswitcher(m_workspace);
     m_cutieshell = new CutieShell(this);
     m_screencopyManager = new ScreencopyManagerV1(this);
+    m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
     
     m_glwindow->setAppswitcher(m_appswitcher);
 
@@ -77,6 +79,11 @@ void CwlCompositor::create()
 QList<CwlView*> CwlCompositor::getViews() const
 {
     return m_workspace->getViews();
+}
+
+QList<CwlView*> CwlCompositor::getToplevelViews()
+{
+    return m_workspace->getToplevelViews();
 }
 
 CwlView *CwlCompositor::viewAt(const QPoint &position)
@@ -133,7 +140,7 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWayland
 void CwlCompositor::onTlAppIdChanged()
 {
     QWaylandXdgToplevel *tl = qobject_cast<QWaylandXdgToplevel*>(sender());
-    qDebug()<<"TopLevel with AppId: "<<tl->appId();
+    qDebug()<<"New TopLevel with AppId: "<<tl->appId();
 
     CwlView* v;
 
@@ -149,6 +156,9 @@ void CwlCompositor::onTlAppIdChanged()
         m_workspace->addView(v);
 
         defaultSeat()->setKeyboardFocus(v->surface());
+
+        m_foreignTlManagerV1->newTopLevel(v);
+
     } else if(v->m_toplevel->appId() == "cutie-launcher"){
         m_launcherView = v;
         m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
@@ -358,6 +368,10 @@ void CwlCompositor::viewSurfaceDestroyed()
     if (view->parentView()) view->parentView()->removeChildView(view);
     else if (view == m_launcherView) m_launcherView = nullptr;
     else m_workspace->removeView(view);
+
+    if(view->isToplevel())
+        m_foreignTlManagerV1->removedToplevel(view);
+    
     delete view;
     m_appswitcher->update();
     triggerRender();

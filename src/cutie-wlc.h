@@ -17,6 +17,8 @@ class GlWindow;
 class CwlWorkspace;
 class CwlAppswitcher;
 class ScreencopyManagerV1;
+class ForeignToplevelManagerV1;
+class ForeignToplevelHandleV1;
 
 class CwlCompositor : public QWaylandCompositor
 {
@@ -27,6 +29,7 @@ public:
     void create() override;
 
     QList<CwlView*> getViews() const;
+    QList<CwlView*> getToplevelViews();
     CwlView *viewAt(const QPoint &position);
     void raise(CwlView *cwlview);
 
@@ -78,6 +81,7 @@ private:
     CwlView *m_appView = nullptr;
     CutieShell *m_cutieshell = nullptr;
     ScreencopyManagerV1 *m_screencopyManager = nullptr;
+    ForeignToplevelManagerV1 *m_foreignTlManagerV1 = nullptr;
     QWaylandOutput *m_output = nullptr;
     QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
     
