@@ -26,6 +26,8 @@ public slots:
 
 signals:
 	void availableGeometryChanged(QRect geometry);
+    void toplevelCreated(CwlView *view);
+    void toplevelDestroyed(CwlView *view);
 
 private:
 	QRect m_availableGeometry;

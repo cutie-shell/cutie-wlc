@@ -27,16 +27,38 @@ void CwlWorkspace::removeView(CwlView *view)
 {
 	m_viewMap.remove(view->layer, view);
 	updateViewList();
+
 	if(view->getLayerSurface() != nullptr && view->getLayerSurface()->ls_zone > 0)
 		updateAvailableGeometry();
+
+	if(view->isToplevel()){
+		emit toplevelDestroyed(view);
+	}
 }
 
 void CwlWorkspace::addView(CwlView *view)
 {
+	bool isNew = true;
+
+	if(m_viewMap.contains(view->layer, view)){
+		m_viewMap.remove(view->layer, view);
+		isNew = false;
+	}
+
+	if(m_viewMap.contains(CwlViewLayer::UNDEFINED, view)){
+		m_viewMap.remove(CwlViewLayer::UNDEFINED, view);
+		isNew = false;
+	}
+
 	m_viewMap.insert(m_viewMap.constEnd(), view->layer, view);
+
 	if(view->isToplevel() && !view->isHidden())
 		showDesktop(false);
+
 	updateViewList();
+
+	if(isNew && view->isToplevel())
+		emit toplevelCreated(view);
 }
 
 QList<CwlView*> CwlWorkspace::getViews()

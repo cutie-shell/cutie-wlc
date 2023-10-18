@@ -117,3 +117,19 @@ CwlView *CwlView::parentView() {
 void CwlView::setParentView(CwlView *view) {
     m_parentView = view;
 }
+
+QString CwlView::getAppId()
+{
+    if(!isToplevel())
+        return "";
+
+    return m_toplevel->appId();
+}
+
+QString CwlView::getTitle()
+{
+    if(!isToplevel())
+        return "";
+
+    return m_toplevel->title();
+}

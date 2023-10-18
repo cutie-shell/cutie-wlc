@@ -25,6 +25,8 @@ void ForeignToplevelManagerV1::zwlr_foreign_toplevel_manager_v1_bind_resource(Re
 		m_toplevelMap.insert(ftl, view);
 
 		this->send_toplevel(resource->handle, ftl->resource()->handle);
+		ftl->send_app_id(view->getAppId());
+	    ftl->send_title(view->getTitle());
 	    ftl->send_done();
     }
 }
@@ -48,7 +50,7 @@ void ForeignToplevelManagerV1::zwlr_foreign_toplevel_manager_v1_stop(Resource *r
 
 }
 
-void ForeignToplevelManagerV1::newTopLevel(CwlView *view)
+void ForeignToplevelManagerV1::onToplevelCreated(CwlView *view)
 {
 	if(resourceMap().isEmpty())
 		return;
@@ -62,13 +64,15 @@ void ForeignToplevelManagerV1::newTopLevel(CwlView *view)
 	while (i.hasNext()) {
 	    i.next();
 	    this->send_toplevel(i.value()->handle, ftl->resource()->handle);
+	    ftl->send_app_id(view->getAppId());
+	    ftl->send_title(view->getTitle());
 	    ftl->send_done();
 	}
 }
 
-void ForeignToplevelManagerV1::removedToplevel(CwlView *view)
+void ForeignToplevelManagerV1::onToplevelDestroyed(CwlView *view)
 {
-	if(m_toplevelMap.isEmpty())
+	if(resourceMap().isEmpty() || m_toplevelMap.isEmpty())
 		return;
 
 	QMapIterator<ForeignToplevelHandleV1 *, CwlView *> i(m_toplevelMap);

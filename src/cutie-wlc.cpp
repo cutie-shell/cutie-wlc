@@ -44,8 +44,11 @@ void CwlCompositor::create()
     m_appswitcher = new CwlAppswitcher(m_workspace);
     m_cutieshell = new CutieShell(this);
     m_screencopyManager = new ScreencopyManagerV1(this);
+
     m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
-    
+    connect(m_workspace, &CwlWorkspace::toplevelCreated, m_foreignTlManagerV1, &ForeignToplevelManagerV1::onToplevelCreated);
+    connect(m_workspace, &CwlWorkspace::toplevelDestroyed, m_foreignTlManagerV1, &ForeignToplevelManagerV1::onToplevelDestroyed);
+
     m_glwindow->setAppswitcher(m_appswitcher);
 
     connect(this, &QWaylandCompositor::surfaceCreated, this, &CwlCompositor::onSurfaceCreated);
@@ -149,17 +152,12 @@ void CwlCompositor::onTlAppIdChanged()
             v = view;
     }
 
-    m_workspace->removeView(v);
-
-    if(v->m_toplevel->appId() != "cutie-launcher"){
+    if(v->getAppId() != "cutie-launcher"){
         v->layer = TOP;
         m_workspace->addView(v);
 
         defaultSeat()->setKeyboardFocus(v->surface());
-
-        m_foreignTlManagerV1->newTopLevel(v);
-
-    } else if(v->m_toplevel->appId() == "cutie-launcher"){
+    } else if(v->getAppId() == "cutie-launcher"){
         m_launcherView = v;
         m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
     }
@@ -194,7 +192,6 @@ void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
     view->setPosition(QPoint(0, 0));
     layerSurface->send_configure(0, 0, 0);
 
-    m_workspace->removeView(view);
     view->layer = (CwlViewLayer) layerSurface->ls_layer;
     m_workspace->addView(view);
 
@@ -203,7 +200,6 @@ void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
 
 void CwlCompositor::raise(CwlView *view)
 {
-    m_workspace->removeView(view);
     m_workspace->addView(view);
 
     if(view->isHidden())
@@ -368,9 +364,6 @@ void CwlCompositor::viewSurfaceDestroyed()
     if (view->parentView()) view->parentView()->removeChildView(view);
     else if (view == m_launcherView) m_launcherView = nullptr;
     else m_workspace->removeView(view);
-
-    if(view->isToplevel())
-        m_foreignTlManagerV1->removedToplevel(view);
     
     delete view;
     m_appswitcher->update();

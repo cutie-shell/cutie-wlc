@@ -21,8 +21,11 @@ class ForeignToplevelManagerV1 : public QWaylandCompositorExtensionTemplate<Fore
 public:
 	ForeignToplevelManagerV1(CwlCompositor *compositor);
 	void initialize() override;
-	void newTopLevel(CwlView *view);
 	void removedToplevel(CwlView *view);
+
+public slots:
+	void onToplevelCreated(CwlView *view);
+	void onToplevelDestroyed(CwlView *view);
 
 protected:
 	void zwlr_foreign_toplevel_manager_v1_bind_resource(Resource *resource) override;

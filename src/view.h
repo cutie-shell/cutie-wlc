@@ -53,6 +53,9 @@ public:
     CwlView* parentView();
     void setParentView(CwlView* view);
 
+    QString getAppId();
+    QString getTitle();
+
 signals:
 
 protected:
