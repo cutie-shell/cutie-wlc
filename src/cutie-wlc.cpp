@@ -2,6 +2,7 @@
 #include <glwindow.h>
 #include <screencopy.h>
 #include <foreign-toplevel-management.h>
+#include <input-method-v2.h>
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandTouch>
@@ -44,6 +45,8 @@ void CwlCompositor::create()
     m_appswitcher = new CwlAppswitcher(m_workspace);
     m_cutieshell = new CutieShell(this);
     m_screencopyManager = new ScreencopyManagerV1(this);
+
+    m_inputmethod = new InputMethodManagerV2(this);
 
     m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
     connect(m_workspace, &CwlWorkspace::toplevelCreated, m_foreignTlManagerV1, &ForeignToplevelManagerV1::onToplevelCreated);

@@ -19,6 +19,7 @@ class CwlAppswitcher;
 class ScreencopyManagerV1;
 class ForeignToplevelManagerV1;
 class ForeignToplevelHandleV1;
+class InputMethodManagerV2;
 
 class CwlCompositor : public QWaylandCompositor
 {
@@ -84,6 +85,7 @@ private:
     ForeignToplevelManagerV1 *m_foreignTlManagerV1 = nullptr;
     QWaylandOutput *m_output = nullptr;
     QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
+    InputMethodManagerV2 *m_inputmethod = nullptr;
     
     int m_scaleFactor = 1;
     QString launcher = "cutie-launcher";
