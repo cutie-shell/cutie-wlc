@@ -44,7 +44,10 @@ class ForeignToplevelHandleV1 : public QWaylandCompositorExtensionTemplate<Forei
 {
 	Q_OBJECT
 public:
-	ForeignToplevelHandleV1(struct ::wl_client *client, uint32_t id, int version);
+	ForeignToplevelHandleV1(struct ::wl_client *client, uint32_t id, int version, CwlView *view, CwlCompositor *compositor);
+
+private slots:
+	void onToplevelTitleChanged();
 
 protected:
 	void zwlr_foreign_toplevel_handle_v1_bind_resource(Resource *resource) override;
@@ -62,6 +65,8 @@ protected:
 	void zwlr_foreign_toplevel_handle_v1_unset_fullscreen(Resource *resource) override;
 
 private:
+	CwlView *m_view = nullptr;
+	CwlCompositor *m_compositor = nullptr;
 
 };
 

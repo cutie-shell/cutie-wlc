@@ -20,7 +20,7 @@ void ForeignToplevelManagerV1::zwlr_foreign_toplevel_manager_v1_bind_resource(Re
 
 	for (CwlView* view : m_compositor->getToplevelViews()) {
         ForeignToplevelHandleV1 *ftl;
-		ftl = new ForeignToplevelHandleV1(resource->client(), 0, resource->version());
+		ftl = new ForeignToplevelHandleV1(resource->client(), 0, resource->version(), view, m_compositor);
 
 		m_toplevelMap.insert(ftl, view);
 
@@ -56,7 +56,7 @@ void ForeignToplevelManagerV1::onToplevelCreated(CwlView *view)
 		return;
 
 	ForeignToplevelHandleV1 *ftl;
-	ftl = new ForeignToplevelHandleV1(this->resourceMap().first()->client(), 0, this->resourceMap().first()->version());
+	ftl = new ForeignToplevelHandleV1(this->resourceMap().first()->client(), 0, this->resourceMap().first()->version(), view, m_compositor);
 
 	m_toplevelMap.insert(ftl, view);
 
@@ -86,9 +86,19 @@ void ForeignToplevelManagerV1::onToplevelDestroyed(CwlView *view)
 	}
 }
 
-ForeignToplevelHandleV1::ForeignToplevelHandleV1(wl_client *client, uint32_t id, int version)
+ForeignToplevelHandleV1::ForeignToplevelHandleV1(wl_client *client, uint32_t id, int version, CwlView *view, CwlCompositor *compositor)
     :QtWaylandServer::zwlr_foreign_toplevel_handle_v1(client, id, version)
 {
+	m_view = view;
+	m_compositor = compositor;
+
+	connect(m_view->getTopLevel(), &QWaylandXdgToplevel::titleChanged, this, &ForeignToplevelHandleV1::onToplevelTitleChanged);
+}
+
+void ForeignToplevelHandleV1::onToplevelTitleChanged()
+{
+	this->send_title(m_view->getTitle());
+	this->send_done();
 }
 
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_bind_resource(Resource *resource)
@@ -123,12 +133,12 @@ void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_unset_minimized(Re
 
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_activate(Resource *resource, struct ::wl_resource *seat)
 {
-
+	m_compositor->raise(m_view);
 }
 
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_close(Resource *resource)
 {
-
+	m_view->getTopLevel()->sendClose();
 }
 
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_set_rectangle(Resource *resource, struct ::wl_resource *surface, int32_t x, int32_t y, int32_t width, int32_t height)

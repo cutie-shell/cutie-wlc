@@ -47,7 +47,6 @@ void CwlWorkspace::addView(CwlView *view)
 
 	if(m_viewMap.contains(CwlViewLayer::UNDEFINED, view)){
 		m_viewMap.remove(CwlViewLayer::UNDEFINED, view);
-		isNew = false;
 	}
 
 	m_viewMap.insert(m_viewMap.constEnd(), view->layer, view);
