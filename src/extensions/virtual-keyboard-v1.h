@@ -5,9 +5,7 @@
 
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
-#include <QWaylandKeyboard>
-#include <QWaylandSeat>
-#include <QWaylandKeymap>
+
 #include <qwayland-server-virtual-keyboard-unstable-v1.h>
 
 class VirtualKeyboard;
@@ -21,17 +19,12 @@ public:
 	VirtualKeyboardManager();
 	VirtualKeyboardManager(QWaylandCompositor *compositor);
 	void initialize() override;
-signals:
-	
-public Q_SLOTS:
 	
 protected:
 	void zwp_virtual_keyboard_manager_v1_create_virtual_keyboard(Resource *resource, struct ::wl_resource *seat, uint32_t id) override;
 
 private:
-    QWaylandCompositor *compositor;
-    VirtualKeyboard *m_vkbd;
-    QWaylandSeat *m_wlseat;
+
 };
 
 class VirtualKeyboard : public QWaylandCompositorExtensionTemplate<VirtualKeyboard>

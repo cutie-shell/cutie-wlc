@@ -5,8 +5,7 @@
 
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
-#include <QWaylandSeat>
-#include <QMap>
+
 #include <qwayland-server-text-input-unstable-v3.h>
 
 class TextInputV3;
@@ -21,26 +20,12 @@ public:
 	TextInputManagerV3(QWaylandCompositor *compositor);
 	void initialize() override;
 
-	bool setFocus(QWaylandSurface *newFocus);
-	bool removeFocus(QWaylandSurface *oldFocus);
-
-	void sendString(QString string);
-
-signals:
-	void textInputFocus(bool focus);
-
-public Q_SLOTS:
-	void onResourceDestroyed(TextInputV3 *textinput);
-
 protected:
 	void zwp_text_input_manager_v3_get_text_input(Resource *resource, uint32_t id, struct ::wl_resource *seat) override;
 	void zwp_text_input_manager_v3_destroy(Resource *resource) override;
 
 private:
-    QWaylandCompositor *compositor;
-    QWaylandSeat *m_defaultSeat;
-    TextInputV3 *m_activeInput;
-    QMap<struct ::wl_client *, TextInputV3 *> m_textInputMap;
+
 };
 
 class  TextInputV3 : public QWaylandCompositorExtensionTemplate< TextInputV3>
@@ -49,10 +34,6 @@ class  TextInputV3 : public QWaylandCompositorExtensionTemplate< TextInputV3>
 	Q_OBJECT
 public:
 	 TextInputV3(struct ::wl_client *client, uint32_t id, int version);
-
-signals:
-	void resourceDestroyed(TextInputV3 *textinput);
-	void textInputFocus(bool focus);
 
 protected:
 	void zwp_text_input_v3_enable(Resource *resource) override;

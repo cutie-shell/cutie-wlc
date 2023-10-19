@@ -5,8 +5,7 @@
 
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
-#include <QWaylandSeat>
-#include <QMap>
+
 #include <qwayland-server-text-input-unstable-v1.h>
 
 class TextInputV1;
@@ -21,24 +20,10 @@ public:
 	TextInputManagerV1(QWaylandCompositor *compositor);
 	void initialize() override;
 
-	bool setFocus(QWaylandSurface *newFocus);
-	bool removeFocus(QWaylandSurface *oldFocus);
-
-	void sendString(QString string);
-
-signals:
-	void textInputFocus(bool focus);
-
-public Q_SLOTS:
-	void onResourceDestroyed(TextInputV1 *textinput);
 protected:
-	virtual void zwp_text_input_manager_v1_create_text_input(Resource *resource, uint32_t id) override;
+	void zwp_text_input_manager_v1_create_text_input(Resource *resource, uint32_t id) override;
 
 private:
-    QWaylandCompositor *compositor;
-    QWaylandSeat *m_defaultSeat;
-    TextInputV1 *m_activeInput;
-    QMap<struct ::wl_client *, TextInputV1 *> m_textInputMap;
 
 };
 
@@ -48,11 +33,6 @@ class  TextInputV1 : public QWaylandCompositorExtensionTemplate< TextInputV1>
 	Q_OBJECT
 public:
 	TextInputV1(struct ::wl_client *client, uint32_t id, int version);
-	uint serial;
-
-signals:
-	void resourceDestroyed(TextInputV1 *textinput);
-	void textInputFocus(bool focus);
 
 protected:
 	void zwp_text_input_v1_bind_resource(Resource *resource) override;
