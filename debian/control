@@ -1,0 +1,22 @@
+Source: cutie-wlc
+Section: libs
+Maintainer: Cutie Shell Developers <admin@cutie-shell.org>
+Priority: optional
+Build-Depends: pkg-kde-tools,
+               cmake,
+               libgles-dev,
+               qt6-base-dev,
+               qt6-base-private-dev,
+               qt6-wayland,
+               qt6-wayland-dev,
+               qt6-declarative-dev,
+               pkg-config,
+               libqt6waylandcompositor6,
+Standards-Version: 4.5.1
+
+Package: cutie-wlc
+Architecture: any
+Multi-Arch: foreign
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: This package contains a Wayland compositor for Cutie based on QtWaylandCompositor.
