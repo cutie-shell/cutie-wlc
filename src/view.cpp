@@ -1,9 +1,11 @@
 #include <view.h>
 #include <cutie-wlc.h>
 
-CwlView::CwlView(CwlCompositor *cwlcompositor)
+CwlView::CwlView(CwlCompositor *cwlcompositor, QRect geometry)
     : m_cwlcompositor(cwlcompositor)
-{}
+{
+    m_availableGeometry = geometry;
+}
 
 CwlView::~CwlView()
 {
@@ -86,6 +88,7 @@ void CwlView::setHidden(bool hide)
 
 void CwlView::onAvailableGeometryChanged(QRect geometry)
 {
+    m_availableGeometry = geometry;
     if(layer == TOP){
         if(m_xdgSurface->toplevel() != nullptr){
             setPosition(geometry.topLeft());
@@ -132,4 +135,29 @@ QString CwlView::getTitle()
         return "";
 
     return m_toplevel->title();
+}
+
+void CwlView::setLayerSurface(LayerSurfaceV1 *surface)
+{
+    if(surface != nullptr){
+        m_layerSurface = surface;
+        connect(m_layerSurface, &LayerSurfaceV1::layerSurfaceDataChanged, this, &CwlView::onLayerSurfaceDataChanged);
+    }
+}
+
+void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
+{
+    if(surface != m_layerSurface)
+        return;
+
+    if(CwlViewAnchor::ANCHOR_TOP == m_layerSurface->ls_anchor){
+        this->setPosition(m_availableGeometry.topLeft());
+    } else if(CwlViewAnchor::ANCHOR_BOTTOM == m_layerSurface->ls_anchor){
+        this->setPosition(QPointF(m_availableGeometry.bottomLeft().x(),
+                            m_availableGeometry.bottomLeft().y() - m_layerSurface->size.height()));
+    }
+
+
+
+    qDebug()<<"ANCHOR: "<<surface->ls_anchor<<" SIZE: "<<surface->size.width()<<"x"<<surface->size.height()<<"ZONE:"<<surface->ls_zone;
 }

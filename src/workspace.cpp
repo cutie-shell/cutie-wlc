@@ -151,13 +151,10 @@ void CwlWorkspace::updateAvailableGeometry()
 
 void CwlWorkspace::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
 {
-	if(surface->ls_zone > 0 && surface->initialized &&
-        (surface->ls_anchor == 1 ||
-            surface->ls_anchor == 2 ||
-            surface->ls_anchor == 4 ||
-            surface->ls_anchor == 8)){
+	if(surface->ls_zone > 0 && surface->initialized){
 		surface->send_configure(surface->ls_serial, surface->size.width(), surface->size.height());
-        updateAvailableGeometry();
+		updateAvailableGeometry();
+
     } else if (surface->ls_zone <= 0){
     	surface->send_configure(surface->ls_serial, surface->size.width(), surface->size.height());
         updateAvailableGeometry();

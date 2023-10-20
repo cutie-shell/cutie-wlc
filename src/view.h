@@ -25,11 +25,19 @@ enum CwlViewLayer: uint32_t
     UNDEFINED       = 4
 };
 
+enum CwlViewAnchor: uint32_t
+{
+    ANCHOR_TOP     = 1,
+    ANCHOR_BOTTOM  = 2,
+    ANCHOR_LEFT    = 4,
+    ANCHOR_RIGHT   = 8
+};
+
 class CwlView : public QWaylandView
 {
     Q_OBJECT
 public:
-    CwlView(CwlCompositor *cwlcompositor);
+    CwlView(CwlCompositor *cwlcompositor, QRect geometry);
     ~CwlView();
 
     QOpenGLTexture *getTexture();
@@ -56,6 +64,8 @@ public:
     QString getAppId();
     QString getTitle();
 
+    void setLayerSurface(LayerSurfaceV1 *surface);
+
 signals:
 
 protected:
@@ -75,9 +85,13 @@ private:
     CwlView *m_parentView = nullptr;
     bool m_hidden = false;
     QList<CwlView*> m_childViewList;
+    QRect m_availableGeometry;
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);
+
+private slots:
+    void onLayerSurfaceDataChanged(LayerSurfaceV1 *surface);
 };
 
 QT_END_NAMESPACE

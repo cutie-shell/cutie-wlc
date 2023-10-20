@@ -191,7 +191,7 @@ void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
     CwlView *view = findView(layerSurface->surface);
     Q_ASSERT(view);
 
-    view->m_layerSurface = layerSurface;
+    view->setLayerSurface(layerSurface);
     view->setPosition(QPoint(0, 0));
     layerSurface->send_configure(0, 0, 0);
 
@@ -335,7 +335,7 @@ void CwlCompositor::onSurfaceCreated(QWaylandSurface *surface)
     connect(surface, &QWaylandSurface::hasContentChanged, this, &CwlCompositor::surfaceHasContentChanged);
     connect(surface, &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
 
-    CwlView *view = new CwlView(this);
+    CwlView *view = new CwlView(this, m_workspace->availableGeometry());
     view->setSurface(surface);
     view->setOutput(outputFor(m_glwindow));
 
