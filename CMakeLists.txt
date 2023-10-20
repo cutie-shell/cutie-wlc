@@ -14,6 +14,6 @@ add_subdirectory(src)
 target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Core Qt6::Gui Qt::WaylandCompositor)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Core Qt6::Gui Qt6::GuiPrivate Qt6::WaylandCompositor)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION /usr/bin)
