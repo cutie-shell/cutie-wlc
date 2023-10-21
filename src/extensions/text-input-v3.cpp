@@ -1,12 +1,15 @@
 #include <text-input-v3.h>
 
+#include <QWaylandSeat>
+
 TextInputManagerV3::TextInputManagerV3()
 {
 }
 
-TextInputManagerV3::TextInputManagerV3(QWaylandCompositor *compositor)
+TextInputManagerV3::TextInputManagerV3(CwlCompositor *compositor)
     :QWaylandCompositorExtensionTemplate(compositor)
 {
+	m_compositor = compositor;
 }
 
 void TextInputManagerV3::initialize()
@@ -18,7 +21,18 @@ void TextInputManagerV3::initialize()
 
 void TextInputManagerV3::zwp_text_input_manager_v3_get_text_input(Resource *resource, uint32_t id, struct ::wl_resource *seat)
 {
+	QWaylandSurface *surface;
+	TextInputV3 *textInput = new TextInputV3(resource->client(), id, resource->version());
 
+	connect(textInput, &TextInputV3::showInputPanel, this, &TextInputManagerV3::showInputPanel);
+	connect(textInput, &TextInputV3::hideInputPanel, this, &TextInputManagerV3::hideInputPanel);
+
+	if(m_compositor->defaultSeat()->keyboardFocus() != nullptr){
+        surface = m_compositor->defaultSeat()->keyboardFocus();
+        if(surface->client()->client() == resource->client()){
+            textInput->send_enter(surface->resource());
+        }
+    }
 }
 
 void TextInputManagerV3::zwp_text_input_manager_v3_destroy(Resource *resource)
@@ -32,12 +46,12 @@ TextInputV3::TextInputV3(wl_client *client, uint32_t id, int version)
 
 void TextInputV3::zwp_text_input_v3_enable(Resource *resource)
 {
-
+	emit showInputPanel();
 }
 
 void TextInputV3::zwp_text_input_v3_disable(Resource *resource)
 {
-
+	emit hideInputPanel();
 }
 
 void TextInputV3::zwp_text_input_v3_set_surrounding_text(Resource *resource, const QString &text, int32_t cursor, int32_t anchor)

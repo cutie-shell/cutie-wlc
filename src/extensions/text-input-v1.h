@@ -6,6 +6,8 @@
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
 
+#include <cutie-wlc.h>
+
 #include <qwayland-server-text-input-unstable-v1.h>
 
 class TextInputV1;
@@ -17,13 +19,18 @@ class TextInputManagerV1 : public QWaylandCompositorExtensionTemplate<TextInputM
 	Q_OBJECT
 public:
 	TextInputManagerV1();
-	TextInputManagerV1(QWaylandCompositor *compositor);
+	TextInputManagerV1(CwlCompositor *compositor);
 	void initialize() override;
+
+signals:
+	void showInputPanel();
+	void hideInputPanel();
 
 protected:
 	void zwp_text_input_manager_v1_create_text_input(Resource *resource, uint32_t id) override;
 
 private:
+	CwlCompositor *m_compositor;
 
 };
 
@@ -33,6 +40,10 @@ class  TextInputV1 : public QWaylandCompositorExtensionTemplate< TextInputV1>
 	Q_OBJECT
 public:
 	TextInputV1(struct ::wl_client *client, uint32_t id, int version);
+
+signals:
+	void showInputPanel();
+	void hideInputPanel();
 
 protected:
 	void zwp_text_input_v1_bind_resource(Resource *resource) override;
