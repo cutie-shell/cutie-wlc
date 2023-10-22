@@ -19,7 +19,12 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_bind_resource(Resource *r
 }
 void InputMethodManagerV2::zwp_input_method_manager_v2_destroy_resource(Resource *resource)
 {
-	
+	delete m_inputmethod;
+	delete m_textinputV1;
+	delete m_textinputV2;
+	delete m_textinputV3;
+
+	emit imDestroyed();
 }
 
 void InputMethodManagerV2::zwp_input_method_manager_v2_get_input_method(Resource *resource, struct ::wl_resource *seat, uint32_t input_method)

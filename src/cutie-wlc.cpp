@@ -46,11 +46,11 @@ void CwlCompositor::create()
     m_cutieshell = new CutieShell(this);
     m_screencopyManager = new ScreencopyManagerV1(this);
 
-    m_inputmethod = new InputMethodManagerV2(this);
-
     m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
     connect(m_workspace, &CwlWorkspace::toplevelCreated, m_foreignTlManagerV1, &ForeignToplevelManagerV1::onToplevelCreated);
     connect(m_workspace, &CwlWorkspace::toplevelDestroyed, m_foreignTlManagerV1, &ForeignToplevelManagerV1::onToplevelDestroyed);
+
+    initInputMethod();
 
     m_glwindow->setAppswitcher(m_appswitcher);
 
@@ -164,6 +164,15 @@ void CwlCompositor::onTlAppIdChanged()
         m_launcherView = v;
         m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
     }
+}
+
+void CwlCompositor::initInputMethod()
+{
+    if(m_inputmethod != nullptr)
+        delete m_inputmethod;
+
+    m_inputmethod = new InputMethodManagerV2(this);
+    connect(m_inputmethod, &InputMethodManagerV2::imDestroyed, this, &CwlCompositor::initInputMethod);
 }
 
 void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface)

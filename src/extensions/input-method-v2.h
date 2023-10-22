@@ -25,6 +25,9 @@ public:
 	InputMethodManagerV2(CwlCompositor *compositor);
 	void initialize() override;
 
+signals:
+	void imDestroyed();
+	
 protected:
 	void zwp_input_method_manager_v2_bind_resource(Resource *resource) override;
     void zwp_input_method_manager_v2_destroy_resource(Resource *resource) override;

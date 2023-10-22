@@ -70,6 +70,7 @@ private slots:
     void surfaceDestroyed();
     void viewSurfaceDestroyed();
     void onTlAppIdChanged();
+    void initInputMethod();
     
 private:
     CwlView *findView(const QWaylandSurface *s) const;
