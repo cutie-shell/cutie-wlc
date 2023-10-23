@@ -66,19 +66,24 @@ InputMethodV2::InputMethodV2(struct ::wl_client *client, uint32_t id, int versio
 
 void InputMethodV2::zwp_input_method_v2_commit_string(Resource *resource, const QString &text)
 {
-	if(m_compositor->defaultSeat()->keyboardFocus() == nullptr)
-		return;
-
-	CwlView *v = m_compositor->findView(m_compositor->defaultSeat()->keyboardFocus());
-
-	if(v->tiV1 != nullptr){
-		v->tiV1->send_commit_string(0, text);
-	} else if(v->tiV2 != nullptr){
-		v->tiV2->send_commit_string(text);
-	} else if(v->tiV3 != nullptr){
-		v->tiV3->send_commit_string(text);
-		v->tiV3->send_done(0);
+	if(text == "\u21E6"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Backspace, 1);
+	} else if(text == "\u21E5"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Tab, 1);
+	} else if(text == "\u21D1"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Up, 1);
+	} else if(text == "\u21D3"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Down, 1);
+	} else if(text == "\u21D0"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Left, 1);
+	} else if(text == "\u21D2"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Right, 1);
+	} else if(text == "\u21B5"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Enter, 1);
+	} else if(text == "CUTIE_SPACE"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Space, 1);
 	}
+	m_lastString = text;
 }
 
 void InputMethodV2::zwp_input_method_v2_set_preedit_string(Resource *resource, const QString &text, int32_t cursor_begin, int32_t cursor_end)
@@ -93,7 +98,59 @@ void InputMethodV2::zwp_input_method_v2_delete_surrounding_text(Resource *resour
 
 void InputMethodV2::zwp_input_method_v2_commit(Resource *resource, uint32_t serial)
 {
-	qDebug()<<"COMMIT SERVER";
+	if(m_compositor->defaultSeat()->keyboardFocus() == nullptr)
+		return;
+
+	if(m_lastString == ""){
+		return;;
+	}
+
+	if(m_lastString == "\u21E6"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Backspace, 0);
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "\u21E5"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Tab, 0);
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "\u21D1"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Up, 0);
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "\u21D3"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Down, 0);
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "\u21D0"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Left, 0);
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "\u21D2"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Right, 0);
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "\u21B5"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Enter, 0);
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "CUTIE_SPACE"){
+		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Space, 0);
+		m_lastString = "";
+		return;
+	}
+	
+
+	CwlView *v = m_compositor->findView(m_compositor->defaultSeat()->keyboardFocus());
+
+	if(v->tiV1 != nullptr){
+		v->tiV1->send_commit_string(0, m_lastString);
+	} else if(v->tiV2 != nullptr){
+		v->tiV2->send_commit_string(m_lastString);
+	} else if(v->tiV3 != nullptr){
+		v->tiV3->send_commit_string(m_lastString);
+		v->tiV3->send_done(0);
+	}
+	m_lastString = "";
 }
 
 void InputMethodV2::zwp_input_method_v2_get_input_popup_surface(Resource *resource, uint32_t id, struct ::wl_resource *surface)
@@ -113,14 +170,14 @@ void InputMethodV2::zwp_input_method_v2_destroy(Resource *resource)
 
 void InputMethodV2::onShowInputPanel()
 {
-	qDebug()<<"SHOW INPUT PANEL SERVER";
 	this->send_activate();
 	this->send_done();
+	m_serial += 1;
 }
 
 void InputMethodV2::onHideInputPanel()
 {
-	qDebug()<<"HIDE INPUT PANEL SERVER";
 	this->send_deactivate();
 	this->send_done();
+	m_serial += 1;
 }

@@ -67,6 +67,8 @@ public slots:
 
 private:
 	CwlCompositor *m_compositor;
+	uint32_t m_serial = 0;
+	QString m_lastString = "";
 
 };
 
