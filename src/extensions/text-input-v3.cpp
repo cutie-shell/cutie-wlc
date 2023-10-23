@@ -22,7 +22,7 @@ void TextInputManagerV3::initialize()
 void TextInputManagerV3::zwp_text_input_manager_v3_get_text_input(Resource *resource, uint32_t id, struct ::wl_resource *seat)
 {
 	QWaylandSurface *surface;
-	TextInputV3 *textInput = new TextInputV3(resource->client(), id, resource->version());
+	TextInputV3 *textInput = new TextInputV3(resource->client(), id, resource->version(), m_compositor);
 
 	connect(textInput, &TextInputV3::showInputPanel, this, &TextInputManagerV3::showInputPanel);
 	connect(textInput, &TextInputV3::hideInputPanel, this, &TextInputManagerV3::hideInputPanel);
@@ -31,6 +31,7 @@ void TextInputManagerV3::zwp_text_input_manager_v3_get_text_input(Resource *reso
         surface = m_compositor->defaultSeat()->keyboardFocus();
         if(surface->client()->client() == resource->client()){
             textInput->send_enter(surface->resource());
+            m_compositor->findView(surface)->tiV3 = textInput;
         }
     }
 }
@@ -39,13 +40,22 @@ void TextInputManagerV3::zwp_text_input_manager_v3_destroy(Resource *resource)
 {
 }
 
-TextInputV3::TextInputV3(wl_client *client, uint32_t id, int version)
+TextInputV3::TextInputV3(wl_client *client, uint32_t id, int version, CwlCompositor *compositor)
     :QtWaylandServer::zwp_text_input_v3(client, id, version)
 {
+	m_compositor = compositor;
 }
 
 void TextInputV3::zwp_text_input_v3_enable(Resource *resource)
 {
+	QWaylandSurface *surface;
+	if(m_compositor->defaultSeat()->keyboardFocus() != nullptr){
+        surface = m_compositor->defaultSeat()->keyboardFocus();
+        if(surface->client()->client() == resource->client()){
+            m_compositor->findView(surface)->tiV3 = this;
+        }
+    }
+
 	emit showInputPanel();
 }
 

@@ -40,7 +40,7 @@ class  TextInputV3 : public QWaylandCompositorExtensionTemplate< TextInputV3>
 {
 	Q_OBJECT
 public:
-	 TextInputV3(struct ::wl_client *client, uint32_t id, int version);
+	 TextInputV3(struct ::wl_client *client, uint32_t id, int version, CwlCompositor *compositor);
 
 signals:
 	void showInputPanel();
@@ -56,6 +56,10 @@ protected:
 	void zwp_text_input_v3_commit(Resource *resource) override;
 	void zwp_text_input_v3_bind_resource(Resource *resource) override;
 	void zwp_text_input_v3_destroy_resource(Resource *resource) override;
+
+private:
+	CwlCompositor *m_compositor;
+	
 };
 
 #endif //TEXT_INPUT_V3

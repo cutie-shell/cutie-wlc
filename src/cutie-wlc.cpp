@@ -106,7 +106,7 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
     return ret;
 }
 
-CwlView *CwlCompositor::findView(const QWaylandSurface *s) const
+CwlView* CwlCompositor::findView(QWaylandSurface *s)
 {
     for (CwlView* view : getViews()) {
         if (view->surface() == s)

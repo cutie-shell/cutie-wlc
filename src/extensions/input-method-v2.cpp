@@ -1,5 +1,8 @@
 #include <input-method-v2.h>
 
+#include <view.h>
+#include <QWaylandSeat>
+
 InputMethodManagerV2::InputMethodManagerV2(CwlCompositor *compositor)
     :QWaylandCompositorExtensionTemplate(compositor)
 {
@@ -30,7 +33,7 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_destroy_resource(Resource
 void InputMethodManagerV2::zwp_input_method_manager_v2_get_input_method(Resource *resource, struct ::wl_resource *seat, uint32_t input_method)
 {
 	if(m_inputmethod == nullptr){
-		m_inputmethod = new InputMethodV2(resource->client(), input_method, resource->version());
+		m_inputmethod = new InputMethodV2(resource->client(), input_method, resource->version(), m_compositor);
 
 		m_textinputV1 = new TextInputManagerV1(m_compositor);
 		m_textinputV2 = new TextInputManagerV2(m_compositor);
@@ -55,15 +58,27 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_destroy(Resource *resourc
 
 }
 
-InputMethodV2::InputMethodV2(struct ::wl_client *client, uint32_t id, int version)
+InputMethodV2::InputMethodV2(struct ::wl_client *client, uint32_t id, int version, CwlCompositor *compositor)
     :QtWaylandServer::zwp_input_method_v2(client, id, version)
 {
-
+	m_compositor = compositor;
 }
 
 void InputMethodV2::zwp_input_method_v2_commit_string(Resource *resource, const QString &text)
 {
-	qDebug()<<"COMMIT STRING SERVER";
+	if(m_compositor->defaultSeat()->keyboardFocus() == nullptr)
+		return;
+
+	CwlView *v = m_compositor->findView(m_compositor->defaultSeat()->keyboardFocus());
+
+	if(v->tiV1 != nullptr){
+		v->tiV1->send_commit_string(0, text);
+	} else if(v->tiV2 != nullptr){
+		v->tiV2->send_commit_string(text);
+	} else if(v->tiV3 != nullptr){
+		v->tiV3->send_commit_string(text);
+		v->tiV3->send_done(0);
+	}
 }
 
 void InputMethodV2::zwp_input_method_v2_set_preedit_string(Resource *resource, const QString &text, int32_t cursor_begin, int32_t cursor_end)

@@ -22,7 +22,7 @@ void TextInputManagerV1::initialize()
 void TextInputManagerV1::zwp_text_input_manager_v1_create_text_input(Resource *resource, uint32_t id)
 {
 	QWaylandSurface *surface;
-	TextInputV1 *textInput = new TextInputV1(resource->client(), id, resource->version());
+	TextInputV1 *textInput = new TextInputV1(resource->client(), id, resource->version(), m_compositor);
 
 	connect(textInput, &TextInputV1::showInputPanel, this, &TextInputManagerV1::showInputPanel);
 	connect(textInput, &TextInputV1::hideInputPanel, this, &TextInputManagerV1::hideInputPanel);
@@ -31,13 +31,15 @@ void TextInputManagerV1::zwp_text_input_manager_v1_create_text_input(Resource *r
         surface = m_compositor->defaultSeat()->keyboardFocus();
         if(surface->client()->client() == resource->client()){
             textInput->send_enter(surface->resource());
+            m_compositor->findView(surface)->tiV1 = textInput;
         }
     }
 }
 
-TextInputV1::TextInputV1(wl_client *client, uint32_t id, int version)
+TextInputV1::TextInputV1(wl_client *client, uint32_t id, int version, CwlCompositor *compositor)
     :QtWaylandServer::zwp_text_input_v1(client, id, version)
 {
+	m_compositor = compositor;
 }
 
 void TextInputV1::zwp_text_input_v1_bind_resource(Resource *resource)
@@ -59,6 +61,13 @@ void TextInputV1::zwp_text_input_v1_deactivate(Resource *resource, struct ::wl_r
 
 void TextInputV1::zwp_text_input_v1_show_input_panel(Resource *resource)
 {
+	QWaylandSurface *surface;
+	if(m_compositor->defaultSeat()->keyboardFocus() != nullptr){
+        surface = m_compositor->defaultSeat()->keyboardFocus();
+        if(surface->client()->client() == resource->client()){
+            m_compositor->findView(surface)->tiV1 = this;
+        }
+    }
 	emit showInputPanel();
 }
 

@@ -50,7 +50,7 @@ class InputMethodV2 : public QWaylandCompositorExtensionTemplate<InputMethodV2>
 {
 	Q_OBJECT
 public:
-	InputMethodV2(struct ::wl_client *client, uint32_t id, int version);
+	InputMethodV2(struct ::wl_client *client, uint32_t id, int version, CwlCompositor *compositor);
 
 protected:
 	void zwp_input_method_v2_commit_string(Resource *resource, const QString &text) override;

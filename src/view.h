@@ -15,6 +15,9 @@ QT_BEGIN_NAMESPACE
 class QOpenGLTexture;
 class QWaylandXdgShell;
 class CwlCompositor;
+class TextInputV1;
+class TextInputV2;
+class TextInputV3;
 
 enum CwlViewLayer: uint32_t
 {
@@ -65,6 +68,10 @@ public:
     QString getTitle();
 
     void setLayerSurface(LayerSurfaceV1 *surface);
+
+    TextInputV1 *tiV1 = nullptr;
+    TextInputV2 *tiV2 = nullptr;
+    TextInputV3 *tiV3 = nullptr;
 
 signals:
 

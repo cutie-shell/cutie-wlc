@@ -32,6 +32,7 @@ public:
     QList<CwlView*> getViews() const;
     QList<CwlView*> getToplevelViews();
     CwlView *viewAt(const QPoint &position);
+    CwlView* findView(QWaylandSurface *s);
     void raise(CwlView *cwlview);
 
     void handleTouchEvent(QTouchEvent *ev);
@@ -87,7 +88,7 @@ private:
     QWaylandOutput *m_output = nullptr;
     QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
     InputMethodManagerV2 *m_inputmethod = nullptr;
-    
+
     int m_scaleFactor = 1;
     QString launcher = "cutie-launcher";
 };
