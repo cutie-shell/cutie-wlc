@@ -98,7 +98,7 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
     for (auto it = getViews().crbegin(); it != getViews().crend(); ++it) {
         CwlView *view = *it;
         QRectF geom(view->getPosition(), view->size() * scaleFactor());
-        if (geom.contains(position)){
+        if (geom.contains(position / scaleFactor())){
             ret = view;
             return ret;
         }
