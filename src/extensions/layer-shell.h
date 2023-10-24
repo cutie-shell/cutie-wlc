@@ -50,6 +50,7 @@ public:
 	uint32_t ls_layer;
 	uint32_t ls_keyboard_interactivity;
 	uint32_t ls_serial;
+	QString ls_scope;
 	bool initialized = false;
 
 signals:

@@ -6,8 +6,14 @@
 #include <QOpenGLTexture>
 #include <QMouseEvent>
 
+#include <QGuiApplication>
+#include <qpa/qplatformnativeinterface.h>
+#include <QtWaylandCompositor/QWaylandSeat>
+
 GlWindow::GlWindow()
 {
+    QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayon");
+    m_displayOff = false;
 }
 
 void GlWindow::setCompositor(CwlCompositor *cwlcompositor)
@@ -128,4 +134,36 @@ void GlWindow::paintGL()
 void GlWindow::touchEvent(QTouchEvent *ev)
 {
     m_gesture->handleTouchEvent(ev);
+}
+
+void GlWindow::keyPressEvent(QKeyEvent *event)
+{
+    if(event->key() == Qt::Key_PowerOff)
+        qDebug()<<"POWER KEY PRESS";
+}
+
+void GlWindow::keyReleaseEvent(QKeyEvent *event)
+{
+    if(event->key() == Qt::Key_PowerOff){
+        if(m_cwlcompositor->getHomeView() != nullptr){
+            QWaylandSurface *focusSurface = m_cwlcompositor->defaultSeat()->keyboardFocus();
+
+            m_cwlcompositor->defaultSeat()->setKeyboardFocus(m_cwlcompositor->getHomeView()->surface());
+            m_cwlcompositor->defaultSeat()->sendFullKeyEvent(event);
+
+            if(focusSurface != nullptr){
+                m_cwlcompositor->defaultSeat()->setKeyboardFocus(focusSurface);
+                m_cwlcompositor->defaultSeat()->sendFullKeyEvent(event);
+            }
+        }
+
+        //Can be removed later when the shell handles the power key;
+        if(m_displayOff){
+            QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayon");
+            m_displayOff = false;
+        } else {
+            QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayoff");
+            m_displayOff = true;
+        }
+    }
 }

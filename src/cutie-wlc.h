@@ -56,6 +56,8 @@ public:
     CwlView *m_launcherView = nullptr;
     CwlWorkspace *m_workspace = nullptr;
 
+    CwlView* getHomeView();
+
 public slots:
     void appSwitcherAnimate();
     void triggerRender();
@@ -88,6 +90,7 @@ private:
     QWaylandOutput *m_output = nullptr;
     QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
     InputMethodManagerV2 *m_inputmethod = nullptr;
+    CwlView *m_homeView = nullptr;
 
     int m_scaleFactor = 1;
     QString launcher = "cutie-launcher";

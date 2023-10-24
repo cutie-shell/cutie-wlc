@@ -213,7 +213,14 @@ void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
     view->layer = (CwlViewLayer) layerSurface->ls_layer;
     m_workspace->addView(view);
 
+    if(layerSurface->ls_scope == "cutie-home")
+        m_homeView = view;
     connect(view->m_layerSurface, &LayerSurfaceV1::layerSurfaceDataChanged, m_workspace, &CwlWorkspace::onLayerSurfaceDataChanged);
+}
+
+CwlView* CwlCompositor::getHomeView()
+{
+    return m_homeView;
 }
 
 void CwlCompositor::raise(CwlView *view)

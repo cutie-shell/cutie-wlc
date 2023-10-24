@@ -18,6 +18,7 @@ void LayerShellV1::zwlr_layer_shell_v1_get_layer_surface(Resource *resource, uin
 	LayerSurfaceV1 *obj = new LayerSurfaceV1(resource->client(), id, resource->version());
 	obj->surface = QWaylandSurface::fromResource(surface);
 	obj->ls_layer = layer;
+	obj->ls_scope = scope;
 
 	if (layer == 2)
 		emit layerShellSurfaceTopCreated(surface);

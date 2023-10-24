@@ -28,6 +28,9 @@ protected:
     void paintGL() override;
 
     void touchEvent(QTouchEvent *ev) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
+
 
 private:
     QOpenGLTextureBlitter m_textureBlitter;
@@ -36,6 +39,7 @@ private:
     QList<QEventPoint*> m_evPoint;
 
     CwlGesture *m_gesture = nullptr;
+    bool m_displayOff = false;
 };
 
 QT_END_NAMESPACE
