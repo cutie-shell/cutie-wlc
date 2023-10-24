@@ -65,6 +65,12 @@ void CwlCompositor::create()
 
     QStringList args = QStringList();
     args.append("-c");
+    args.append("cutie-home");
+    if (!QProcess::startDetached("bash", args))
+        qDebug() << "Failed to run";
+
+    args = QStringList();
+    args.append("-c");
     args.append(launcher);
     if (!QProcess::startDetached("bash", args))
         qDebug() << "Failed to run";
@@ -77,7 +83,7 @@ void CwlCompositor::create()
 
     args = QStringList();
     args.append("-c");
-    args.append("cutie-home");
+    args.append("cutie-keyboard");
     if (!QProcess::startDetached("bash", args))
         qDebug() << "Failed to run";
 }
