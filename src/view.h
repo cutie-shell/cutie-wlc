@@ -63,6 +63,7 @@ public:
     void addChildView(CwlView *view);
     CwlView* parentView();
     void setParentView(CwlView* view);
+    void setTopLevel(QWaylandXdgToplevel *toplevel);
 
     QString getAppId();
     QString getTitle();
@@ -93,6 +94,7 @@ private:
     bool m_hidden = false;
     QList<CwlView*> m_childViewList;
     QRect m_availableGeometry;
+    bool m_isTopLevel = false;
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);

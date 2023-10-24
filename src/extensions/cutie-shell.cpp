@@ -19,8 +19,6 @@ void CutieShell::cutie_shell_private_exec_app(Resource *resource, const QString 
 	qputenv("CUTIE_SHELL", QByteArray("true"));
     qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
     qputenv("EGL_PLATFORM", QByteArray("wayland"));
-    qunsetenv("GTK_IM_MODULE");
-    qunsetenv("QT_IM_MODULE");
     qunsetenv("QT_QPA_GENERIC_PLUGINS");
     qunsetenv("QT_SCALE_FACTOR");
     qputenv("WAYLAND_DISPLAY", m_compositor->socketName());

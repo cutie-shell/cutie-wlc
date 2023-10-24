@@ -15,6 +15,7 @@ CwlWorkspace::CwlWorkspace(CwlCompositor *compositor)
     m_bottomLayerList.clear();
     m_topLayerList.clear();
     m_overlayLayerList.clear();
+    m_compositor = compositor;
 }
 
 CwlWorkspace::~CwlWorkspace()
@@ -120,6 +121,11 @@ void CwlWorkspace::singleView(bool single)
 {
 	m_singleView = single;
 	updateViewList();
+}
+
+int CwlWorkspace::getScaleFactor()
+{
+	return m_compositor->scaleFactor();
 }
 
 void CwlWorkspace::updateViewList()

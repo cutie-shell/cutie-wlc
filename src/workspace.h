@@ -20,6 +20,7 @@ public:
     void hideAllTopLevel();
     void showDesktop(bool show);
     void singleView(bool single);
+    int getScaleFactor();
 
 public slots:
     void onLayerSurfaceDataChanged(LayerSurfaceV1 *surface);
@@ -30,6 +31,7 @@ signals:
     void toplevelDestroyed(CwlView *view);
 
 private:
+    CwlCompositor *m_compositor = nullptr;
 	QRect m_availableGeometry;
 	QRect m_outputGeometry;
 

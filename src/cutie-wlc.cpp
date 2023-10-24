@@ -133,7 +133,7 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWayland
 
     view->setPosition(m_workspace->availableGeometry().topLeft());
 
-    view->m_toplevel = toplevel;
+    view->setTopLevel(toplevel);
 
     connect(view->m_toplevel, &QWaylandXdgToplevel::appIdChanged, this, &CwlCompositor::onTlAppIdChanged);
 
@@ -248,7 +248,6 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
             CwlView *view = m_appswitcher->findViewAt(ev->points().first().globalPosition());
             if(view != nullptr){
                 if(view == m_appView && m_appPointStart->y() - ev->points().first().globalPosition().y() > 150){
-
                     if(view->m_xdgSurface->toplevel() != nullptr){
                         view->m_xdgSurface->toplevel()->sendClose();
                         m_appView = nullptr;
@@ -356,7 +355,7 @@ void CwlCompositor::onSurfaceCreated(QWaylandSurface *surface)
 
 void CwlCompositor::surfaceDestroyed()
 {
-    triggerRender();
+    //triggerRender();
 }
 
 void CwlCompositor::surfaceHasContentChanged()
@@ -366,17 +365,21 @@ void CwlCompositor::surfaceHasContentChanged()
 
 void CwlCompositor::onSurfaceDestroyed()
 {
-    triggerRender();
+    //triggerRender();
 }
 
 void CwlCompositor::viewSurfaceDestroyed()
 {
     CwlView *view = qobject_cast<CwlView*>(sender());
 
-    if (view->parentView()) view->parentView()->removeChildView(view);
-    else if (view == m_launcherView) m_launcherView = nullptr;
-    else m_workspace->removeView(view);
-    
+    if (view->parentView()){
+        view->parentView()->removeChildView(view);
+    } else if (view == m_launcherView){
+        m_launcherView = nullptr;
+    } else {
+        m_workspace->removeView(view);
+    }
+
     delete view;
     m_appswitcher->update();
     triggerRender();

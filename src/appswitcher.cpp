@@ -23,10 +23,11 @@ QMap<CwlView*, QRectF> CwlAppswitcher::getRecentViews()
 
 void CwlAppswitcher::activate()
 {
+	if(m_workspace->getToplevelViews().size() < 1)
+		return;
+
 	m_workspace->singleView(false);
 	m_workspace->showDesktop(false);
-
-	updateViewMap();
 
 	m_active = true;
 
@@ -48,15 +49,12 @@ void CwlAppswitcher::deactivate()
 {
 	m_workspace->singleView(true);
 	m_active = false;
+	m_toplevelViews.clear();
 }
 
 bool CwlAppswitcher::isActive()
 {
 	return m_active;
-}
-
-void CwlAppswitcher::updateViewMap()
-{
 }
 
 CwlView* CwlAppswitcher::findViewAt(QPointF point)
@@ -78,7 +76,7 @@ void CwlAppswitcher::animationOpen()
 	QList<CwlView*> tlViews = m_workspace->getToplevelViews();
 
 	if(tlViews.empty()){
-		m_active = false;
+		deactivate();
 		m_animationFactor = 0.0;
 		animationRunning = false;
 		return;
@@ -108,6 +106,8 @@ void CwlAppswitcher::animationOpen()
 		QSize finalSize = QSize((m_workspace->availableGeometry().size().width() - m_gridSpacing * 3) / 2,
 							m_workspace->availableGeometry().size().height() / m_workspace->availableGeometry().size().width() * 
 							m_workspace->availableGeometry().size().width() / 2 - 3 * m_gridSpacing);
+
+		finalSize = finalSize * m_workspace->getScaleFactor();
 
 		int xPos = m_gridSpacing + finalSize.width() / 2;
 		int yPos = m_gridSpacing + m_workspace->availableGeometry().top() + finalSize.height() / 2;
@@ -161,7 +161,7 @@ void CwlAppswitcher::animationUpdate()
 	QList<CwlView*> tlViews = m_workspace->getToplevelViews();
 
 	if(tlViews.empty()){
-		m_active = false;
+		deactivate();
 		m_animationFactor = 0.0;
 		animationRunning = false;
 		return;
@@ -189,6 +189,8 @@ void CwlAppswitcher::animationUpdate()
 	QPointF currentPosition;
 
 	for (CwlView *view : tlViews) {
+		if(view == nullptr)
+			continue;
 
 		currentPosition = m_toplevelViews.value(view).center();
 
@@ -199,6 +201,8 @@ void CwlAppswitcher::animationUpdate()
 							m_workspace->availableGeometry().size().height() / m_workspace->availableGeometry().size().width() * 
 							m_workspace->availableGeometry().size().width() / 2 - 3 * m_gridSpacing);
 
+		finalSize = finalSize * m_workspace->getScaleFactor();
+		
 		int xPos = m_gridSpacing + finalSize.width() / 2;
 		int yPos = m_gridSpacing + m_workspace->availableGeometry().top() + finalSize.height() / 2;
 

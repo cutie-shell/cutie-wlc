@@ -22,8 +22,6 @@ public:
     void update();
     void deactivate();
 
-    void updateViewMap();
-
     CwlView* findViewAt(QPointF point);
 
     bool animationRunning = false;

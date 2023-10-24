@@ -59,10 +59,7 @@ QSize CwlView::size()
 
 bool CwlView::isToplevel()
 {
-    if(m_xdgSurface != nullptr && m_xdgSurface->toplevel() != nullptr)
-        return true;
-    else
-        return false;
+    return m_isTopLevel;
 }
 
 QWaylandXdgToplevel *CwlView::getTopLevel()
@@ -119,6 +116,12 @@ CwlView *CwlView::parentView() {
 
 void CwlView::setParentView(CwlView *view) {
     m_parentView = view;
+}
+
+void CwlView::setTopLevel(QWaylandXdgToplevel *toplevel)
+{
+    m_toplevel = toplevel;
+    m_isTopLevel = true;
 }
 
 QString CwlView::getAppId()
