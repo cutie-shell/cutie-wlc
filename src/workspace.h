@@ -33,8 +33,13 @@ private:
 	QRect m_availableGeometry;
 	QRect m_outputGeometry;
 
-    QMultiMap<CwlViewLayer, CwlView*> m_viewMap;
     QList<CwlView*> m_viewList;
+    QList<CwlView*> m_undefinedLayerList;
+    QList<CwlView*> m_bgLayerList;
+    QList<CwlView*> m_bottomLayerList;
+    QList<CwlView*> m_topLayerList;
+    QList<CwlView*> m_overlayLayerList;
+
 
     QList<LayerSurfaceV1*> getLayerSurfaces();
 

@@ -156,8 +156,4 @@ void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
         this->setPosition(QPointF(m_availableGeometry.bottomLeft().x(),
                             m_availableGeometry.bottomLeft().y() - m_layerSurface->size.height()));
     }
-
-
-
-    qDebug()<<"ANCHOR: "<<surface->ls_anchor<<" SIZE: "<<surface->size.width()<<"x"<<surface->size.height()<<"ZONE:"<<surface->ls_zone;
 }

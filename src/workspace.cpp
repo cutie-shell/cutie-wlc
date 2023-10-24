@@ -11,7 +11,10 @@ CwlWorkspace::CwlWorkspace(CwlCompositor *compositor)
 	m_availableGeometry = m_outputGeometry;
 
 	m_viewList.clear();
-	m_viewMap.clear();
+	m_bgLayerList.clear();
+    m_bottomLayerList.clear();
+    m_topLayerList.clear();
+    m_overlayLayerList.clear();
 }
 
 CwlWorkspace::~CwlWorkspace()
@@ -25,7 +28,17 @@ QRect CwlWorkspace::availableGeometry()
 
 void CwlWorkspace::removeView(CwlView *view)
 {
-	m_viewMap.remove(view->layer, view);
+	if(view->layer == CwlViewLayer::UNDEFINED){
+		m_undefinedLayerList.removeAll(view);
+	} else if(view->layer == CwlViewLayer::BACKGROUND){
+		m_bgLayerList.removeAll(view);
+	} else if(view->layer == CwlViewLayer::BOTTOM){
+		m_bottomLayerList.removeAll(view);
+	} else if(view->layer == CwlViewLayer::TOP){
+		m_topLayerList.removeAll(view);
+	} else if(view->layer == CwlViewLayer::OVERLAY){
+		m_overlayLayerList.removeAll(view);
+	}
 	updateViewList();
 
 	if(view->getLayerSurface() != nullptr && view->getLayerSurface()->ls_zone > 0)
@@ -40,16 +53,30 @@ void CwlWorkspace::addView(CwlView *view)
 {
 	bool isNew = true;
 
-	if(m_viewMap.contains(view->layer, view)){
-		m_viewMap.remove(view->layer, view);
-		isNew = false;
+	if(m_undefinedLayerList.contains(view))
+		m_undefinedLayerList.removeAll(view);
+
+	if(view->layer == CwlViewLayer::UNDEFINED){
+		m_undefinedLayerList<<view;
 	}
 
-	if(m_viewMap.contains(CwlViewLayer::UNDEFINED, view)){
-		m_viewMap.remove(CwlViewLayer::UNDEFINED, view);
+	if(view->layer == CwlViewLayer::BACKGROUND){
+		if(m_bgLayerList.contains(view))
+			m_bgLayerList.removeAll(view);
+		m_bgLayerList<<view;
+	} else if(view->layer == CwlViewLayer::BOTTOM){
+		if(m_bottomLayerList.contains(view))
+			m_bottomLayerList.removeAll(view);
+		m_bottomLayerList<<view;
+	} else if(view->layer == CwlViewLayer::TOP){
+		if(m_topLayerList.contains(view))
+			m_topLayerList.removeAll(view);
+		m_topLayerList<<view;
+	} else if(view->layer == CwlViewLayer::OVERLAY){
+		if(m_overlayLayerList.contains(view))
+			m_overlayLayerList.removeAll(view);
+		m_overlayLayerList<<view;
 	}
-
-	m_viewMap.insert(m_viewMap.constEnd(), view->layer, view);
 
 	if(view->isToplevel() && !view->isHidden())
 		showDesktop(false);
@@ -67,25 +94,16 @@ QList<CwlView*> CwlWorkspace::getViews()
 
 QList<CwlView*> CwlWorkspace::getToplevelViews()
 {
-	QList tlViews = m_viewMap.values(CwlViewLayer::TOP);
-
-	for (CwlView *view : tlViews) {
-		if(!view->isToplevel())
-			tlViews.removeAll(view);
-	}
-
-	return tlViews;
+	return m_topLayerList;
 }
 
 void CwlWorkspace::hideAllTopLevel()
 {
-	QList<CwlView*> tlViews = getToplevelViews();
-
-	if(tlViews.empty()){
+	if(m_topLayerList.empty()){
 		return;
 	}
 
-	for (CwlView *view : tlViews){
+	for (CwlView *view : m_topLayerList){
 		view->setHidden(true);
 	}
 
@@ -106,16 +124,16 @@ void CwlWorkspace::singleView(bool single)
 
 void CwlWorkspace::updateViewList()
 {
-	QList tlViews = m_viewMap.values(CwlViewLayer::TOP);
+	QList ret = m_bgLayerList;
+	ret << m_undefinedLayerList;
+	ret << m_bottomLayerList;
 
-	QList ret = m_viewMap.values(CwlViewLayer::UNDEFINED);
-	ret << m_viewMap.values(CwlViewLayer::BACKGROUND);
-	ret << m_viewMap.values(CwlViewLayer::BOTTOM);
-	if(!m_showDesktop && !tlViews.isEmpty() && !m_singleView)
-		ret << tlViews;
-	else if((!m_showDesktop && !tlViews.isEmpty() && m_singleView))
-		ret << tlViews.last();
-	ret << m_viewMap.values(CwlViewLayer::OVERLAY);
+	if(!m_showDesktop && !m_topLayerList.isEmpty() && !m_singleView)
+		ret << m_topLayerList;
+	else if((!m_showDesktop && !m_topLayerList.isEmpty() && m_singleView))
+		ret << m_topLayerList.last();
+
+	ret << m_overlayLayerList;
 	m_viewList = ret;
 }
 
@@ -165,7 +183,7 @@ QList<LayerSurfaceV1*> CwlWorkspace::getLayerSurfaces()
 {
 	QList<LayerSurfaceV1*> ret;
 	ret.clear();
-	for(CwlView* view : m_viewMap.values())
+	for(CwlView* view : m_viewList)
 	{
 		if(view->layer != CwlViewLayer::UNDEFINED && view->getLayerSurface() != nullptr && view->getLayerSurface()->ls_zone > 0 &&
 	        (view->getLayerSurface()->ls_anchor == 1 ||
