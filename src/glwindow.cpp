@@ -161,6 +161,7 @@ void GlWindow::keyReleaseEvent(QKeyEvent *event)
         if(m_displayOff){
             QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayon");
             m_displayOff = false;
+            this->requestUpdate();
         } else {
             QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayoff");
             m_displayOff = true;
