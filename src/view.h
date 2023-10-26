@@ -28,6 +28,13 @@ enum CwlViewLayer: uint32_t
     UNDEFINED       = 4
 };
 
+enum CwlTopPanel: uint32_t
+{
+    PANEL_UNDEFINED      = 0,
+    PANEL_FOLDED         = 1,
+    PANEL_UNFOLDING      = 2
+};
+
 enum CwlViewAnchor: uint32_t
 {
     ANCHOR_TOP     = 1,
@@ -50,6 +57,7 @@ public:
     QSize size();
 
     CwlViewLayer layer = UNDEFINED;
+    CwlTopPanel panelState = PANEL_UNDEFINED;
 
     bool isToplevel();
     LayerSurfaceV1 *getLayerSurface();
@@ -101,6 +109,7 @@ public slots:
 
 private slots:
     void onLayerSurfaceDataChanged(LayerSurfaceV1 *surface);
+    void onDestinationSizeChanged();
 };
 
 QT_END_NAMESPACE

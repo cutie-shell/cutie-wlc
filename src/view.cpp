@@ -145,6 +145,7 @@ void CwlView::setLayerSurface(LayerSurfaceV1 *surface)
     if(surface != nullptr){
         m_layerSurface = surface;
         connect(m_layerSurface, &LayerSurfaceV1::layerSurfaceDataChanged, this, &CwlView::onLayerSurfaceDataChanged);
+        connect(this->surface(), &QWaylandSurface::destinationSizeChanged, this, &CwlView::onDestinationSizeChanged);
     }
 }
 
@@ -153,10 +154,24 @@ void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
     if(surface != m_layerSurface)
         return;
 
+    if(m_layerSurface->ls_scope == "cutie-panel" && m_layerSurface->size.height() <= m_layerSurface->ls_zone)
+        panelState = PANEL_FOLDED;
+
     if(CwlViewAnchor::ANCHOR_TOP == m_layerSurface->ls_anchor){
         this->setPosition(m_availableGeometry.topLeft());
     } else if(CwlViewAnchor::ANCHOR_BOTTOM == m_layerSurface->ls_anchor){
         this->setPosition(QPointF(m_availableGeometry.bottomLeft().x(),
                             m_availableGeometry.bottomLeft().y() - m_layerSurface->size.height()));
+    }
+}
+
+void CwlView::onDestinationSizeChanged()
+{
+    if(m_layerSurface != nullptr && m_layerSurface->ls_scope == "cutie-panel"){
+        if(this->surface()->destinationSize().height() <= m_layerSurface->ls_zone){
+            panelState = PANEL_FOLDED;
+        } else if (this->surface()->destinationSize().height() > m_layerSurface->ls_zone){
+            panelState = PANEL_UNFOLDING;
+        }
     }
 }

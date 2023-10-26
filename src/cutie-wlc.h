@@ -49,6 +49,8 @@ public:
     int scaleFactor();
     void setScaleFactor(int scale);
 
+    CwlView *getTopPanel();
+
     GlWindow *glWindow();
 
     bool launcherClosed = true;
@@ -89,8 +91,9 @@ private:
     ForeignToplevelManagerV1 *m_foreignTlManagerV1 = nullptr;
     QWaylandOutput *m_output = nullptr;
     QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
-    InputMethodManagerV2 *m_inputmethod = nullptr;
+    InputMethodManagerV2 *m_inputMngr = nullptr;
     CwlView *m_homeView = nullptr;
+    CwlView *m_panelView = nullptr;
 
     int m_scaleFactor = 1;
     QString launcher = "cutie-launcher";

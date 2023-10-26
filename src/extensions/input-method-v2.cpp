@@ -58,10 +58,26 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_destroy(Resource *resourc
 
 }
 
+InputMethodV2* InputMethodManagerV2::getInputMethod()
+{
+	return m_inputmethod;
+}
+
 InputMethodV2::InputMethodV2(struct ::wl_client *client, uint32_t id, int version, CwlCompositor *compositor)
     :QtWaylandServer::zwp_input_method_v2(client, id, version)
 {
 	m_compositor = compositor;
+}
+
+void InputMethodV2::hidePanel()
+{
+	if(!m_panelHidden){
+		this->send_deactivate();
+		this->send_done();
+		m_serial += 1;
+		m_panelHidden = true;
+	}
+
 }
 
 void InputMethodV2::zwp_input_method_v2_commit_string(Resource *resource, const QString &text)
@@ -173,6 +189,7 @@ void InputMethodV2::onShowInputPanel()
 	this->send_activate();
 	this->send_done();
 	m_serial += 1;
+	m_panelHidden = false;
 }
 
 void InputMethodV2::onHideInputPanel()
@@ -180,4 +197,5 @@ void InputMethodV2::onHideInputPanel()
 	this->send_deactivate();
 	this->send_done();
 	m_serial += 1;
+	m_panelHidden = true;
 }

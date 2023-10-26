@@ -174,11 +174,11 @@ void CwlCompositor::onTlAppIdChanged()
 
 void CwlCompositor::initInputMethod()
 {
-    if(m_inputmethod != nullptr)
-        delete m_inputmethod;
+    if(m_inputMngr != nullptr)
+        delete m_inputMngr;
 
-    m_inputmethod = new InputMethodManagerV2(this);
-    connect(m_inputmethod, &InputMethodManagerV2::imDestroyed, this, &CwlCompositor::initInputMethod);
+    m_inputMngr = new InputMethodManagerV2(this);
+    connect(m_inputMngr, &InputMethodManagerV2::imDestroyed, this, &CwlCompositor::initInputMethod);
 }
 
 void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface)
@@ -215,12 +215,20 @@ void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
 
     if(layerSurface->ls_scope == "cutie-home")
         m_homeView = view;
+
+    if(layerSurface->ls_scope == "cutie-panel")
+        m_panelView = view;
     connect(view->m_layerSurface, &LayerSurfaceV1::layerSurfaceDataChanged, m_workspace, &CwlWorkspace::onLayerSurfaceDataChanged);
 }
 
 CwlView* CwlCompositor::getHomeView()
 {
     return m_homeView;
+}
+
+CwlView* CwlCompositor::getTopPanel()
+{
+    return m_panelView;
 }
 
 void CwlCompositor::raise(CwlView *view)
@@ -282,6 +290,9 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
 
 bool CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
 {
+    if(m_inputMngr->getInputMethod() != nullptr)
+        m_inputMngr->getInputMethod()->hidePanel();
+    
     if (edge == EDGE_RIGHT) {
         if(ev->isBeginEvent() || ev->isUpdateEvent()){
             return !m_appswitcher->isActive() && launcherClosed;
@@ -297,6 +308,11 @@ bool CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
 
     if(edge == EDGE_BOTTOM){
         if(ev->isBeginEvent() || ev->isUpdateEvent()){
+            if(m_panelView != nullptr){
+                if(m_panelView->panelState > 1){
+                    return false;
+                }
+            }
             launcherClosed = false;
             QPointF newPos = m_launcherView->getPosition();
             newPos.setY(ev->points().first().globalPosition().y() / scaleFactor());
@@ -306,6 +322,11 @@ bool CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
         }
 
         if(ev->isEndEvent()){
+            if(m_panelView != nullptr){
+                if(m_panelView->panelState > 1){
+                    return false;
+                }
+            }
             if(ev->points().first().globalPosition().y() < m_glwindow->height() * 0.8){
                 m_launcherView->setPosition(m_workspace->availableGeometry().topLeft());
                 launcherOpened = true;

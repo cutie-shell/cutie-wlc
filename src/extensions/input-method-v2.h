@@ -24,6 +24,7 @@ class InputMethodManagerV2 : public QWaylandCompositorExtensionTemplate<InputMet
 public:
 	InputMethodManagerV2(CwlCompositor *compositor);
 	void initialize() override;
+	InputMethodV2* getInputMethod();
 
 signals:
 	void imDestroyed();
@@ -51,6 +52,7 @@ class InputMethodV2 : public QWaylandCompositorExtensionTemplate<InputMethodV2>
 	Q_OBJECT
 public:
 	InputMethodV2(struct ::wl_client *client, uint32_t id, int version, CwlCompositor *compositor);
+	void hidePanel();
 
 protected:
 	void zwp_input_method_v2_commit_string(Resource *resource, const QString &text) override;
@@ -69,6 +71,7 @@ private:
 	CwlCompositor *m_compositor;
 	uint32_t m_serial = 0;
 	QString m_lastString = "";
+	bool m_panelHidden = true;
 
 };
 

@@ -67,6 +67,11 @@ void GlWindow::paintGL()
             } else {
                 m_textureBlitter.setOpacity(m_cwlcompositor->m_launcherView->getPosition().y()/height());
             }
+        } else if(m_cwlcompositor->getTopPanel() != nullptr && view->isToplevel()) {
+            if(m_cwlcompositor->getTopPanel()->panelState > 1)
+                m_textureBlitter.setOpacity(0.0);
+            else
+                m_textureBlitter.setOpacity(1.0);
         } else {
             m_textureBlitter.setOpacity(1.0);
         }
