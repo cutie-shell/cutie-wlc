@@ -53,6 +53,7 @@ public:
     int scaleFactor();
     void setScaleFactor(int scale);
 
+    void deactivateAppSwitcher();
     CwlView *getTopPanel();
 
     GlWindow *glWindow();

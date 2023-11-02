@@ -104,6 +104,17 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
         CwlView *view = *it;
         QRectF geom(view->getPosition(), view->size() * scaleFactor());
         if (geom.contains(position / scaleFactor())){
+            if(view->getChildViews().size()>0){
+                for (CwlView *childView : view->getChildViews()) {
+                    if(!childView->isToplevel())
+                        continue;
+                    QRectF geom(childView->getPosition(), childView->size() * scaleFactor());
+                    if (geom.contains(position / scaleFactor())){
+                        ret = childView;
+                        return ret;
+                    }
+                }
+            }
             ret = view;
             return ret;
         }
@@ -452,6 +463,11 @@ void CwlCompositor::setScaleFactor(int scale) {
     m_scaleFactor = scale;
     if (m_output)
         m_output->setScaleFactor(m_scaleFactor);
+}
+
+void CwlCompositor::deactivateAppSwitcher()
+{
+    m_appswitcher->deactivate();
 }
 
 GlWindow *CwlCompositor::glWindow() {

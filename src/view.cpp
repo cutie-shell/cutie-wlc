@@ -161,12 +161,29 @@ void CwlView::onAppIdChanged()
         setAppId();
         if(getAppId() != "cutie-launcher"){
             layer = TOP;
-            m_cwlcompositor->raise(this);
+            if(m_toplevel->parentToplevel() == nullptr){
+                m_cwlcompositor->raise(this);
+            } else {
+                CwlView *parent_view = m_cwlcompositor->findView(m_toplevel->parentToplevel()->xdgSurface()->surface());
+                parent_view->addChildView(this);
+                this->setParentView(parent_view);
+                connect(m_toplevel->xdgSurface(), &QWaylandXdgSurface::windowGeometryChanged, this, &CwlView::onWindowGeometryChanged);
+            }
         } else if(getAppId() == "cutie-launcher"){
             layer = OVERLAY;
             m_cwlcompositor->m_launcherView = this;
             m_cwlcompositor->m_launcherView->setPosition(m_availableGeometry.bottomLeft());
         }
+    }
+}
+
+void CwlView::onWindowGeometryChanged()
+{
+    if(parentView()){
+        m_cwlcompositor->deactivateAppSwitcher();
+        QRect currentGeometry = m_toplevel->xdgSurface()->windowGeometry();
+        currentGeometry.moveCenter(m_availableGeometry.center());
+        this->setPosition(currentGeometry.topLeft());
     }
 }
 

@@ -113,6 +113,7 @@ public slots:
 
 private slots:
     void onAppIdChanged();
+    void onWindowGeometryChanged();
     void onLayerSurfaceDataChanged(LayerSurfaceV1 *surface);
     void onDestinationSizeChanged();
 };
