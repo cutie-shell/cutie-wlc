@@ -73,6 +73,8 @@ public:
     void setParentView(CwlView* view);
     void setTopLevel(QWaylandXdgToplevel *toplevel);
 
+    void setAppId();
+
     QString getAppId();
     QString getTitle();
 
@@ -94,7 +96,6 @@ private:
     QOpenGLTextureBlitter::Origin m_origin;
     QPointF m_position;
     QSize m_size;
-    QWaylandXdgSurface *m_xdgSurface = nullptr;
     QWaylandXdgPopup *m_xdgPopup = nullptr;
     QWaylandXdgToplevel *m_toplevel = nullptr;
     LayerSurfaceV1 *m_layerSurface = nullptr;
@@ -103,12 +104,15 @@ private:
     QList<CwlView*> m_childViewList;
     QRect m_availableGeometry;
     bool m_isTopLevel = false;
+    bool m_isLayerShell = false;
     bool m_isImageBuffer = false;
+    QString m_cwlAppId = "";
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);
 
 private slots:
+    void onAppIdChanged();
     void onLayerSurfaceDataChanged(LayerSurfaceV1 *surface);
     void onDestinationSizeChanged();
 };

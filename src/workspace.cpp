@@ -54,28 +54,29 @@ void CwlWorkspace::addView(CwlView *view)
 {
 	bool isNew = true;
 
-	if(m_undefinedLayerList.contains(view))
-		m_undefinedLayerList.removeAll(view);
-
-	if(view->layer == CwlViewLayer::UNDEFINED){
-		m_undefinedLayerList<<view;
-	}
-
 	if(view->layer == CwlViewLayer::BACKGROUND){
-		if(m_bgLayerList.contains(view))
+		if(m_bgLayerList.contains(view)){
 			m_bgLayerList.removeAll(view);
+			isNew = false;
+		}
 		m_bgLayerList<<view;
 	} else if(view->layer == CwlViewLayer::BOTTOM){
-		if(m_bottomLayerList.contains(view))
+		if(m_bottomLayerList.contains(view)){
 			m_bottomLayerList.removeAll(view);
+			isNew = false;
+		}
 		m_bottomLayerList<<view;
 	} else if(view->layer == CwlViewLayer::TOP){
-		if(m_topLayerList.contains(view))
+		if(m_topLayerList.contains(view)){
 			m_topLayerList.removeAll(view);
+			isNew = false;
+		}
 		m_topLayerList<<view;
 	} else if(view->layer == CwlViewLayer::OVERLAY){
-		if(m_overlayLayerList.contains(view))
+		if(m_overlayLayerList.contains(view)){
 			m_overlayLayerList.removeAll(view);
+			isNew = false;
+		}
 		m_overlayLayerList<<view;
 	}
 
@@ -131,7 +132,6 @@ int CwlWorkspace::getScaleFactor()
 void CwlWorkspace::updateViewList()
 {
 	QList ret = m_bgLayerList;
-	ret << m_undefinedLayerList;
 	ret << m_bottomLayerList;
 
 	if(!m_showDesktop && !m_topLayerList.isEmpty() && !m_singleView)
@@ -141,6 +141,7 @@ void CwlWorkspace::updateViewList()
 
 	ret << m_overlayLayerList;
 	m_viewList = ret;
+	updateAvailableGeometry();
 }
 
 void CwlWorkspace::updateAvailableGeometry()

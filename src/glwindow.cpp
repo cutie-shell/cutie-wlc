@@ -59,7 +59,7 @@ void GlWindow::paintGL()
     for (CwlView *view : renderViews) {
         QString appId;
         if(view != nullptr && view->isToplevel())
-            appId = view->getTopLevel()->appId();
+            appId = view->getAppId();
 
         if(!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened && view->isToplevel()){
             if(appId == "cutie-launcher"){

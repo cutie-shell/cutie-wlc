@@ -63,8 +63,7 @@ bool CwlView::isToplevel()
 
 QWaylandXdgToplevel *CwlView::getTopLevel()
 {
-    if(isToplevel())
-        return m_xdgSurface->toplevel();
+    return m_toplevel;
 }
 
 LayerSurfaceV1 *CwlView::getLayerSurface()
@@ -86,11 +85,11 @@ void CwlView::onAvailableGeometryChanged(QRect geometry)
 {
     m_availableGeometry = geometry;
     if(layer == TOP){
-        if(m_xdgSurface->toplevel() != nullptr){
+        if(isToplevel()){
             setPosition(geometry.topLeft());
-            m_xdgSurface->toplevel()->sendMaximized(geometry.size());
-        } else if(m_xdgSurface->popup() != nullptr){
-            setPosition(m_xdgSurface->popup()->unconstrainedPosition() + geometry.topLeft());
+            m_toplevel->sendMaximized(geometry.size());
+        } else if(m_toplevel->xdgSurface()->popup() != nullptr){
+            setPosition(m_toplevel->xdgSurface()->popup()->unconstrainedPosition() + geometry.topLeft());
         }
     }
 }
@@ -121,19 +120,25 @@ void CwlView::setTopLevel(QWaylandXdgToplevel *toplevel)
 {
     m_toplevel = toplevel;
     m_isTopLevel = true;
+    connect(m_toplevel, &QWaylandXdgToplevel::appIdChanged, this, &CwlView::onAppIdChanged);
+}
+
+void CwlView::setAppId()
+{
+    if(m_isTopLevel)
+        m_cwlAppId = m_toplevel->appId();
+    else if(m_isLayerShell)
+        m_cwlAppId = m_layerSurface->ls_scope;
 }
 
 QString CwlView::getAppId()
 {
-    if(!isToplevel())
-        return "";
-
-    return m_toplevel->appId();
+    return m_cwlAppId;
 }
 
 QString CwlView::getTitle()
 {
-    if(!isToplevel())
+    if(!m_isTopLevel)
         return "";
 
     return m_toplevel->title();
@@ -143,8 +148,25 @@ void CwlView::setLayerSurface(LayerSurfaceV1 *surface)
 {
     if(surface != nullptr){
         m_layerSurface = surface;
+        m_isLayerShell = true;
+        setAppId();
         connect(m_layerSurface, &LayerSurfaceV1::layerSurfaceDataChanged, this, &CwlView::onLayerSurfaceDataChanged);
         connect(this->surface(), &QWaylandSurface::destinationSizeChanged, this, &CwlView::onDestinationSizeChanged);
+    }
+}
+
+void CwlView::onAppIdChanged()
+{
+    if(m_toplevel->appId() != getAppId()){
+        setAppId();
+        if(getAppId() != "cutie-launcher"){
+            layer = TOP;
+            m_cwlcompositor->raise(this);
+        } else if(getAppId() == "cutie-launcher"){
+            layer = OVERLAY;
+            m_cwlcompositor->m_launcherView = this;
+            m_cwlcompositor->m_launcherView->setPosition(m_availableGeometry.bottomLeft());
+        }
     }
 }
 

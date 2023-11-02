@@ -18,10 +18,8 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
     m_glwindow->setCompositor(this);
     connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
 
-    connect(m_xdgShell, &QWaylandXdgShell::xdgSurfaceCreated, this, &CwlCompositor::onXdgSurfaceCreated);
     connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this, &CwlCompositor::onXdgToplevelCreated);
     connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this, &CwlCompositor::onXdgPopupCreated);
-
     connect(m_layerShell, &LayerShellV1::layerShellSurfaceCreated, this, &CwlCompositor::onLayerShellSurfaceCreated);
 }
 
@@ -55,7 +53,7 @@ void CwlCompositor::create()
 
     m_glwindow->setAppswitcher(m_appswitcher);
 
-    connect(this, &QWaylandCompositor::surfaceCreated, this, &CwlCompositor::onSurfaceCreated);
+//    connect(this, &QWaylandCompositor::surfaceCreated, this, &CwlCompositor::onSurfaceCreated);
 
     qputenv("CUTIE_SHELL", QByteArray("true"));
     qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
@@ -122,55 +120,24 @@ CwlView* CwlCompositor::findView(QWaylandSurface *s)
     return nullptr;
 }
 
-void CwlCompositor::onXdgSurfaceCreated(QWaylandXdgSurface *xdgSurface)
-{
-    CwlView *view = findView(xdgSurface->surface());
-    Q_ASSERT(view);
-    view->m_xdgSurface = xdgSurface;
-
-    triggerRender();
-}
-
 void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWaylandXdgSurface *xdgSurface)
 {
-    CwlView *view = findView(xdgSurface->surface());
-    Q_ASSERT(view);
-    
+    CwlView *view = new CwlView(this, m_workspace->availableGeometry());
+    view->setOutput(outputFor(m_glwindow));
+    view->setSurface(xdgSurface->surface());
+
     toplevel->sendMaximized(m_workspace->availableGeometry().size());
-
     view->setPosition(m_workspace->availableGeometry().topLeft());
-
     view->setTopLevel(toplevel);
-
-    connect(view->m_toplevel, &QWaylandXdgToplevel::appIdChanged, this, &CwlCompositor::onTlAppIdChanged);
 
     launcherClosed = true;
     launcherOpened = false;
     if(m_launcherView != nullptr)
         m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
-}
 
-void CwlCompositor::onTlAppIdChanged()
-{
-    QWaylandXdgToplevel *tl = qobject_cast<QWaylandXdgToplevel*>(sender());
-    qDebug()<<"New TopLevel with AppId: "<<tl->appId();
-
-    CwlView* v;
-
-    for (CwlView* view : getViews()) {
-        if (view->m_toplevel == tl)
-            v = view;
-    }
-
-    if(v->getAppId() != "cutie-launcher"){
-        v->layer = TOP;
-        m_workspace->addView(v);
-
-        defaultSeat()->setKeyboardFocus(v->surface());
-    } else if(v->getAppId() == "cutie-launcher"){
-        m_launcherView = v;
-        m_launcherView->setPosition(m_workspace->availableGeometry().bottomLeft());
-    }
+    connect(m_workspace, &CwlWorkspace::availableGeometryChanged, view, &CwlView::onAvailableGeometryChanged);
+    connect(view->surface(), &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
+    connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
 }
 
 void CwlCompositor::initInputMethod()
@@ -184,28 +151,34 @@ void CwlCompositor::initInputMethod()
 
 void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface)
 {
-    CwlView *view = findView(xdgSurface->surface());
-    Q_ASSERT(view);
+    CwlView *view = new CwlView(this, m_workspace->availableGeometry());
+    view->setOutput(outputFor(m_glwindow));
+    view->setSurface(xdgSurface->surface());
+    view->m_xdgPopup = popup;
 
     CwlView *parent_view = findView(popup->parentXdgSurface()->surface());
+
+    qDebug()<<parent_view;
 
     view->setPosition(popup->unconstrainedPosition()+m_workspace->availableGeometry().topLeft());
 
     qDebug()<<"Popup "<<(uint64_t)view<<" created";
 
-    m_workspace->removeView(view);
     view->layer = TOP;
     if (parent_view) {
         parent_view->addChildView(view);
         view->setParentView(parent_view);
         qDebug()<<"Popup "<<(uint64_t)view << " parented to "<<(uint64_t)parent_view;
+        connect(view->surface(), &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
+        connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
     } else m_workspace->addView(view);
 }
 
 void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
 {
-    CwlView *view = findView(layerSurface->surface);
-    Q_ASSERT(view);
+    CwlView *view = new CwlView(this, m_workspace->availableGeometry());
+    view->setOutput(outputFor(m_glwindow));
+    view->setSurface(layerSurface->surface);
 
     view->setLayerSurface(layerSurface);
     view->setPosition(QPoint(0, 0));
@@ -219,6 +192,8 @@ void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
 
     if(layerSurface->ls_scope == "cutie-panel")
         m_panelView = view;
+    connect(view->surface(), &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
+    connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
     connect(view->m_layerSurface, &LayerSurfaceV1::layerSurfaceDataChanged, m_workspace, &CwlWorkspace::onLayerSurfaceDataChanged);
 }
 
@@ -270,8 +245,8 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
             CwlView *view = m_appswitcher->findViewAt(ev->points().first().globalPosition());
             if(view != nullptr){
                 if(view == m_appView && m_appPointStart->y() - ev->points().first().globalPosition().y() > 150){
-                    if(view->m_xdgSurface->toplevel() != nullptr){
-                        view->m_xdgSurface->toplevel()->sendClose();
+                    if(view->getTopLevel() != nullptr){
+                        view->getTopLevel()->sendClose();
                         m_appView = nullptr;
                         m_appPointStart = nullptr;
                     }
@@ -326,8 +301,8 @@ void CwlCompositor::handleMouseReleaseEvent(QMouseEvent *ev)
         CwlView *view = m_appswitcher->findViewAt(ev->points().first().globalPosition());
         if(view != nullptr){
             if(view == m_appView && m_appPointStart->y() - ev->points().first().globalPosition().y() > 150){
-                if(view->m_xdgSurface->toplevel() != nullptr){
-                    view->m_xdgSurface->toplevel()->sendClose();
+                if(view->getTopLevel() != nullptr){
+                    view->getTopLevel()->sendClose();
                     m_appView = nullptr;
                     m_appPointStart = nullptr;
                 }
@@ -425,37 +400,6 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
     }
     
     return false;
-}
-
-void CwlCompositor::onSurfaceCreated(QWaylandSurface *surface)
-{
-    connect(surface, &QWaylandSurface::surfaceDestroyed, this, &CwlCompositor::surfaceDestroyed);
-    connect(surface, &QWaylandSurface::hasContentChanged, this, &CwlCompositor::surfaceHasContentChanged);
-    connect(surface, &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
-
-    CwlView *view = new CwlView(this, m_workspace->availableGeometry());
-    view->setSurface(surface);
-    view->setOutput(outputFor(m_glwindow));
-
-    m_workspace->addView(view);
-
-    connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
-    connect(m_workspace, &CwlWorkspace::availableGeometryChanged, view, &CwlView::onAvailableGeometryChanged);
-}
-
-void CwlCompositor::surfaceDestroyed()
-{
-    //triggerRender();
-}
-
-void CwlCompositor::surfaceHasContentChanged()
-{
-    triggerRender();
-}
-
-void CwlCompositor::onSurfaceDestroyed()
-{
-    //triggerRender();
 }
 
 void CwlCompositor::viewSurfaceDestroyed()
