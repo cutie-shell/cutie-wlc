@@ -5,6 +5,7 @@
 #include <QOpenGLTextureBlitter>
 
 #include <QEventPoint>
+#include <atmosphere.h>
 #include <cutie-wlc.h>
 #include <gesture.h>
 
@@ -34,12 +35,16 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
 
+public Q_SLOTS:
+    void onAtmospherePathChanged();
 
 private:
     QOpenGLTextureBlitter m_textureBlitter;
     CwlCompositor *m_cwlcompositor = nullptr;
     CwlAppswitcher *m_appswitcher = nullptr;
     QList<QEventPoint*> m_evPoint;
+    QOpenGLTexture *m_wallpaper = nullptr;
+    AtmosphereModel *m_atmosphere = nullptr;
 
     CwlGesture *m_gesture = nullptr;
     bool m_displayOff = false;

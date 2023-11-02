@@ -11,9 +11,10 @@
 #include <QtWaylandCompositor/QWaylandSeat>
 
 GlWindow::GlWindow()
-{
+: m_atmosphere(new AtmosphereModel()) {
     QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayon");
     m_displayOff = false;
+    connect(m_atmosphere, &AtmosphereModel::pathChanged, this, &GlWindow::onAtmospherePathChanged);
 }
 
 void GlWindow::setCompositor(CwlCompositor *cwlcompositor)
@@ -31,7 +32,13 @@ void GlWindow::setAppswitcher(CwlAppswitcher *appswitcher)
 void GlWindow::initializeGL()
 {
     m_textureBlitter.create();
+    onAtmospherePathChanged();
     emit glReady();
+}
+
+void GlWindow::onAtmospherePathChanged() {
+    if (m_wallpaper) delete m_wallpaper;
+    m_wallpaper = new QOpenGLTexture(QImage(m_atmosphere->path() + "/wallpaper.jpg"));
 }
 
 void GlWindow::paintGL()
@@ -39,13 +46,35 @@ void GlWindow::paintGL()
     m_cwlcompositor->startRender();
 
     QOpenGLFunctions *functions = context()->functions();
-    functions->glClearColor(1.f, .6f, .0f, 0.5f);
-    functions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     GLenum currentTarget = GL_TEXTURE_2D;
     m_textureBlitter.bind(currentTarget);
     functions->glEnable(GL_BLEND);
     functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    double wallAspect = 1.0 * m_wallpaper->width() / m_wallpaper->height();
+    double screenAspect = 1.0 * width() / height();
+    QMatrix4x4 targetTransform;
+    QMatrix3x3 sourceTransform;
+    qDebug() << wallAspect << " : " << screenAspect;
+    if (wallAspect > screenAspect) {
+	int tgtWidth = m_wallpaper->height() * width() / height();
+        targetTransform = QOpenGLTextureBlitter::targetTransform(
+            QRect(QPoint(), QSize(tgtWidth, m_wallpaper->height())),
+            QRect(QPoint(), size() * m_wallpaper->height() / height()));
+        sourceTransform = QOpenGLTextureBlitter::sourceTransform(
+            QRect(QPoint((m_wallpaper->width() - tgtWidth) / 2, 0), QSize(tgtWidth, m_wallpaper->height())),
+            QSize(m_wallpaper->width(), m_wallpaper->height()), QOpenGLTextureBlitter::OriginTopLeft);
+    } else {
+	int tgtHeight = m_wallpaper->width() * height() / width();
+        targetTransform = QOpenGLTextureBlitter::targetTransform(
+            QRect(QPoint(), QSize(m_wallpaper->width(), tgtHeight)),
+            QRect(QPoint(), size() * m_wallpaper->width() / width()));
+        sourceTransform = QOpenGLTextureBlitter::sourceTransform(
+            QRect(QPoint(0, (m_wallpaper->height() - tgtHeight) / 2), QSize(m_wallpaper->width(), tgtHeight)),
+            QSize(m_wallpaper->width(), m_wallpaper->height()), QOpenGLTextureBlitter::OriginTopLeft);
+    }
+    m_textureBlitter.setOpacity(1.0);
+    m_textureBlitter.blit(m_wallpaper->textureId(), targetTransform, sourceTransform);
 
     int counter = 0;
 
