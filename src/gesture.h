@@ -43,7 +43,7 @@ private:
     EdgeSwipe edge = EDGE_UNDEFINED;
     CornerSwipe corner = CORNER_UNDEFINED;
     QSize m_screenSize;
-    int m_gestureOffset = 50;
+    int m_gestureOffset = 20;
 
     QRectF m_topEdge;
     QRectF m_bottomEdge;

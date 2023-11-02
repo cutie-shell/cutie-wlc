@@ -47,8 +47,8 @@ class CwlView : public QWaylandView
 {
     Q_OBJECT
 public:
-    CwlView(CwlCompositor *cwlcompositor, QRect geometry);
-    ~CwlView();
+    explicit CwlView(CwlCompositor *cwlcompositor, QRect geometry);
+    ~CwlView() override;
 
     QOpenGLTexture *getTexture();
     QOpenGLTextureBlitter::Origin textureOrigin();
@@ -103,6 +103,7 @@ private:
     QList<CwlView*> m_childViewList;
     QRect m_availableGeometry;
     bool m_isTopLevel = false;
+    bool m_isImageBuffer = false;
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);

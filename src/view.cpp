@@ -1,5 +1,6 @@
 #include <view.h>
 #include <cutie-wlc.h>
+#include <QOpenGLTexture>
 
 CwlView::CwlView(CwlCompositor *cwlcompositor, QRect geometry)
     : m_cwlcompositor(cwlcompositor)
@@ -9,31 +10,29 @@ CwlView::CwlView(CwlCompositor *cwlcompositor, QRect geometry)
 
 CwlView::~CwlView()
 {
+    if(m_isImageBuffer)
+        delete m_texture;
 }
 
 QOpenGLTexture *CwlView::getTexture()
 {
-    bool hasNewContent = advance();
-    QWaylandBufferRef buffer = currentBuffer();
-
-    if (!buffer.hasContent())
-        m_texture = nullptr;
-
-    if (hasNewContent) {
-        m_texture = buffer.toOpenGLTexture();
-        if (surface()) {
-            m_size = surface()->destinationSize();
-
-            if(buffer.origin() == QWaylandSurface::OriginTopLeft)
-                m_origin = QOpenGLTextureBlitter::OriginTopLeft;
-            else
-                m_origin = QOpenGLTextureBlitter::OriginBottomLeft;
+    if (advance()){
+        if(currentBuffer().origin() == QWaylandSurface::OriginTopLeft)
+            m_origin = QOpenGLTextureBlitter::OriginTopLeft;
+        else
+            m_origin = QOpenGLTextureBlitter::OriginBottomLeft;
+        
+        QImage img = currentBuffer().image();
+        if(img.size().width() < 1){
+            QOpenGLTexture *texture = currentBuffer().toOpenGLTexture();
+            m_texture = texture;
+        } else {
+            if(!m_isImageBuffer)
+                m_isImageBuffer = true;
+            delete m_texture;
+            m_texture = new QOpenGLTexture(img);
         }
     }
-
-    // QImage image = currentBuffer().image();
-    // image.save("/home/droidian/copy.jpeg", 0);
-
     return m_texture;
 }
 
