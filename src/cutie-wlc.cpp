@@ -5,6 +5,7 @@
 #include <input-method-v2.h>
 
 #include <QtWaylandCompositor/QWaylandSeat>
+#include <QWaylandPointer>
 #include <QWaylandTouch>
 #include <QTouchEvent>
 
@@ -288,7 +289,62 @@ void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
     }
 }
 
-bool CwlCompositor::handleGesture(QTouchEvent *ev, int edge, int corner)
+void CwlCompositor::handleMouseMoveEvent(QMouseEvent *ev)
+{
+    if(!m_appswitcher->isActive()){
+        CwlView *view = m_launcherView;
+        if (!launcherOpened) view = viewAt(ev->position().toPoint());
+        if(view == nullptr)
+            return;
+        seatFor(ev)->sendMouseMoveEvent(
+            view,
+            ev->position().toPoint() / scaleFactor() - view->getPosition()
+        );
+    }
+}
+
+void CwlCompositor::handleMousePressEvent(QMouseEvent *ev)
+{
+    handleMouseMoveEvent(ev);
+    if(!m_appswitcher->isActive()){
+        seatFor(ev)->sendMousePressEvent(ev->button());
+    } else {
+        CwlView *view  = m_appswitcher->findViewAt(ev->points().first().globalPosition());
+        if(view != nullptr){
+            m_appView = view;
+            m_appPointStart = new QPointF(ev->points().first().globalPosition());
+       }
+    }
+}
+
+void CwlCompositor::handleMouseReleaseEvent(QMouseEvent *ev)
+{
+    handleMouseMoveEvent(ev);
+    if(!m_appswitcher->isActive()){
+        seatFor(ev)->sendMouseReleaseEvent(ev->button());
+    } else {
+        CwlView *view = m_appswitcher->findViewAt(ev->points().first().globalPosition());
+        if(view != nullptr){
+            if(view == m_appView && m_appPointStart->y() - ev->points().first().globalPosition().y() > 150){
+                if(view->m_xdgSurface->toplevel() != nullptr){
+                    view->m_xdgSurface->toplevel()->sendClose();
+                    m_appView = nullptr;
+                    m_appPointStart = nullptr;
+                }
+            } else if(view == m_appView){
+                raise(view);
+                m_appView = nullptr;
+                m_appPointStart = nullptr;
+                m_appswitcher->deactivate();
+            }
+        } else {
+            m_workspace->hideAllTopLevel();
+            m_appswitcher->deactivate();
+        }
+    }
+}
+
+bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
 {
     if(m_inputMngr->getInputMethod() != nullptr)
         m_inputMngr->getInputMethod()->hidePanel();

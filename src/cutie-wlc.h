@@ -38,7 +38,11 @@ public:
     void handleTouchEvent(QTouchEvent *ev);
     void handleTouchPointEvent(QEventPoint *evP);
 
-    bool handleGesture(QTouchEvent *ev, int edge, int corner);
+    void handleMouseMoveEvent(QMouseEvent *ev);
+    void handleMousePressEvent(QMouseEvent *ev);
+    void handleMouseReleaseEvent(QMouseEvent *ev);
+
+    bool handleGesture(QPointerEvent *ev, int edge, int corner);
 
     void handleKeyPress(quint32 nativeScanCode);
     void handleKeyRelease(quint32 nativeScanCode);

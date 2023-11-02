@@ -13,14 +13,14 @@ CwlGesture::~CwlGesture()
 {
 }
 
-void CwlGesture::handleTouchEvent(QTouchEvent *ev)
+void CwlGesture::handlePointerEvent(QPointerEvent *ev, std::function<void(QPointerEvent*)> next)
 {
 	QPointF point;
 
 	if(ev->points().size() != 1){
 		corner = CORNER_UNDEFINED;
 		edge = EDGE_UNDEFINED;
-		m_cwlcompositor->handleTouchEvent(ev);
+		next(ev);
 		return;
 	}
 
@@ -72,7 +72,7 @@ void CwlGesture::handleTouchEvent(QTouchEvent *ev)
 	if (!handled) {
 		corner = CORNER_UNDEFINED;
 		edge = EDGE_UNDEFINED;
-		m_cwlcompositor->handleTouchEvent(ev);
+		next(ev);
 	}
 }
 

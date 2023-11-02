@@ -138,7 +138,30 @@ void GlWindow::paintGL()
 
 void GlWindow::touchEvent(QTouchEvent *ev)
 {
-    m_gesture->handleTouchEvent(ev);
+    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
+        m_cwlcompositor->handleTouchEvent(static_cast<QTouchEvent*>(ev));
+    });
+}
+
+void GlWindow::mouseMoveEvent(QMouseEvent *ev)
+{
+    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
+        m_cwlcompositor->handleMouseMoveEvent(static_cast<QMouseEvent*>(ev));
+    });
+}
+
+void GlWindow::mousePressEvent(QMouseEvent *ev)
+{
+    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
+        m_cwlcompositor->handleMousePressEvent(static_cast<QMouseEvent*>(ev));
+    });
+}
+
+void GlWindow::mouseReleaseEvent(QMouseEvent *ev)
+{
+    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
+        m_cwlcompositor->handleMouseReleaseEvent(static_cast<QMouseEvent*>(ev));
+    });
 }
 
 void GlWindow::keyPressEvent(QKeyEvent *event)

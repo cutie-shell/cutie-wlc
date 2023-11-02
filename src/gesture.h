@@ -29,7 +29,7 @@ public:
     CwlGesture(CwlCompositor *compositor, QSize screenSize);
     ~CwlGesture();
 
-    void handleTouchEvent(QTouchEvent *ev);
+    void handlePointerEvent(QPointerEvent *ev, std::function<void(QPointerEvent*)> next);
 
 public slots:
     
