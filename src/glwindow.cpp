@@ -151,10 +151,18 @@ void GlWindow::paintGL()
                 QSize viewSize = childView->size();
                 QPointF viewPosition = childView->getPosition();
                 auto surfaceOrigin = childView->textureOrigin();
-                QRectF targetRect = QRectF(
-                    viewPosition * m_cwlcompositor->scaleFactor(),
-                    viewSize * m_cwlcompositor->scaleFactor()
-                );
+                QRectF targetRect;
+
+                if(m_appswitcher != nullptr && m_appswitcher->isActive() && m_appswitcher->getRecentViews().contains(childView)){
+                    QRectF geom = m_appswitcher->getRecentViews().value(childView);
+                    targetRect = QRectF(geom.topLeft(), geom.size());
+                } else {
+                    targetRect = QRectF(
+                        viewPosition * m_cwlcompositor->scaleFactor(),
+                        viewSize * m_cwlcompositor->scaleFactor()
+                    );
+                }
+            
                 QMatrix4x4 targetTransform = QOpenGLTextureBlitter::targetTransform(targetRect, QRect(QPoint(), size()));
                 m_textureBlitter.blit(texture->textureId(), targetTransform, surfaceOrigin);
             }

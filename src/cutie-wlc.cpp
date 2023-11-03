@@ -137,8 +137,6 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWayland
     view->setOutput(outputFor(m_glwindow));
     view->setSurface(xdgSurface->surface());
 
-    toplevel->sendMaximized(m_workspace->availableGeometry().size());
-    view->setPosition(m_workspace->availableGeometry().topLeft());
     view->setTopLevel(toplevel);
 
     launcherClosed = true;

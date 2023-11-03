@@ -162,11 +162,14 @@ void CwlView::onAppIdChanged()
         if(getAppId() != "cutie-launcher"){
             layer = TOP;
             if(m_toplevel->parentToplevel() == nullptr){
+                m_toplevel->sendMaximized(m_availableGeometry.size());
+                this->setPosition(m_availableGeometry.topLeft());
                 m_cwlcompositor->raise(this);
             } else {
                 CwlView *parent_view = m_cwlcompositor->findView(m_toplevel->parentToplevel()->xdgSurface()->surface());
                 parent_view->addChildView(this);
                 this->setParentView(parent_view);
+                connect(m_toplevel->parentToplevel()->xdgSurface(), &QWaylandXdgSurface::windowGeometryChanged, this, &CwlView::onWindowGeometryChanged);
                 connect(m_toplevel->xdgSurface(), &QWaylandXdgSurface::windowGeometryChanged, this, &CwlView::onWindowGeometryChanged);
             }
         } else if(getAppId() == "cutie-launcher"){
@@ -181,8 +184,9 @@ void CwlView::onWindowGeometryChanged()
 {
     if(parentView()){
         m_cwlcompositor->deactivateAppSwitcher();
+        QRect parentGeometry = parentView()->getTopLevel()->xdgSurface()->windowGeometry();
         QRect currentGeometry = m_toplevel->xdgSurface()->windowGeometry();
-        currentGeometry.moveCenter(m_availableGeometry.center());
+        currentGeometry.moveCenter(parentGeometry.center());
         this->setPosition(currentGeometry.topLeft());
     }
 }

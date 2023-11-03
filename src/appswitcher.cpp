@@ -126,6 +126,21 @@ void CwlAppswitcher::animationOpen()
 		if(m_animationFactor == 1.0){
 			finalGeometry.moveCenter(finalPosition);
 			m_toplevelViews.insert(view, finalGeometry);
+			if(view->getChildViews().size()>0){
+                for (CwlView *childView : view->getChildViews()) {
+                    if(!childView->isToplevel())
+                        continue;
+					QRectF childGeom = childView->getTopLevel()->xdgSurface()->windowGeometry();
+                    childGeom.setSize(childGeom.size() * m_animationFactor);
+                    if(childGeom.width() > finalGeometry.width()){
+                    	double aspect = childGeom.width() / childGeom.height();
+                    	childGeom.setWidth(finalGeometry.size().width());
+                    	childGeom.setHeight(childGeom.width() / aspect);
+                    }
+                    childGeom.moveCenter(finalGeometry.center());
+                    m_toplevelViews.insert(childView, childGeom);
+                }
+            }
 		} else {
 			qreal newX;
 			qreal newY;
@@ -143,6 +158,21 @@ void CwlAppswitcher::animationOpen()
 			finalGeometry.setSize(finalSize*m_animationFactor);
 			finalGeometry.moveCenter(QPointF(newX, newY));
 			m_toplevelViews.insert(view, finalGeometry);
+			if(view->getChildViews().size()>0){
+                for (CwlView *childView : view->getChildViews()) {
+                    if(!childView->isToplevel())
+                        continue;
+                    QRectF childGeom = childView->getTopLevel()->xdgSurface()->windowGeometry();
+                    childGeom.setSize(childGeom.size() * m_animationFactor);
+                    if(childGeom.width() > finalGeometry.width()){
+                    	double aspect = childGeom.width() / childGeom.height();
+                    	childGeom.setWidth(finalGeometry.size().width());
+                    	childGeom.setHeight(childGeom.width() / aspect);
+                    }
+                    childGeom.moveCenter(finalGeometry.center());
+                    m_toplevelViews.insert(childView, childGeom);
+                }
+            }
 		}
 		emit redraw();
 	}
@@ -220,6 +250,21 @@ void CwlAppswitcher::animationUpdate()
 		if(m_animationFactor == 1.0){
 			finalGeometry.moveCenter(finalPosition);
 			m_toplevelViews.insert(view, finalGeometry);
+			if(view->getChildViews().size()>0){
+                for (CwlView *childView : view->getChildViews()) {
+                    if(!childView->isToplevel())
+                        continue;
+                    QRectF childGeom = childView->getTopLevel()->xdgSurface()->windowGeometry();
+                    childGeom.setSize(childGeom.size() * m_animationFactor);
+                    if(childGeom.width() > finalGeometry.width()){
+                    	double aspect = childGeom.width() / childGeom.height();
+                    	childGeom.setWidth(finalGeometry.size().width());
+                    	childGeom.setHeight(childGeom.width() / aspect);
+                    }
+                    childGeom.moveCenter(finalGeometry.center());
+                    m_toplevelViews.insert(childView, childGeom);
+                }
+            }
 		} else {
 			qreal newX;
 			qreal newY;
@@ -241,6 +286,21 @@ void CwlAppswitcher::animationUpdate()
 			finalGeometry.setSize(finalSize);
 			finalGeometry.moveCenter(QPointF(newX, newY));
 			m_toplevelViews.insert(view, finalGeometry);
+			if(view->getChildViews().size()>0){
+                for (CwlView *childView : view->getChildViews()) {
+                    if(!childView->isToplevel())
+                        continue;
+                    QRectF childGeom = childView->getTopLevel()->xdgSurface()->windowGeometry();
+                    childGeom.setSize(childGeom.size() * m_animationFactor);
+                    if(childGeom.width() > finalGeometry.width()){
+                    	double aspect = childGeom.width() / childGeom.height();
+                    	childGeom.setWidth(finalGeometry.size().width());
+                    	childGeom.setHeight(childGeom.width() / aspect);
+                    }
+                    childGeom.moveCenter(finalGeometry.center());
+                    m_toplevelViews.insert(childView, childGeom);
+                }
+            }
 		}
 		emit redraw();
 	}
