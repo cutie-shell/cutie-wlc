@@ -175,6 +175,7 @@ void CwlView::onAppIdChanged()
         } else if(getAppId() == "cutie-launcher"){
             layer = OVERLAY;
             m_cwlcompositor->m_launcherView = this;
+            m_toplevel->sendMaximized(m_availableGeometry.size());
             m_cwlcompositor->m_launcherView->setPosition(m_availableGeometry.bottomLeft());
         }
     }
