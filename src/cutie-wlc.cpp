@@ -41,7 +41,6 @@ void CwlCompositor::create()
     m_xdgdecoration->setPreferredMode(QWaylandXdgToplevel::ServerSideDecoration);
 
     m_workspace = new CwlWorkspace(this);
-    m_appswitcher = new CwlAppswitcher(m_workspace);
     m_cutieshell = new CutieShell(this);
     m_screencopyManager = new ScreencopyManagerV1(this);
 
@@ -50,10 +49,6 @@ void CwlCompositor::create()
     connect(m_workspace, &CwlWorkspace::toplevelDestroyed, m_foreignTlManagerV1, &ForeignToplevelManagerV1::onToplevelDestroyed);
 
     initInputMethod();
-
-    m_glwindow->setAppswitcher(m_appswitcher);
-
-//    connect(this, &QWaylandCompositor::surfaceCreated, this, &CwlCompositor::onSurfaceCreated);
 
     qputenv("CUTIE_SHELL", QByteArray("true"));
     qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
@@ -229,103 +224,43 @@ void CwlCompositor::raise(CwlView *view)
 
 void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
 {
-    if(!m_appswitcher->isActive()){
-        CwlView *view = m_launcherView;
-        if (!launcherOpened) view = viewAt(ev->points().first().globalPosition().toPoint());
-        if(view == nullptr)
-            return;
-        foreach (QEventPoint point, ev->points()) {
-            seatFor(ev)->touch()->sendTouchPointEvent(
-                view->surface(),
-                point.id(),
-                point.position() / scaleFactor() - view->getPosition(),
-                (Qt::TouchPointState) point.state()
-            );
-        }
-        seatFor(ev)->touch()->sendFrameEvent(view->surface()->client()); 
-    } else {
-        if(ev->points().first().state() == QEventPoint::Pressed){
-            CwlView *view  = m_appswitcher->findViewAt(ev->points().first().globalPosition());
-            if(view != nullptr){
-                m_appView = view;
-                m_appPointStart = new QPointF(ev->points().first().globalPosition());
-            }
-        } else if(ev->points().first().state() == QEventPoint::Released){
-            CwlView *view = m_appswitcher->findViewAt(ev->points().first().globalPosition());
-            if(view != nullptr){
-                if(view == m_appView && m_appPointStart->y() - ev->points().first().globalPosition().y() > 150){
-                    if(view->getTopLevel() != nullptr){
-                        view->getTopLevel()->sendClose();
-                        m_appView = nullptr;
-                        m_appPointStart = nullptr;
-                    }
-                } else if(view == m_appView){
-                    raise(view);
-                    m_appView = nullptr;
-                    m_appPointStart = nullptr;
-                    m_appswitcher->deactivate();
-                }
-            } else {
-                m_workspace->hideAllTopLevel();
-                m_appswitcher->deactivate();
-            }
-        }
+    CwlView *view = m_launcherView;
+    if (!launcherOpened) view = viewAt(ev->points().first().globalPosition().toPoint());
+    if(view == nullptr)
+        return;
+    foreach (QEventPoint point, ev->points()) {
+        seatFor(ev)->touch()->sendTouchPointEvent(
+            view->surface(),
+            point.id(),
+            point.position() / scaleFactor() - view->getPosition(),
+            (Qt::TouchPointState) point.state()
+        );
     }
+    seatFor(ev)->touch()->sendFrameEvent(view->surface()->client()); 
 }
 
 void CwlCompositor::handleMouseMoveEvent(QMouseEvent *ev)
 {
-    if(!m_appswitcher->isActive()){
-        CwlView *view = m_launcherView;
-        if (!launcherOpened) view = viewAt(ev->position().toPoint());
-        if(view == nullptr)
-            return;
-        seatFor(ev)->sendMouseMoveEvent(
-            view,
-            ev->position().toPoint() / scaleFactor() - view->getPosition()
-        );
-    }
+    CwlView *view = m_launcherView;
+    if (!launcherOpened) view = viewAt(ev->position().toPoint());
+    if(view == nullptr)
+        return;
+    seatFor(ev)->sendMouseMoveEvent(
+        view,
+        ev->position().toPoint() / scaleFactor() - view->getPosition()
+    );
 }
 
 void CwlCompositor::handleMousePressEvent(QMouseEvent *ev)
 {
     handleMouseMoveEvent(ev);
-    if(!m_appswitcher->isActive()){
-        seatFor(ev)->sendMousePressEvent(ev->button());
-    } else {
-        CwlView *view  = m_appswitcher->findViewAt(ev->points().first().globalPosition());
-        if(view != nullptr){
-            m_appView = view;
-            m_appPointStart = new QPointF(ev->points().first().globalPosition());
-       }
-    }
+    seatFor(ev)->sendMousePressEvent(ev->button());
 }
 
 void CwlCompositor::handleMouseReleaseEvent(QMouseEvent *ev)
 {
     handleMouseMoveEvent(ev);
-    if(!m_appswitcher->isActive()){
-        seatFor(ev)->sendMouseReleaseEvent(ev->button());
-    } else {
-        CwlView *view = m_appswitcher->findViewAt(ev->points().first().globalPosition());
-        if(view != nullptr){
-            if(view == m_appView && m_appPointStart->y() - ev->points().first().globalPosition().y() > 150){
-                if(view->getTopLevel() != nullptr){
-                    view->getTopLevel()->sendClose();
-                    m_appView = nullptr;
-                    m_appPointStart = nullptr;
-                }
-            } else if(view == m_appView){
-                raise(view);
-                m_appView = nullptr;
-                m_appPointStart = nullptr;
-                m_appswitcher->deactivate();
-            }
-        } else {
-            m_workspace->hideAllTopLevel();
-            m_appswitcher->deactivate();
-        }
-    }
+    seatFor(ev)->sendMouseReleaseEvent(ev->button());
 }
 
 bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
@@ -335,12 +270,12 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
     
     if (edge == EDGE_RIGHT) {
         if(ev->isBeginEvent() || ev->isUpdateEvent()){
-            return !m_appswitcher->isActive() && launcherClosed;
+            return launcherClosed;
         }
 
         if(ev->isEndEvent() && 
             ev->points().first().globalPosition().x() < m_glwindow->width() * 0.8){
-            m_appswitcher->activate();
+            // TODO: bring home up
             triggerRender();
             return true;
         }
@@ -424,17 +359,10 @@ void CwlCompositor::viewSurfaceDestroyed()
     }
 
     delete view;
-    m_appswitcher->update();
     triggerRender();
 }
 
 void CwlCompositor::triggerRender()
-{
-    if(!m_appswitcher->animationRunning)
-        m_glwindow->requestUpdate();
-}
-
-void CwlCompositor::appSwitcherAnimate()
 {
     m_glwindow->requestUpdate();
 }
@@ -461,11 +389,6 @@ void CwlCompositor::setScaleFactor(int scale) {
     m_scaleFactor = scale;
     if (m_output)
         m_output->setScaleFactor(m_scaleFactor);
-}
-
-void CwlCompositor::deactivateAppSwitcher()
-{
-    m_appswitcher->deactivate();
 }
 
 GlWindow *CwlCompositor::glWindow() {

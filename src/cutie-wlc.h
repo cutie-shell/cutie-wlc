@@ -4,7 +4,6 @@
 #include <view.h>
 #include <layer-shell.h>
 #include <workspace.h>
-#include <appswitcher.h>
 #include <cutie-shell.h>
 #include <gesture.h>
 #include <QEventPoint>
@@ -15,7 +14,6 @@ QT_BEGIN_NAMESPACE
 
 class GlWindow;
 class CwlWorkspace;
-class CwlAppswitcher;
 class ScreencopyManagerV1;
 class ForeignToplevelManagerV1;
 class ForeignToplevelHandleV1;
@@ -53,9 +51,7 @@ public:
     int scaleFactor();
     void setScaleFactor(int scale);
 
-    void deactivateAppSwitcher();
     CwlView *getTopPanel();
-
     GlWindow *glWindow();
 
     bool launcherClosed = true;
@@ -66,7 +62,6 @@ public:
     CwlView* getHomeView();
 
 public slots:
-    void appSwitcherAnimate();
     void triggerRender();
 
 private slots:
@@ -82,7 +77,6 @@ private:
     QWaylandXdgShell *m_xdgShell = nullptr;
     QPointer<CwlView> m_mouseView;
     LayerShellV1 *m_layerShell = nullptr;
-    CwlAppswitcher *m_appswitcher = nullptr;
     QPointF *m_appPointStart = nullptr;
     CwlView *m_appView = nullptr;
     CutieShell *m_cutieshell = nullptr;

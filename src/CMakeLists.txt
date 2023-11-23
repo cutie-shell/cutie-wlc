@@ -7,7 +7,6 @@ set(CWL_SOURCES
 		view.cpp
 		cutie-wlc.cpp
 		workspace.cpp
-		appswitcher.cpp
 		glwindow.cpp
 		gesture.cpp)
 
@@ -15,7 +14,6 @@ set(CWL_HEADERS
 		view.h
 		cutie-wlc.h
 		workspace.h
-		appswitcher.h
 		glwindow.h
 		gesture.h)
 

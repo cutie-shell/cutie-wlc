@@ -184,7 +184,6 @@ void CwlView::onAppIdChanged()
 void CwlView::onWindowGeometryChanged()
 {
     if(parentView()){
-        m_cwlcompositor->deactivateAppSwitcher();
         QRect parentGeometry = parentView()->getTopLevel()->xdgSurface()->windowGeometry();
         QRect currentGeometry = m_toplevel->xdgSurface()->windowGeometry();
         currentGeometry.moveCenter(parentGeometry.center());

@@ -19,7 +19,6 @@ class GlWindow : public QOpenGLWindow
 public:
     GlWindow();
     void setCompositor(CwlCompositor *cwlcompositor);
-    void setAppswitcher(CwlAppswitcher *appswitcher);
 
 signals:
     void glReady();
@@ -41,7 +40,6 @@ public Q_SLOTS:
 private:
     QOpenGLTextureBlitter m_textureBlitter;
     CwlCompositor *m_cwlcompositor = nullptr;
-    CwlAppswitcher *m_appswitcher = nullptr;
     QList<QEventPoint*> m_evPoint;
     QOpenGLTexture *m_wallpaper = nullptr;
     AtmosphereModel *m_atmosphere = nullptr;
