@@ -60,6 +60,7 @@ public:
     CwlWorkspace *m_workspace = nullptr;
 
     CwlView* getHomeView();
+    double homeOpen = 1.0;
 
 public slots:
     void triggerRender();

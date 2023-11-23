@@ -84,20 +84,25 @@ void GlWindow::paintGL()
         if(view != nullptr && view->isToplevel())
             appId = view->getAppId();
 
-        if(!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened && view->isToplevel()){
-            if(appId == "cutie-launcher"){
+        if (appId == "cutie-launcher")
+            if (!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened)
                 m_textureBlitter.setOpacity(1.0 - (m_cwlcompositor->m_launcherView->getPosition().y()/height()));
-            } else {
-                m_textureBlitter.setOpacity(m_cwlcompositor->m_launcherView->getPosition().y()/height());
-            }
-        } else if(m_cwlcompositor->getTopPanel() != nullptr && view->isToplevel()) {
-            if(m_cwlcompositor->getTopPanel()->panelState > 1)
-                m_textureBlitter.setOpacity(0.0);
-            else
+            else if (m_cwlcompositor->launcherOpened)
                 m_textureBlitter.setOpacity(1.0);
-        } else {
-            m_textureBlitter.setOpacity(1.0);
-        }
+            else m_textureBlitter.setOpacity(0.0);
+        else if (view->isToplevel())
+            if (!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened)
+                m_textureBlitter.setOpacity((1.0 - m_cwlcompositor->homeOpen) * m_cwlcompositor->m_launcherView->getPosition().y()/height());
+            else if (m_cwlcompositor->getTopPanel() != nullptr)
+                if(m_cwlcompositor->getTopPanel()->panelState > 1)
+                    m_textureBlitter.setOpacity(0.0);
+                else m_textureBlitter.setOpacity(1.0 - m_cwlcompositor->homeOpen);
+            else {
+                m_textureBlitter.setOpacity(1.0 - m_cwlcompositor->homeOpen);
+            } 
+        else if (view == m_cwlcompositor->getHomeView())
+            m_textureBlitter.setOpacity(m_cwlcompositor->homeOpen);
+        else m_textureBlitter.setOpacity(1.0);
 
         if(m_cwlcompositor->launcherOpened && view->layer == 2)
             continue;
