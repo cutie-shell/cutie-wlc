@@ -329,7 +329,9 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
             }
             launcherClosed = false;
             QPointF newPos = m_launcherView->getPosition();
-            newPos.setY(ev->points().first().globalPosition().y() / scaleFactor());
+            newPos.setY(qMax(
+                ev->points().first().globalPosition().y() / scaleFactor(),
+                1.0 * m_workspace->availableGeometry().y()));
             m_launcherView->setPosition(newPos);
             triggerRender();
             return true;
@@ -360,7 +362,9 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
             if(ev->isBeginEvent() || ev->isUpdateEvent()){
                 launcherOpened = false;
                 QPointF newPos = m_launcherView->getPosition();
-                newPos.setY(ev->points().first().globalPosition().y());
+                newPos.setY(qMax(
+                    ev->points().first().globalPosition().y() / scaleFactor(),
+                    1.0 * m_workspace->availableGeometry().y()));
                 m_launcherView->setPosition(newPos);
                 triggerRender();
             }
