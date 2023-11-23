@@ -4,6 +4,8 @@
 #include <cutie-wlc.h>
 #include <QTouchEvent>
 
+#define GESTURE_ACCEPT_THRESHOLD 100
+
 enum EdgeSwipe: uint32_t
 {
     EDGE_RIGHT      = 0,

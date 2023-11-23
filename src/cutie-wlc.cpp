@@ -219,6 +219,14 @@ void CwlCompositor::raise(CwlView *view)
         view->setHidden(false);
 
     defaultSeat()->setKeyboardFocus(view->surface());
+
+    if (view == m_homeView) {
+        m_workspace->showDesktop(true);
+        homeOpen = 1.0;
+    } else {
+        homeOpen = 0.0;
+    }
+
     triggerRender();
 }
 
@@ -268,14 +276,45 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
     if(m_inputMngr->getInputMethod() != nullptr)
         m_inputMngr->getInputMethod()->hidePanel();
     
-    if (edge == EDGE_RIGHT) {
-        if(ev->isBeginEvent() || ev->isUpdateEvent()){
-            return launcherClosed;
+    if (edge == EDGE_LEFT) {
+        if(ev->isBeginEvent()){
+            return launcherClosed && (homeOpen != 1.0);
         }
 
-        if(ev->isEndEvent() && 
-            ev->points().first().globalPosition().x() < m_glwindow->width() * 0.8){
-            // TODO: bring home up
+        if(ev->isUpdateEvent()){
+            homeOpen = 1.0 * ev->points().first().globalPosition().x() / m_glwindow->width();
+            triggerRender();
+            return true;
+        }
+
+        if(ev->isEndEvent()) { 
+            if (ev->points().first().globalPosition().x() > GESTURE_ACCEPT_THRESHOLD) {
+                raise(m_homeView);
+                return true;
+            } 
+            homeOpen = 0.0;
+            triggerRender();
+            return true;
+        }
+    }
+    
+    if (edge == EDGE_RIGHT) {
+        if(ev->isBeginEvent()){
+            return launcherClosed && (homeOpen != 1.0);
+        }
+
+        if(ev->isUpdateEvent()){
+            homeOpen = 1.0 - 1.0 * ev->points().first().globalPosition().x() / m_glwindow->width();
+            triggerRender();
+            return true;
+        }
+
+        if(ev->isEndEvent()) { 
+            if (ev->points().first().globalPosition().x() < m_glwindow->width() - GESTURE_ACCEPT_THRESHOLD) {
+                raise(m_homeView);
+                return true;
+            } 
+            homeOpen = 0.0;
             triggerRender();
             return true;
         }
