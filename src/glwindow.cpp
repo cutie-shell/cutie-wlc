@@ -37,6 +37,7 @@ void GlWindow::onAtmospherePathChanged() {
 
 void GlWindow::paintGL()
 {
+    if (m_displayOff) return;
     m_cwlcompositor->startRender();
 
     QOpenGLFunctions *functions = context()->functions();
