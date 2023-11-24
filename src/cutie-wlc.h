@@ -5,7 +5,6 @@
 #include <layer-shell.h>
 #include <workspace.h>
 #include <cutie-shell.h>
-#include <gesture.h>
 #include <QEventPoint>
 #include <QProcess>
 #include <QWaylandXdgDecorationManagerV1>
