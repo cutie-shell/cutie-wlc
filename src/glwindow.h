@@ -1,20 +1,16 @@
-#ifndef GLWINDOW_H
-#define GLWINDOW_H
+#pragma once
 
 #include <QOpenGLWindow>
 #include <QOpenGLTextureBlitter>
-
 #include <QEventPoint>
 #include <atmosphere.h>
+
 #include <cutie-wlc.h>
 #include <gesture.h>
 
 QT_BEGIN_NAMESPACE
 
-class CwlCompositor;
-
-class GlWindow : public QOpenGLWindow
-{
+class GlWindow : public QOpenGLWindow {
     Q_OBJECT
 public:
     GlWindow();
@@ -38,16 +34,19 @@ public Q_SLOTS:
     void onAtmospherePathChanged();
 
 private:
-    QOpenGLTextureBlitter m_textureBlitter;
-    CwlCompositor *m_cwlcompositor = nullptr;
-    QList<QEventPoint*> m_evPoint;
-    QOpenGLTexture *m_wallpaper = nullptr;
-    AtmosphereModel *m_atmosphere = nullptr;
+    void renderWallpaper();
+    void renderView(CwlView *view);
 
-    CwlGesture *m_gesture = nullptr;
+    QOpenGLTextureBlitter m_textureBlitter;
+    GLenum m_currentTarget;
+    QOpenGLTexture *m_wallpaper = nullptr;
+
+    QList<QEventPoint*> m_evPoint;
     bool m_displayOff = false;
+
+    CwlCompositor *m_cwlcompositor = nullptr;
+    AtmosphereModel *m_atmosphere = new AtmosphereModel();
+    CwlGesture *m_gesture = nullptr;
 };
 
 QT_END_NAMESPACE
-
-#endif //GLWINDOW_H
