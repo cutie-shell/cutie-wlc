@@ -13,6 +13,8 @@ QT_BEGIN_NAMESPACE
 
 class GlWindow;
 class CwlWorkspace;
+class OutputManagerV1;
+class OutputPowerManagerV1;
 class ScreencopyManagerV1;
 class ForeignToplevelManagerV1;
 class ForeignToplevelHandleV1;
@@ -61,6 +63,9 @@ public:
     CwlView* getHomeView();
     double homeOpen = 1.0;
 
+signals:
+    void scaleFactorChanged(int scaleFactor);
+
 public slots:
     void triggerRender();
 
@@ -80,6 +85,8 @@ private:
     QPointF *m_appPointStart = nullptr;
     CwlView *m_appView = nullptr;
     CutieShell *m_cutieshell = nullptr;
+    OutputManagerV1 *m_outputManager = nullptr;
+    OutputPowerManagerV1 *m_outputPowerManager = nullptr;
     ScreencopyManagerV1 *m_screencopyManager = nullptr;
     ForeignToplevelManagerV1 *m_foreignTlManagerV1 = nullptr;
     QWaylandOutput *m_output = nullptr;

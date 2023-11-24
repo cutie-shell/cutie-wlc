@@ -21,6 +21,20 @@ void GlWindow::setCompositor(CwlCompositor *cwlcompositor) {
     m_gesture = new CwlGesture(cwlcompositor, QSize(width(), height()));
 }
 
+bool GlWindow::displayOff() {
+    return m_displayOff;
+}
+
+void GlWindow::setDisplayOff(bool displayOff) {
+    if (m_displayOff == displayOff) return;
+    if (m_displayOff) {
+        QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayon");
+        this->requestUpdate();
+    } else QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayoff");
+    m_displayOff = displayOff;
+    emit displayOffChanged(m_displayOff);
+}
+
 void GlWindow::initializeGL() {
     m_textureBlitter.create();
     onAtmospherePathChanged();

@@ -1,5 +1,7 @@
 #include <cutie-wlc.h>
 #include <glwindow.h>
+#include <output-management-v1.h>
+#include <output-power-management-v1.h>
 #include <screencopy.h>
 #include <foreign-toplevel-management.h>
 #include <input-method-v2.h>
@@ -42,6 +44,8 @@ void CwlCompositor::create()
 
     m_workspace = new CwlWorkspace(this);
     m_cutieshell = new CutieShell(this);
+    m_outputManager = new OutputManagerV1(this);
+    m_outputPowerManager = new OutputPowerManagerV1(this);
     m_screencopyManager = new ScreencopyManagerV1(this);
 
     m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
@@ -432,9 +436,11 @@ int CwlCompositor::scaleFactor() {
 }
 
 void CwlCompositor::setScaleFactor(int scale) {
+    if (m_scaleFactor == scale) return;
     m_scaleFactor = scale;
     if (m_output)
         m_output->setScaleFactor(m_scaleFactor);
+    emit scaleFactorChanged(m_scaleFactor);
 }
 
 GlWindow *CwlCompositor::glWindow() {

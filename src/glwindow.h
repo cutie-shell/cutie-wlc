@@ -15,9 +15,12 @@ class GlWindow : public QOpenGLWindow {
 public:
     GlWindow();
     void setCompositor(CwlCompositor *cwlcompositor);
+    bool displayOff();
+    void setDisplayOff(bool displayOff);
 
 signals:
     void glReady();
+    void displayOffChanged(bool displayOff);
 
 protected:
     void initializeGL() override;
