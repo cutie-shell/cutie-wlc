@@ -1,205 +1,118 @@
 #include <workspace.h>
-#include <QDebug>
 
 CwlWorkspace::CwlWorkspace(CwlCompositor *compositor)
-{
+	: m_compositor(compositor) {
 	m_outputGeometry = compositor->defaultOutput()->geometry();
 	m_outputGeometry = QRect(
 		m_outputGeometry.topLeft() / compositor->scaleFactor(),
 		m_outputGeometry.size() / compositor->scaleFactor()
 	);
 	m_availableGeometry = m_outputGeometry;
-
-	m_viewList.clear();
-	m_bgLayerList.clear();
-    m_bottomLayerList.clear();
-    m_topLayerList.clear();
-    m_overlayLayerList.clear();
-    m_compositor = compositor;
 }
 
-CwlWorkspace::~CwlWorkspace()
-{
-}
-
-QRect CwlWorkspace::availableGeometry()
-{
+QRect CwlWorkspace::availableGeometry() {
 	return m_availableGeometry;
 }
 
-void CwlWorkspace::removeView(CwlView *view)
-{
-	if(view->layer == CwlViewLayer::UNDEFINED){
-		m_undefinedLayerList.removeAll(view);
-	} else if(view->layer == CwlViewLayer::BACKGROUND){
-		m_bgLayerList.removeAll(view);
-	} else if(view->layer == CwlViewLayer::BOTTOM){
-		m_bottomLayerList.removeAll(view);
-	} else if(view->layer == CwlViewLayer::TOP){
-		m_topLayerList.removeAll(view);
-	} else if(view->layer == CwlViewLayer::OVERLAY){
-		m_overlayLayerList.removeAll(view);
-	}
+void CwlWorkspace::removeView(CwlView *view) {
+	m_viewLayerList[view->layer].removeAll(view);
 	updateViewList();
-
 	if(view->getLayerSurface() != nullptr && view->getLayerSurface()->ls_zone > 0)
 		updateAvailableGeometry();
-
-	if(view->isToplevel()){
+	if(view->isToplevel())
 		emit toplevelDestroyed(view);
-	}
 }
 
-void CwlWorkspace::addView(CwlView *view)
-{
-	bool isNew = true;
-
-	if(view->layer == CwlViewLayer::BACKGROUND){
-		if(m_bgLayerList.contains(view)){
-			m_bgLayerList.removeAll(view);
-			isNew = false;
-		}
-		m_bgLayerList<<view;
-	} else if(view->layer == CwlViewLayer::BOTTOM){
-		if(m_bottomLayerList.contains(view)){
-			m_bottomLayerList.removeAll(view);
-			isNew = false;
-		}
-		m_bottomLayerList<<view;
-	} else if(view->layer == CwlViewLayer::TOP){
-		if(m_topLayerList.contains(view)){
-			m_topLayerList.removeAll(view);
-			isNew = false;
-		}
-		m_topLayerList<<view;
-	} else if(view->layer == CwlViewLayer::OVERLAY){
-		if(m_overlayLayerList.contains(view)){
-			m_overlayLayerList.removeAll(view);
-			isNew = false;
-		}
-		m_overlayLayerList<<view;
-	}
-
+void CwlWorkspace::addView(CwlView *view) {
+	m_viewLayerList[view->layer] << view;
+	updateViewList();
 	if(view->isToplevel() && !view->isHidden())
 		showDesktop(false);
-
-	updateViewList();
-
-	if(isNew && view->isToplevel())
-		emit toplevelCreated(view);
 }
 
-QList<CwlView*> CwlWorkspace::getViews()
-{
+void CwlWorkspace::raiseView(CwlView *view) {
+	m_viewLayerList[view->layer].removeAll(view);
+	m_viewLayerList[view->layer] << view;
+	updateViewList();
+	if(view->isToplevel() && !view->isHidden())
+		showDesktop(false);
+}
+
+QList<CwlView*> CwlWorkspace::getViews() {
 	return m_viewList;
 }
 
-QList<CwlView*> CwlWorkspace::getToplevelViews()
-{
-	return m_topLayerList;
+QList<CwlView*> CwlWorkspace::getToplevelViews() {
+	return m_viewLayerList[CwlViewLayer::TOP];
 }
 
-void CwlWorkspace::hideAllTopLevel()
-{
-	if(m_topLayerList.empty()){
-		return;
-	}
-
-	for (CwlView *view : m_topLayerList){
+void CwlWorkspace::hideAllTopLevel() {
+	for (CwlView *view : m_viewLayerList[CwlViewLayer::TOP])
 		view->setHidden(true);
-	}
-
 	showDesktop(true);
 }
 
-void CwlWorkspace::showDesktop(bool show)
-{
+void CwlWorkspace::showDesktop(bool show) {
 	m_showDesktop = show;
 	updateViewList();
 }
 
-void CwlWorkspace::singleView(bool single)
-{
+void CwlWorkspace::singleView(bool single) {
 	m_singleView = single;
 	updateViewList();
 }
 
-int CwlWorkspace::getScaleFactor()
-{
-	return m_compositor->scaleFactor();
-}
+void CwlWorkspace::updateViewList() {
+	m_viewList = m_viewLayerList[CwlViewLayer::BACKGROUND]
+		+ m_viewLayerList[CwlViewLayer::BOTTOM];
 
-void CwlWorkspace::updateViewList()
-{
-	QList ret = m_bgLayerList;
-	ret << m_bottomLayerList;
+	if (!m_showDesktop && !m_viewLayerList[CwlViewLayer::TOP].isEmpty()) 
+		if (m_singleView)
+			m_viewList << m_viewLayerList[CwlViewLayer::TOP].last();
+		else m_viewList << m_viewLayerList[CwlViewLayer::TOP];
 
-	if(!m_showDesktop && !m_topLayerList.isEmpty() && !m_singleView)
-		ret << m_topLayerList;
-	else if((!m_showDesktop && !m_topLayerList.isEmpty() && m_singleView))
-		ret << m_topLayerList.last();
-
-	ret << m_overlayLayerList;
-	m_viewList = ret;
+	m_viewList << m_viewLayerList[CwlViewLayer::OVERLAY];
 	updateAvailableGeometry();
 }
 
-void CwlWorkspace::updateAvailableGeometry()
-{
+void CwlWorkspace::updateAvailableGeometry() {
 	QRect geometry = m_outputGeometry;
 
 	QList<LayerSurfaceV1*> lsList = getLayerSurfaces();
-	if(lsList.empty())
-		return;
+	if (lsList.empty()) return;
 
 	for (LayerSurfaceV1* surface : lsList) {
-		if(surface != nullptr && surface->initialized){
-			if(surface->ls_anchor == 1){
-	        	geometry.setTop(geometry.top()+surface->ls_zone);
-	        } else if(surface->ls_anchor == 2){
-	        	geometry.setHeight(geometry.height()-surface->ls_zone);
-	        }
-	        else if(surface->ls_anchor == 4){
-	        	geometry.setLeft(geometry.left()+surface->ls_zone);
-	        }
-	        else if(surface->ls_anchor == 8){
-	        	geometry.setWidth(geometry.width()-surface->ls_zone);
+		if (surface && surface->initialized) {
+			if (surface->ls_anchor == 1 || surface->ls_anchor == 13) {
+	        	geometry.setTop(geometry.top() + surface->ls_zone);
+	        } else if (surface->ls_anchor == 2 || surface->ls_anchor == 14) {
+	        	geometry.setHeight(geometry.height() - surface->ls_zone);
+	        } else if (surface->ls_anchor == 4 || surface->ls_anchor == 7) {
+	        	geometry.setLeft(geometry.left() + surface->ls_zone);
+	        } else if(surface->ls_anchor == 8 || surface->ls_anchor == 11) {
+	        	geometry.setWidth(geometry.width() - surface->ls_zone);
 	        }
 		}
     }
 
-    if(geometry != m_availableGeometry){
+    if (geometry != m_availableGeometry) {
 		m_availableGeometry = geometry;
 		emit availableGeometryChanged(m_availableGeometry);
     }
 }
 
-void CwlWorkspace::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
-{
-	if(surface->ls_zone > 0 && surface->initialized){
+void CwlWorkspace::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface) {
+	if (!surface->initialized) return;
+	if (surface->ls_zone > 0) 
 		surface->send_configure(surface->ls_serial, surface->size.width(), surface->size.height());
-		updateAvailableGeometry();
-
-    } else if (surface->ls_zone <= 0){
-    	surface->send_configure(surface->ls_serial, surface->size.width(), surface->size.height());
-        updateAvailableGeometry();
-    }
+    else surface->send_configure(surface->ls_serial, surface->size.width(), surface->size.height());
+	updateAvailableGeometry();
 }
 
-QList<LayerSurfaceV1*> CwlWorkspace::getLayerSurfaces()
-{
+QList<LayerSurfaceV1*> CwlWorkspace::getLayerSurfaces() {
 	QList<LayerSurfaceV1*> ret;
-	ret.clear();
-	for(CwlView* view : m_viewList)
-	{
-		if(view->layer != CwlViewLayer::UNDEFINED && view->getLayerSurface() != nullptr && view->getLayerSurface()->ls_zone > 0 &&
-	        (view->getLayerSurface()->ls_anchor == 1 ||
-	            view->getLayerSurface()->ls_anchor == 2 ||
-	            view->getLayerSurface()->ls_anchor == 4 ||
-	            view->getLayerSurface()->ls_anchor == 8))
-		{
+	for (CwlView* view : m_viewList)
+		if (view->getLayerSurface())
 	        ret << view->getLayerSurface();
-	    }
-	}
 	return ret;
 }

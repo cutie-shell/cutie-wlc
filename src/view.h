@@ -22,10 +22,11 @@ class TextInputV3;
 enum CwlViewLayer: uint32_t
 {
     BACKGROUND      = 0,
-    BOTTOM          = 1,
-    TOP             = 2,
-    OVERLAY         = 3,
-    UNDEFINED       = 4
+    BOTTOM,
+    TOP,
+    OVERLAY,
+    UNDEFINED,
+    NUM_LAYERS
 };
 
 enum CwlTopPanel: uint32_t

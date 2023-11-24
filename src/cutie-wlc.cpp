@@ -142,6 +142,9 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWayland
     connect(m_workspace, &CwlWorkspace::availableGeometryChanged, view, &CwlView::onAvailableGeometryChanged);
     connect(view->surface(), &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
     connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
+
+    m_workspace->addView(view);
+    emit m_workspace->toplevelCreated(view);
 }
 
 void CwlCompositor::initInputMethod()
@@ -213,7 +216,7 @@ CwlView* CwlCompositor::getTopPanel()
 
 void CwlCompositor::raise(CwlView *view)
 {
-    m_workspace->addView(view);
+    m_workspace->raiseView(view);
 
     if(view->isHidden())
         view->setHidden(false);
