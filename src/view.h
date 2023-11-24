@@ -1,5 +1,4 @@
-#ifndef CWL_VIEW_H
-#define CWL_VIEW_H
+#pragma once
 
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandSurface>
@@ -19,8 +18,7 @@ class TextInputV1;
 class TextInputV2;
 class TextInputV3;
 
-enum CwlViewLayer: uint32_t
-{
+enum CwlViewLayer: uint32_t {
     BACKGROUND      = 0,
     BOTTOM,
     TOP,
@@ -29,23 +27,20 @@ enum CwlViewLayer: uint32_t
     NUM_LAYERS
 };
 
-enum CwlTopPanel: uint32_t
-{
+enum CwlTopPanel: uint32_t {
     PANEL_UNDEFINED      = 0,
     PANEL_FOLDED         = 1,
     PANEL_UNFOLDING      = 2
 };
 
-enum CwlViewAnchor: uint32_t
-{
+enum CwlViewAnchor: uint32_t {
     ANCHOR_TOP     = 1,
     ANCHOR_BOTTOM  = 2,
     ANCHOR_LEFT    = 4,
     ANCHOR_RIGHT   = 8
 };
 
-class CwlView : public QWaylandView
-{
+class CwlView : public QWaylandView {
     Q_OBJECT
 public:
     explicit CwlView(CwlCompositor *cwlcompositor, QRect geometry);
@@ -85,10 +80,6 @@ public:
     TextInputV2 *tiV2 = nullptr;
     TextInputV3 *tiV3 = nullptr;
 
-signals:
-
-protected:
-
 private:
     friend class CwlCompositor;
     CwlCompositor *m_cwlcompositor = nullptr;
@@ -120,5 +111,3 @@ private slots:
 };
 
 QT_END_NAMESPACE
-
-#endif //VIEW_H
