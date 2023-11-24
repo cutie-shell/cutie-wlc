@@ -49,7 +49,6 @@ void GlWindow::paintGL()
     double screenAspect = 1.0 * width() / height();
     QMatrix4x4 targetTransform;
     QMatrix3x3 sourceTransform;
-    qDebug() << wallAspect << " : " << screenAspect;
     if (wallAspect > screenAspect) {
 	int tgtWidth = m_wallpaper->height() * width() / height();
         targetTransform = QOpenGLTextureBlitter::targetTransform(
