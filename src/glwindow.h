@@ -3,7 +3,6 @@
 #include <QOpenGLWindow>
 #include <QOpenGLTextureBlitter>
 #include <QEventPoint>
-#include <atmosphere.h>
 
 #include <cutie-wlc.h>
 #include <gesture.h>
@@ -33,11 +32,7 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
 
-public Q_SLOTS:
-    void onAtmospherePathChanged();
-
 private:
-    void renderWallpaper();
     void renderView(CwlView *view);
 
     QOpenGLTextureBlitter m_textureBlitter;
@@ -48,7 +43,6 @@ private:
     bool m_displayOff = false;
 
     CwlCompositor *m_cwlcompositor = nullptr;
-    AtmosphereModel *m_atmosphere = new AtmosphereModel();
     CwlGesture *m_gesture = nullptr;
 };
 
