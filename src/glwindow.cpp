@@ -68,10 +68,6 @@ void GlWindow::paintGL() {
                 m_textureBlitter.setOpacity(m_cwlcompositor->blur() *
                     m_cwlcompositor->m_launcherView->getPosition().y() *
                     m_cwlcompositor->scaleFactor() / height());
-            else if (m_cwlcompositor->getTopPanel() != nullptr)
-                if(m_cwlcompositor->getTopPanel()->panelState > 1)
-                    m_textureBlitter.setOpacity(0.0);
-                else m_textureBlitter.setOpacity(m_cwlcompositor->blur());
             else m_textureBlitter.setOpacity(m_cwlcompositor->blur());
         else m_textureBlitter.setOpacity(1.0);
 
