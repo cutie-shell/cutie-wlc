@@ -26,6 +26,22 @@
         <arg name="opacity" type="fixed" summary="the opacity of the blur"/>
       </event>
 
+      <event name="key">
+        <description summary="a special key press to be handled">
+          Notification that a special key press needs to be handled
+        </description>
+        <arg name="key" type="uint" enum="key" summary="the key"/>
+      </event>
+
+      <enum name="key">
+        <description summary="types of states on the toplevel">
+          Special keys passed by the compositor to the shell
+        </description>
+
+        <entry name="power_press" value="0" summary="the power key pressed"/>
+        <entry name="power_release" value="1" summary="the power key released"/>
+      </enum>
+
     </interface>
 
 </protocol>

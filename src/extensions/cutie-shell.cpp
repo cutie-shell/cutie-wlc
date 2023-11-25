@@ -1,10 +1,13 @@
 #include <cutie-shell.h>
+#include <cutie-wlc.h>
+
 #include <QProcess>
 
 CutieShell::CutieShell(CwlCompositor *compositor)
     : QWaylandCompositorExtensionTemplate(compositor)
     , m_compositor(compositor) {
     connect(compositor, &CwlCompositor::blurChanged, this, &CutieShell::onBlurChanged);
+    connect(compositor, &CwlCompositor::specialKey, this, &CutieShell::onSpecialKey);
 }
 
 void CutieShell::initialize()
@@ -34,5 +37,13 @@ void CutieShell::onBlurChanged(double blur) {
 	while (i.hasNext()) {
 	    i.next();
 	    send_blur(i.value()->handle, wl_fixed_from_double(blur));
+	}
+}
+
+void CutieShell::onSpecialKey(SpecialKey key) {
+    QMultiMapIterator<struct ::wl_client*, Resource*> i(resourceMap());
+	while (i.hasNext()) {
+	    i.next();
+	    send_key(i.value()->handle, (uint32_t)key);
 	}
 }

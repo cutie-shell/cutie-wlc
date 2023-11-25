@@ -76,6 +76,7 @@ signals:
     void scaleFactorChanged(int scaleFactor);
     void blurChanged(double blur);
     void launcherPostionChanged(double launcherPostion);
+    void specialKey(CutieShell::SpecialKey key);
 
 public slots:
     void triggerRender();

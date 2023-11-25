@@ -129,30 +129,12 @@ void GlWindow::mouseReleaseEvent(QMouseEvent *ev) {
     });
 }
 
-void GlWindow::keyPressEvent(QKeyEvent *event) {}
+void GlWindow::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_PowerOff)
+        m_cwlcompositor->specialKey(CutieShell::SpecialKey::POWER_PRESS);
+}
 
 void GlWindow::keyReleaseEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_PowerOff) {
-        if (m_cwlcompositor->getTopPanel()) {
-            QWaylandSurface *focusSurface = m_cwlcompositor->defaultSeat()->keyboardFocus();
-
-            m_cwlcompositor->defaultSeat()->setKeyboardFocus(m_cwlcompositor->getTopPanel()->surface());
-            m_cwlcompositor->defaultSeat()->sendFullKeyEvent(event);
-
-            if (focusSurface) {
-                m_cwlcompositor->defaultSeat()->setKeyboardFocus(focusSurface);
-                m_cwlcompositor->defaultSeat()->sendFullKeyEvent(event);
-            }
-        }
-
-        //Can be removed later when the shell handles the power key;
-        if (m_displayOff) {
-            QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayon");
-            m_displayOff = false;
-            this->requestUpdate();
-        } else {
-            QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("displayoff");
-            m_displayOff = true;
-        }
-    }
+    if (event->key() == Qt::Key_PowerOff)
+        m_cwlcompositor->specialKey(CutieShell::SpecialKey::POWER_RELEASE);
 }
