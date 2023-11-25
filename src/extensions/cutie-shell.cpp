@@ -1,10 +1,10 @@
 #include <cutie-shell.h>
 #include <QProcess>
 
-CutieShell::CutieShell(QWaylandCompositor *compositor)
-    :QWaylandCompositorExtensionTemplate(compositor)
-{
-    m_compositor = compositor;
+CutieShell::CutieShell(CwlCompositor *compositor)
+    : QWaylandCompositorExtensionTemplate(compositor)
+    , m_compositor(compositor) {
+    connect(compositor, &CwlCompositor::blurChanged, this, &CutieShell::onBlurChanged);
 }
 
 void CutieShell::initialize()
@@ -27,4 +27,12 @@ void CutieShell::cutie_shell_private_exec_app(Resource *resource, const QString 
     args.append(path);
     if (!QProcess::startDetached("/bin/sh", args))
         qDebug() << "Failed to run";
+}
+
+void CutieShell::onBlurChanged(double blur) {
+    QMultiMapIterator<struct ::wl_client*, Resource*> i(resourceMap());
+	while (i.hasNext()) {
+	    i.next();
+	    send_blur(i.value()->handle, wl_fixed_from_double(blur));
+	}
 }

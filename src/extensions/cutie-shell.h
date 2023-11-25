@@ -6,6 +6,8 @@
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
 
+#include <cutie-wlc.h>
+
 #include "qwayland-server-cutie-shell-private.h"
 
 class CutieShell : public QWaylandCompositorExtensionTemplate<CutieShell>
@@ -14,18 +16,19 @@ class CutieShell : public QWaylandCompositorExtensionTemplate<CutieShell>
 {
 	Q_OBJECT
 public:
-	CutieShell(QWaylandCompositor *compositor);
+	CutieShell(CwlCompositor *compositor);
 	void initialize() override;
 
 signals:
 
 public Q_SLOTS:
+	void onBlurChanged(double blur);
 
 protected:
 	void cutie_shell_private_exec_app(Resource *resource, const QString &path) override;
 
 private:
-	QWaylandCompositor *m_compositor;
+	CwlCompositor *m_compositor;
 
 };
 

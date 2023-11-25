@@ -19,6 +19,12 @@
         <arg name="path" type="string"/>
       </request>
 
+      <event name="blur">
+        <description summary="blur opacity change has been requested">
+          Notification that the wallpaper blur opacity change has been requested.
+        </description>
+        <arg name="opacity" type="fixed" summary="the opacity of the blur"/>
+      </event>
 
     </interface>
 
