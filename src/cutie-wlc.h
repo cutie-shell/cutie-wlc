@@ -7,12 +7,14 @@
 #include <cutie-shell.h>
 #include <QEventPoint>
 #include <QProcess>
+#include <QPropertyAnimation>
 #include <QWaylandXdgDecorationManagerV1>
 
 QT_BEGIN_NAMESPACE
 
 class GlWindow;
 class CwlWorkspace;
+class CutieShell;
 class OutputManagerV1;
 class OutputPowerManagerV1;
 class ScreencopyManagerV1;
@@ -23,6 +25,8 @@ class InputMethodManagerV2;
 class CwlCompositor : public QWaylandCompositor
 {
     Q_OBJECT
+    Q_PROPERTY(double blur READ blur WRITE setBlur NOTIFY blurChanged)
+    Q_PROPERTY(double launcherPostion READ launcherPostion WRITE setLauncherPosition NOTIFY launcherPostionChanged)
 public:
     CwlCompositor(GlWindow *glwindow);
     ~CwlCompositor() override;
@@ -61,10 +65,17 @@ public:
     CwlWorkspace *m_workspace = nullptr;
 
     CwlView* getHomeView();
-    double homeOpen = 1.0;
+
+    double blur();
+    void setBlur(double blur);
+
+    double launcherPostion();
+    void setLauncherPosition(double position);
 
 signals:
     void scaleFactorChanged(int scaleFactor);
+    void blurChanged(double blur);
+    void launcherPostionChanged(double launcherPostion);
 
 public slots:
     void triggerRender();
@@ -95,7 +106,16 @@ private:
     CwlView *m_homeView = nullptr;
     CwlView *m_panelView = nullptr;
 
+    QPropertyAnimation *blurAnim = new QPropertyAnimation(this, "blur", this);
+    QPropertyAnimation *unblurAnim = new QPropertyAnimation(this, "blur", this);
+
+    QPropertyAnimation *launcherCloseAnim = new QPropertyAnimation(this, "launcherPostion", this);
+    QPropertyAnimation *launcherOpenAnim = new QPropertyAnimation(this, "launcherPostion", this);
+
     int m_scaleFactor = 1;
+    double m_blur = 0.0;
+    double m_launcherPosition = 1.0;
+    bool m_homeOpen = true;
     QString launcher = "cutie-launcher";
 };
 

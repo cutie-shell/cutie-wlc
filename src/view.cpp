@@ -135,7 +135,7 @@ void CwlView::onAppIdChanged() {
         layer = OVERLAY;
         m_cwlcompositor->m_launcherView = this;
         m_toplevel->sendMaximized(m_availableGeometry.size());
-        m_cwlcompositor->m_launcherView->setPosition(m_availableGeometry.bottomLeft());
+        m_cwlcompositor->setLauncherPosition(0.0);
     } else {
         layer = TOP;
         if (m_toplevel->parentToplevel()) {

@@ -60,13 +60,9 @@ void GlWindow::paintGL() {
             appId = view->getAppId();
 
         if (appId == "cutie-launcher")
-            if (!m_cwlcompositor->launcherClosed && !m_cwlcompositor->launcherOpened)
-                m_textureBlitter.setOpacity(1.0 -
-                    (m_cwlcompositor->m_launcherView->getPosition().y() *
-                    m_cwlcompositor->scaleFactor() / height()));
-            else if (m_cwlcompositor->launcherOpened)
-                m_textureBlitter.setOpacity(1.0);
-            else m_textureBlitter.setOpacity(0.0);
+            m_textureBlitter.setOpacity(1.0 -
+                (m_cwlcompositor->m_launcherView->getPosition().y() *
+                m_cwlcompositor->scaleFactor() / height()));
         else if (view->isToplevel())
             if (!m_cwlcompositor->launcherClosed)
                 m_textureBlitter.setOpacity(m_cwlcompositor->blur() *
