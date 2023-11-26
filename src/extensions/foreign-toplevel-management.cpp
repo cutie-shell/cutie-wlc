@@ -95,6 +95,10 @@ ForeignToplevelHandleV1::ForeignToplevelHandleV1(wl_client *client, uint32_t id,
 	connect(m_view->getTopLevel(), &QWaylandXdgToplevel::titleChanged, this, &ForeignToplevelHandleV1::onToplevelTitleChanged);
 }
 
+CwlView *ForeignToplevelHandleV1::view() {
+	return m_view;
+}
+
 void ForeignToplevelHandleV1::onToplevelTitleChanged()
 {
 	this->send_title(m_view->getTitle());

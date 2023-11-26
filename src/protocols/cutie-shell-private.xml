@@ -19,6 +19,15 @@
         <arg name="path" type="string"/>
       </request>
 
+      <request name="get_thumbnail" since="1">
+        <description summary="request a window thumbnail for a given toplevel">
+          Allows to retrieve a window thumbnail image for a given foreign
+          toplevel via wlr_screencopy protocol.
+        </description>
+        <arg name="id" type="new_id" interface="zwlr_screencopy_frame_v1"/>
+        <arg name="toplevel" type="object" interface="zwlr_foreign_toplevel_handle_v1"/>
+      </request>
+
       <event name="blur">
         <description summary="blur opacity change has been requested">
           Notification that the wallpaper blur opacity change has been requested.
