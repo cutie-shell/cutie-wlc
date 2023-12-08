@@ -5,6 +5,7 @@
 
 #include <QProcess>
 #include <QDateTime>
+#include <QOpenGLTexture>
 
 CutieShell::CutieShell(CwlCompositor *compositor)
     : QWaylandCompositorExtensionTemplate(compositor)
@@ -36,16 +37,26 @@ void CutieShell::cutie_shell_private_exec_app(Resource *resource, const QString 
 }
 
 void CutieShell::cutie_shell_private_get_thumbnail(Resource *resource, uint32_t id, struct ::wl_resource *toplevel) {
-    ForeignToplevelHandleV1 *toplevelHandle = static_cast<ForeignToplevelHandleV1*>(
-        QtWaylandServer::zwlr_foreign_toplevel_handle_v1::Resource::fromResource(toplevel)->object());
+    auto *r = std::remove_pointer<ForeignToplevelHandleV1 *>::type::Resource::fromResource(toplevel);
+    ForeignToplevelHandleV1 *toplevelHandle = static_cast<ForeignToplevelHandleV1 *>(r->object());
     ScreencopyFrameV1 *frame = new ScreencopyFrameV1(resource->client(), id, resource->version());
-	QImage fb = toplevelHandle->view()->currentBuffer().image();
-	fb.convertTo(QImage::Format_ARGB32_Premultiplied);
-	frame->setFrameBuffer(fb, QDateTime::currentSecsSinceEpoch(), (QDateTime::currentMSecsSinceEpoch()%1000)*1000000);
-	frame->send_buffer(0 /* 0 = ARGB32 */, fb.width(), fb.height(), fb.bytesPerLine());
-	frame->send_buffer_done();
-}
+    if (!toplevelHandle->view()->grabber()) return;
 
+    connect(toplevelHandle->view()->grabber(), &QWaylandSurfaceGrabber::success,
+        [=]( const QImage &fb ) {
+            frame->setFrameBuffer(fb, QDateTime::currentSecsSinceEpoch(), (QDateTime::currentMSecsSinceEpoch()%1000)*1000000);
+            frame->send_buffer(0, fb.width(), fb.height(), fb.bytesPerLine());
+            frame->send_buffer_done();
+            disconnect(toplevelHandle->view()->grabber(), nullptr, nullptr, nullptr);
+        });
+    connect(toplevelHandle->view()->grabber(), &QWaylandSurfaceGrabber::failed,
+        [=]( QWaylandSurfaceGrabber::Error ) {
+            frame->send_buffer_done();
+            disconnect(toplevelHandle->view()->grabber(), nullptr, nullptr, nullptr);
+        });
+        
+    toplevelHandle->view()->grabber()->grab();
+}
 
 void CutieShell::onBlurChanged(double blur) {
     QMultiMapIterator<struct ::wl_client*, Resource*> i(resourceMap());
