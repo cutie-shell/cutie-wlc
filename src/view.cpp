@@ -185,6 +185,12 @@ void CwlView::onDestinationSizeChanged() {
             panelState = PANEL_UNFOLDING;
 }
 
+void CwlView::onRedraw() {
+    m_cwlcompositor->triggerRender();
+    if (isToplevel());
+        m_cwlcompositor->onToplevelDamaged(this);
+}
+
 QWaylandSurfaceGrabber *CwlView::grabber() {
     return m_grabber;
 }

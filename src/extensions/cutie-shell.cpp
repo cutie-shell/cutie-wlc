@@ -73,3 +73,17 @@ void CutieShell::onSpecialKey(SpecialKey key) {
 	    send_key(i.value()->handle, (uint32_t)key);
 	}
 }
+
+void CutieShell::onThumbnailDamage(CwlView *view) {
+	if(resourceMap().isEmpty())
+		return;
+
+	QMultiMapIterator<struct ::wl_client*, Resource*> i(resourceMap());
+	while (i.hasNext()) {
+	    i.next();
+        ForeignToplevelHandleV1 *handle = 
+            m_compositor->foreignTlManagerV1()->handleForView(i.key(), view);
+        if (!handle) continue;
+        send_thumbnail_damage(i.value()->handle, handle->resource()->handle);
+	}
+}

@@ -9,6 +9,7 @@
 #include "qwayland-server-cutie-shell-private.h"
 
 class CwlCompositor;
+class CwlView;
 
 class CutieShell : public QWaylandCompositorExtensionTemplate<CutieShell>
 	, public QtWaylandServer::cutie_shell_private
@@ -29,6 +30,7 @@ signals:
 public Q_SLOTS:
 	void onBlurChanged(double blur);
 	void onSpecialKey(SpecialKey key);
+	void onThumbnailDamage(CwlView *view);
 
 protected:
 	void cutie_shell_private_exec_app(Resource *resource, const QString &path) override;

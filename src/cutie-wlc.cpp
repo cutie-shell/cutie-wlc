@@ -153,7 +153,7 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWayland
         launcherCloseAnim->start();
 
     connect(m_workspace, &CwlWorkspace::availableGeometryChanged, view, &CwlView::onAvailableGeometryChanged);
-    connect(view->surface(), &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
+    connect(view->surface(), &QWaylandSurface::redraw, view, &CwlView::onRedraw);
     connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
 
     m_workspace->addView(view);
@@ -189,7 +189,7 @@ void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurfac
         parent_view->addChildView(view);
         view->setParentView(parent_view);
         qDebug()<<"Popup "<<(uint64_t)view << " parented to "<<(uint64_t)parent_view;
-        connect(view->surface(), &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
+        connect(view->surface(), &QWaylandSurface::redraw, view, &CwlView::onRedraw);
         connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
     } else m_workspace->addView(view);
 }
@@ -212,7 +212,7 @@ void CwlCompositor::onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface)
 
     if(layerSurface->ls_scope == "cutie-panel")
         m_panelView = view;
-    connect(view->surface(), &QWaylandSurface::redraw, this, &CwlCompositor::triggerRender);
+    connect(view->surface(), &QWaylandSurface::redraw, view, &CwlView::onRedraw);
     connect(view, &QWaylandView::surfaceDestroyed, this, &CwlCompositor::viewSurfaceDestroyed);
     connect(view->m_layerSurface, &LayerSurfaceV1::layerSurfaceDataChanged, m_workspace, &CwlWorkspace::onLayerSurfaceDataChanged);
 }
@@ -428,6 +428,10 @@ void CwlCompositor::viewSurfaceDestroyed()
 void CwlCompositor::triggerRender()
 {
     m_glwindow->requestUpdate();
+}
+
+void CwlCompositor::onToplevelDamaged(CwlView *view) {
+    m_cutieshell->onThumbnailDamage(view)
 }
 
 void CwlCompositor::startRender()

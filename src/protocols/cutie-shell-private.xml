@@ -51,6 +51,13 @@
         <entry name="power_release" value="1" summary="the power key released"/>
       </enum>
 
+      <event name="thumbnail_damage">
+        <description summary="indicates that a thumbnail has changed and needs to rerendered">
+          Notification that indicates that a thumbnail has changed and needs to rerendered.
+        </description>
+        <arg name="toplevel" type="object" interface="zwlr_foreign_toplevel_handle_v1"/>
+      </event>
+
     </interface>
 
 </protocol>

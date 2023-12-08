@@ -81,6 +81,7 @@ signals:
 
 public slots:
     void triggerRender();
+    void onToplevelDamaged(CwlView *view);
 
 private slots:
     void onXdgToplevelCreated(QWaylandXdgToplevel *toplevel, QWaylandXdgSurface *xdgSurface);

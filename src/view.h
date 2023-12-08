@@ -106,6 +106,7 @@ private:
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);
+    void onRedraw();
 
 private slots:
     void onAppIdChanged();
