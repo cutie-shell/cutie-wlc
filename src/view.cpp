@@ -4,11 +4,15 @@
 
 CwlView::CwlView(CwlCompositor *cwlcompositor, QRect geometry)
     : m_cwlcompositor(cwlcompositor)
-    , m_availableGeometry(geometry) { }
+    , m_availableGeometry(geometry) {
+    connect(this, &CwlView::surfaceChanged, this, &CwlView::onSurfaceChanged);
+}
 
 CwlView::~CwlView() {
     if(m_isImageBuffer)
         delete m_texture;
+    if (m_grabber)
+        delete m_grabber;
 }
 
 QOpenGLTexture *CwlView::getTexture() {
@@ -178,4 +182,13 @@ void CwlView::onDestinationSizeChanged() {
             panelState = PANEL_FOLDED;
         else if (this->surface()->destinationSize().height() > m_layerSurface->ls_zone)
             panelState = PANEL_UNFOLDING;
+}
+
+QWaylandSurfaceGrabber *CwlView::grabber() {
+    return m_grabber;
+}
+
+void CwlView::onSurfaceChanged() {
+    if (m_grabber) delete m_grabber;
+    m_grabber = new QWaylandSurfaceGrabber(surface());
 }

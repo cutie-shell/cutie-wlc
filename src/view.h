@@ -2,6 +2,7 @@
 
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandSurface>
+#include <QtWaylandCompositor/QWaylandSurfaceGrabber>
 #include <QtWaylandCompositor/QWaylandView>
 #include <QtWaylandCompositor/QWaylandXdgSurface>
 #include <QTimer>
@@ -80,6 +81,8 @@ public:
     TextInputV2 *tiV2 = nullptr;
     TextInputV3 *tiV3 = nullptr;
 
+    QWaylandSurfaceGrabber *grabber();
+
 private:
     friend class CwlCompositor;
     CwlCompositor *m_cwlcompositor = nullptr;
@@ -99,6 +102,7 @@ private:
     bool m_isLayerShell = false;
     bool m_isImageBuffer = false;
     QString m_cwlAppId = "";
+    QWaylandSurfaceGrabber *m_grabber = nullptr;
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);
@@ -108,6 +112,7 @@ private slots:
     void onWindowGeometryChanged();
     void onLayerSurfaceDataChanged(LayerSurfaceV1 *surface);
     void onDestinationSizeChanged();
+    void onSurfaceChanged();
 };
 
 QT_END_NAMESPACE
