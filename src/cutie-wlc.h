@@ -58,6 +58,7 @@ public:
 
     CwlView *getTopPanel();
     GlWindow *glWindow();
+    ForeignToplevelManagerV1 *foreignTlManagerV1();
 
     bool launcherClosed = true;
     bool launcherOpened = false;

@@ -484,3 +484,7 @@ void CwlCompositor::setLauncherPosition(double position) {
     m_launcherView->setPosition(newPos);
     emit launcherPostionChanged(m_launcherPosition);
 }
+
+ForeignToplevelManagerV1 *CwlCompositor::foreignTlManagerV1() {
+    return m_foreignTlManagerV1;
+}
