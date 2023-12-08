@@ -22,6 +22,7 @@ public:
 	ForeignToplevelManagerV1(CwlCompositor *compositor);
 	void initialize() override;
 	void removedToplevel(CwlView *view);
+	ForeignToplevelHandleV1 *handleForView(struct ::wl_client *client, CwlView *view);
 
 public slots:
 	void onToplevelCreated(CwlView *view);
@@ -35,7 +36,7 @@ protected:
 
 private:
 	CwlCompositor *m_compositor;
-	QMap<ForeignToplevelHandleV1 *, CwlView *> m_toplevelMap;
+	QMap<struct ::wl_client *, QList<ForeignToplevelHandleV1 *>> m_toplevelMap;
 
 };
 
