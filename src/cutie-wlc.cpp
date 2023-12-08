@@ -431,7 +431,7 @@ void CwlCompositor::triggerRender()
 }
 
 void CwlCompositor::onToplevelDamaged(CwlView *view) {
-    m_cutieshell->onThumbnailDamage(view)
+    m_cutieshell->onThumbnailDamage(view);
 }
 
 void CwlCompositor::startRender()
