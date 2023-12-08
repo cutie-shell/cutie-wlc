@@ -26,7 +26,8 @@ QOpenGLTexture *CwlView::getTexture() {
             m_texture = currentBuffer().toOpenGLTexture();
         } else {
             m_isImageBuffer = true;
-            m_texture->setData(img);
+            delete m_texture;
+            m_texture = new QOpenGLTexture(img);
         }
     }
     return m_texture;
