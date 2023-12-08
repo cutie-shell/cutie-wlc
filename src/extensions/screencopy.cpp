@@ -67,3 +67,7 @@ void ScreencopyFrameV1::zwlr_screencopy_frame_v1_copy(Resource *resource, struct
 	send_flags(0);
 	send_ready((m_tv_sec >> 32) & 0xFFFFFFFF, m_tv_sec, m_tv_nsec);
 }
+
+void ScreencopyFrameV1::zwlr_screencopy_frame_v1_destroy(Resource *resource) {
+	delete this;
+}

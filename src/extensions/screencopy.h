@@ -40,6 +40,7 @@ public:
 
 protected:
 	void zwlr_screencopy_frame_v1_copy(Resource *resource, struct ::wl_resource *buffer) override;
+	void zwlr_screencopy_frame_v1_destroy(Resource *resource) override;
 
 private:
 	QImage m_frameBuffer;
