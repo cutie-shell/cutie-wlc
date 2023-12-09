@@ -22,7 +22,7 @@ QOpenGLTexture *CwlView::getTexture() {
         else m_origin = QOpenGLTextureBlitter::OriginBottomLeft;
         
         QImage img = currentBuffer().image();
-        if (img.size().width() < 1) {
+        if (img.size().width() < 1 || m_firstRenderCall) {
             m_texture = currentBuffer().toOpenGLTexture();
         } else {
             m_isImageBuffer = true;
@@ -30,6 +30,7 @@ QOpenGLTexture *CwlView::getTexture() {
             m_texture = new QOpenGLTexture(img);
         }
     }
+    m_firstRenderCall = false;
     return m_texture;
 }
 

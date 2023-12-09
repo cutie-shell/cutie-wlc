@@ -103,6 +103,7 @@ private:
     bool m_isImageBuffer = false;
     QString m_cwlAppId = "";
     QWaylandSurfaceGrabber *m_grabber = nullptr;
+    bool m_firstRenderCall = true;
 
 public slots:
     void onAvailableGeometryChanged(QRect geometry);
