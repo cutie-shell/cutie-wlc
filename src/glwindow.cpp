@@ -44,6 +44,9 @@ void GlWindow::paintGL() {
     m_cwlcompositor->startRender();
 
     QOpenGLFunctions *functions = context()->functions();
+    functions->glClearColor(.0f, .0f, .0f, 1.f);
+    functions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     m_currentTarget = GL_TEXTURE_2D;
     m_textureBlitter.bind(m_currentTarget);
     functions->glEnable(GL_BLEND);
