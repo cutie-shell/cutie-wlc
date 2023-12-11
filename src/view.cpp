@@ -171,11 +171,35 @@ void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface) {
     if (surface != m_layerSurface) return;
     if (m_layerSurface->ls_scope == "cutie-panel" && m_layerSurface->size.height() <= m_layerSurface->ls_zone)
         panelState = PANEL_FOLDED;
-    if (CwlViewAnchor::ANCHOR_TOP == m_layerSurface->ls_anchor)
-        this->setPosition(m_availableGeometry.topLeft());
-    else if (CwlViewAnchor::ANCHOR_BOTTOM == m_layerSurface->ls_anchor)
-        this->setPosition(QPointF(m_availableGeometry.bottomLeft().x(),
-                            m_availableGeometry.bottomLeft().y() - m_layerSurface->size.height()));
+
+    QPointF position(
+        m_availableGeometry.center().x() - m_layerSurface->size.width() / 2,
+        m_availableGeometry.center().y() - m_layerSurface->size.height() / 2);
+    
+    if (CwlViewAnchor::ANCHOR_TOP & m_layerSurface->ls_anchor && !(CwlViewAnchor::ANCHOR_BOTTOM & m_layerSurface->ls_anchor))
+        position.setY(m_layerSurface->ls_zone < 0 ? 0 : m_availableGeometry.top());
+    else if (CwlViewAnchor::ANCHOR_BOTTOM & m_layerSurface->ls_anchor && !(CwlViewAnchor::ANCHOR_TOP & m_layerSurface->ls_anchor))
+        position.setY((m_layerSurface->ls_zone < 0
+            ? m_cwlcompositor->m_workspace->outputGeometry().bottom()
+            : m_availableGeometry.bottom())
+            - m_layerSurface->size.height());
+    else if (m_layerSurface->ls_zone < 0)
+        position.setY(
+            m_cwlcompositor->m_workspace->outputGeometry().center().y()
+            - m_layerSurface->size.height() / 2);
+    
+    if (CwlViewAnchor::ANCHOR_LEFT & m_layerSurface->ls_anchor && !(CwlViewAnchor::ANCHOR_RIGHT & m_layerSurface->ls_anchor))
+        position.setX(m_layerSurface->ls_zone < 0 ? 0 : m_availableGeometry.left());
+    else if (CwlViewAnchor::ANCHOR_RIGHT & m_layerSurface->ls_anchor && !(CwlViewAnchor::ANCHOR_LEFT & m_layerSurface->ls_anchor))
+        position.setX((m_layerSurface->ls_zone < 0
+            ? m_cwlcompositor->m_workspace->outputGeometry().right()
+            : m_availableGeometry.right())
+            - m_layerSurface->size.width());
+    else if (m_layerSurface->ls_zone < 0)
+        position.setX(m_cwlcompositor->m_workspace->outputGeometry().center().x()
+            - m_layerSurface->size.width() / 2);
+
+    this->setPosition(position);
 }
 
 void CwlView::onDestinationSizeChanged() {
