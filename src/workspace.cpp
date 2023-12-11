@@ -14,6 +14,10 @@ QRect CwlWorkspace::availableGeometry() {
 	return m_availableGeometry;
 }
 
+QRect CwlWorkspace::outputGeometry() {
+	return m_outputGeometry;
+}
+
 void CwlWorkspace::removeView(CwlView *view) {
 	m_viewLayerList[view->layer].removeAll(view);
 	updateViewList();

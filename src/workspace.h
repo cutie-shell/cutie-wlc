@@ -8,6 +8,7 @@ public:
     CwlWorkspace(CwlCompositor *compositor);
 
     QRect availableGeometry();
+    QRect outputGeometry();
 
     void removeView(CwlView *view);
     void addView(CwlView *view);
