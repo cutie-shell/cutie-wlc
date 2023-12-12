@@ -21,6 +21,7 @@ OutputPowerV1::OutputPowerV1(wl_client *client, uint32_t id, int version)
 void OutputPowerV1::setGlWindow(GlWindow *glWindow) {
 	m_glWindow = glWindow;
 	connect(m_glWindow, &GlWindow::displayOffChanged, this, &OutputPowerV1::onDisplayOffChanged);
+	onDisplayOffChanged(m_glWindow->displayOff());
 }
 
 void OutputPowerV1::onDisplayOffChanged(bool displayOff) {
