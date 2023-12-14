@@ -69,10 +69,12 @@ public slots:
 
 private:
 	CwlCompositor *m_compositor;
+	void sendWithModifier();
 	uint32_t m_serial = 0;
 	QString m_lastString = "";
 	bool m_panelHidden = true;
-
+	bool m_ctrlModifier = false;
+	bool m_altModifier = false;
 };
 
 #endif //INPUTMETHODV2

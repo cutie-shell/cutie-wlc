@@ -2,6 +2,7 @@
 
 #include <view.h>
 #include <QWaylandSeat>
+#include <QKeyEvent>
 
 InputMethodManagerV2::InputMethodManagerV2(CwlCompositor *compositor)
     :QWaylandCompositorExtensionTemplate(compositor)
@@ -153,8 +154,23 @@ void InputMethodV2::zwp_input_method_v2_commit(Resource *resource, uint32_t seri
 		m_compositor->defaultSeat()->sendKeyEvent(Qt::Key_Space, 0);
 		m_lastString = "";
 		return;
+	} else if(m_lastString == "Ctrl"){
+		m_ctrlModifier = !m_ctrlModifier;
+		m_lastString = "";
+		return;
+	} else if(m_lastString == "Alt"){
+		m_altModifier = !m_altModifier;
+		m_lastString = "";
+		return;
 	}
-	
+
+	if(m_ctrlModifier || m_altModifier){
+		sendWithModifier();
+		m_lastString = "";
+		m_ctrlModifier = false;
+		m_altModifier = false;
+		return;
+	}
 
 	CwlView *v = m_compositor->findView(m_compositor->defaultSeat()->keyboardFocus());
 
@@ -198,4 +214,28 @@ void InputMethodV2::onHideInputPanel()
 	this->send_done();
 	m_serial += 1;
 	m_panelHidden = true;
+}
+
+void InputMethodV2::sendWithModifier()
+{
+	QKeySequence qtkey = QKeySequence(m_lastString);
+
+	Qt::KeyboardModifiers modifiers;
+
+	if(m_ctrlModifier)
+		modifiers |= Qt::ControlModifier;
+
+	if(m_altModifier)
+		modifiers |= Qt::AltModifier;
+
+    QKeyEvent *key_press = new QKeyEvent(QEvent::KeyPress, qtkey[0].key(), modifiers);
+    QKeyEvent *key_release = new QKeyEvent(QEvent::KeyRelease, qtkey[0].key(), Qt::KeyboardModifiers{});
+
+    m_compositor->defaultSeat()->sendFullKeyEvent(key_press);
+    m_compositor->defaultSeat()->sendFullKeyEvent(key_release);
+
+	key_press = new QKeyEvent(QEvent::KeyPress, Qt::Key_AltGr, Qt::KeyboardModifiers{});
+	key_release = new QKeyEvent(QEvent::KeyRelease, Qt::Key_AltGr, Qt::KeyboardModifiers{});
+	m_compositor->defaultSeat()->sendFullKeyEvent(key_press);
+	m_compositor->defaultSeat()->sendFullKeyEvent(key_release);
 }
