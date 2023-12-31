@@ -4,7 +4,7 @@
 #include <QTouchEvent>
 
 #define GESTURE_ACCEPT_THRESHOLD 100
-#define GESTURE_OFFSET 20
+#define GESTURE_OFFSET 50
 
 enum EdgeSwipe: uint32_t {
     EDGE_RIGHT      = 0,
