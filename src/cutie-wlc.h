@@ -87,6 +87,7 @@ private slots:
     void onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface);
     void viewSurfaceDestroyed();
     void initInputMethod();
+    void animationValueChanged(const QVariant &value);
     
 private:
     CwlView *findView(const QWaylandSurface *s) const;

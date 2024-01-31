@@ -32,6 +32,11 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
     unblurAnim->setEndValue(0.0);
     launcherOpenAnim->setEndValue(1.0);
     launcherCloseAnim->setEndValue(0.0);
+
+    connect(blurAnim, &QVariantAnimation::valueChanged, this, &CwlCompositor::animationValueChanged);
+    connect(unblurAnim, &QVariantAnimation::valueChanged, this, &CwlCompositor::animationValueChanged);
+    connect(launcherOpenAnim, &QVariantAnimation::valueChanged, this, &CwlCompositor::animationValueChanged);
+    connect(launcherCloseAnim, &QVariantAnimation::valueChanged, this, &CwlCompositor::animationValueChanged);
 }
 
 CwlCompositor::~CwlCompositor()
@@ -172,6 +177,11 @@ void CwlCompositor::initInputMethod()
 
     m_inputMngr = new InputMethodManagerV2(this);
     connect(m_inputMngr, &InputMethodManagerV2::imDestroyed, this, &CwlCompositor::initInputMethod);
+}
+
+void CwlCompositor::animationValueChanged(const QVariant &value)
+{
+    triggerRender();
 }
 
 void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup, QWaylandXdgSurface *xdgSurface)
