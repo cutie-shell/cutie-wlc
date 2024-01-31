@@ -111,13 +111,18 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
     for (auto it = getViews().crbegin(); it != getViews().crend(); ++it) {
         CwlView *view = *it;
         QRectF geom(view->getPosition(), view->size() * scaleFactor());
-        if (geom.contains(position)){
+        QPoint checkPoint = position;
+
+        if(view->getAppId() == "cutie-keyboard")
+            checkPoint = position / scaleFactor();
+
+        if (geom.contains(checkPoint)){
             if(view->getChildViews().size()>0){
                 for (CwlView *childView : view->getChildViews()) {
                     if(!childView->isToplevel())
                         continue;
                     QRectF geom(childView->getPosition(), childView->size() * scaleFactor());
-                    if (geom.contains(position)){
+                    if (geom.contains(checkPoint)){
                         ret = childView;
                         return ret;
                     }
