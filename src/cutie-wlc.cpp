@@ -382,8 +382,8 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
             setLauncherPosition(qMin(1.0, 1.0
                 - (ev->points().first().globalPosition().y()
                 / scaleFactor() 
-                - m_workspace->availableGeometry().y())
-                / m_workspace->availableGeometry().height()));
+                - m_workspace->outputGeometry().y())
+                / m_workspace->outputGeometry().height()));
             triggerRender();
             return true;
         }
@@ -422,8 +422,8 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
                 setLauncherPosition(qMin(1.0, 1.0
                     - (ev->points().first().globalPosition().y()
                     / scaleFactor() 
-                    - m_workspace->availableGeometry().y())
-                    / m_workspace->availableGeometry().height()));
+                    - m_workspace->outputGeometry().y())
+                    / m_workspace->outputGeometry().height()));
                 triggerRender();
             }
 
@@ -520,8 +520,10 @@ void CwlCompositor::setLauncherPosition(double position) {
     if (m_launcherPosition == position) return;
     m_launcherPosition = position;
     QPointF newPos = m_launcherView->getPosition();
-    newPos.setY((1.0 - m_launcherPosition) * m_workspace->availableGeometry().height()
-        + m_workspace->availableGeometry().y());
+    newPos.setY((1.0 - m_launcherPosition) * m_workspace->outputGeometry().height()
+        + m_workspace->outputGeometry().y());
+    if(newPos.y() < m_workspace->availableGeometry().y() - m_workspace->outputGeometry().y())
+        newPos.setY(m_workspace->availableGeometry().y() - m_workspace->outputGeometry().y());
     if (m_homeOpen) setBlur(m_launcherPosition);
     m_launcherView->setPosition(newPos);
     emit launcherPostionChanged(m_launcherPosition);
