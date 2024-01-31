@@ -239,3 +239,7 @@ void InputMethodV2::sendWithModifier()
 	m_compositor->defaultSeat()->sendFullKeyEvent(key_press);
 	m_compositor->defaultSeat()->sendFullKeyEvent(key_release);
 }
+
+bool InputMethodV2::isPanelHidden() {
+	return m_panelHidden;
+}

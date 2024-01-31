@@ -16,6 +16,9 @@ public:
     void setCompositor(CwlCompositor *cwlcompositor);
     bool displayOff();
     void setDisplayOff(bool displayOff);
+    inline CwlGesture *gesture() {
+        return m_gesture;
+    }
 
 signals:
     void glReady();

@@ -10,24 +10,22 @@ CwlGesture::CwlGesture(CwlCompositor *compositor,  QSize screenSize)
 CwlGesture::~CwlGesture() {}
 
 void CwlGesture::handlePointerEvent(
-	QPointerEvent *ev, std::function<void(QPointerEvent*)> next) {
-	QPointF point;
-
+	QPointerEvent *ev, std::function<void(QList<QEventPoint>)> next) {
 	if (ev->points().size() != 1) {
 		corner = CORNER_UNDEFINED;
 		edge = EDGE_UNDEFINED;
-		next(ev);
+		next(ev->points());
 		return;
 	}
 
 	bool handled = false;
 
 	if (ev->isBeginEvent()) {
-		point = ev->points().first().globalPosition();
+		m_startingPoint = ev->points().first().globalPosition();
 		for (uint32_t e = 0; e < EDGE_UNDEFINED; ++e)
-			if (m_edges[e].contains(point)) edge = (EdgeSwipe)e;
+			if (m_edges[e].contains(m_startingPoint)) edge = (EdgeSwipe)e;
 		for (uint32_t c = 0; c < CORNER_UNDEFINED; ++c)
-			if (m_corners[c].contains(point)) corner = (CornerSwipe)c;
+			if (m_corners[c].contains(m_startingPoint)) corner = (CornerSwipe)c;
 
 		if (edge < EDGE_UNDEFINED || corner < CORNER_UNDEFINED)
 			handled = m_cwlcompositor->handleGesture(ev, edge, corner);
@@ -42,13 +40,37 @@ void CwlGesture::handlePointerEvent(
 			handled = m_cwlcompositor->handleGesture(ev, edge, corner);
 			corner = CORNER_UNDEFINED;
 			edge = EDGE_UNDEFINED;
+
+			if (m_gestureConfirmed) m_eventQueue.clear();
+			else {
+				while (!m_eventQueue.isEmpty()) {
+					auto oldEvent = m_eventQueue.pop();
+					oldEvent.second(oldEvent.first);
+				}
+				next(ev->points());
+			}
+
+			m_gestureConfirmed = false;
+			return;
 		}
 
-	if (!handled) {
+	if (handled) {
+		m_eventQueue.push(QPair<QList<QEventPoint>, std::function<void(QList<QEventPoint>)>>(
+			ev->points(), next
+		));
+	} else {
 		corner = CORNER_UNDEFINED;
 		edge = EDGE_UNDEFINED;
-		next(ev);
+		next(ev->points());
 	}
+}
+
+void CwlGesture::confirmGesture() {
+	m_gestureConfirmed = true;
+}
+
+QPointF CwlGesture::startingPoint() {
+	return m_startingPoint;
 }
 
 void CwlGesture::updateGestureRect() {

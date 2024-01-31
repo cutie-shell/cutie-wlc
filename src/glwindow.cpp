@@ -109,26 +109,28 @@ void GlWindow::renderView(CwlView *view) {
 }
 
 void GlWindow::touchEvent(QTouchEvent *ev) {
-    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
-        m_cwlcompositor->handleTouchEvent(static_cast<QTouchEvent*>(ev));
+    m_gesture->handlePointerEvent(ev, [this](QList<QEventPoint> points){
+        m_cwlcompositor->handleTouchEvent(points);
     });
 }
 
 void GlWindow::mouseMoveEvent(QMouseEvent *ev) {
-    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
-        m_cwlcompositor->handleMouseMoveEvent(static_cast<QMouseEvent*>(ev));
+    m_gesture->handlePointerEvent(ev, [this](QList<QEventPoint> points){
+        m_cwlcompositor->handleMouseMoveEvent(points);
     });
 }
 
 void GlWindow::mousePressEvent(QMouseEvent *ev) {
-    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
-        m_cwlcompositor->handleMousePressEvent(static_cast<QMouseEvent*>(ev));
+    Qt::MouseButton btn = ev->button();
+    m_gesture->handlePointerEvent(ev, [this, btn](QList<QEventPoint> points){
+        m_cwlcompositor->handleMousePressEvent(points, btn);
     });
 }
 
 void GlWindow::mouseReleaseEvent(QMouseEvent *ev) {
-    m_gesture->handlePointerEvent(ev, [this](QPointerEvent* ev){
-        m_cwlcompositor->handleMouseReleaseEvent(static_cast<QMouseEvent*>(ev));
+    Qt::MouseButton btn = ev->button();
+    m_gesture->handlePointerEvent(ev, [this, btn](QList<QEventPoint> points){
+        m_cwlcompositor->handleMouseReleaseEvent(points, btn);
     });
 }
 

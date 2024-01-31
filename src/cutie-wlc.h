@@ -38,12 +38,10 @@ public:
     CwlView* findView(QWaylandSurface *s);
     void raise(CwlView *cwlview);
 
-    void handleTouchEvent(QTouchEvent *ev);
-    void handleTouchPointEvent(QEventPoint *evP);
-
-    void handleMouseMoveEvent(QMouseEvent *ev);
-    void handleMousePressEvent(QMouseEvent *ev);
-    void handleMouseReleaseEvent(QMouseEvent *ev);
+    void handleTouchEvent(QList<QEventPoint> points);
+    void handleMouseMoveEvent(QList<QEventPoint> points);
+    void handleMousePressEvent(QList<QEventPoint> points, Qt::MouseButton btn);
+    void handleMouseReleaseEvent(QList<QEventPoint> points, Qt::MouseButton btn);
 
     bool handleGesture(QPointerEvent *ev, int edge, int corner);
 

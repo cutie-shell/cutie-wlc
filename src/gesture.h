@@ -2,8 +2,12 @@
 
 #include <cutie-wlc.h>
 #include <QTouchEvent>
+#include <QStack>
 
-#define GESTURE_ACCEPT_THRESHOLD 100
+// Minimum offset to consider the movement a gesture (either accepted or canceled)
+#define GESTURE_MINIMUM_THRESHOLD 10
+// Minimum offset to consider a gesture accepted.
+#define GESTURE_ACCEPT_THRESHOLD 200
 #define GESTURE_OFFSET 50
 
 enum EdgeSwipe: uint32_t {
@@ -28,7 +32,9 @@ public:
     CwlGesture(CwlCompositor *compositor, QSize screenSize);
     ~CwlGesture();
 
-    void handlePointerEvent(QPointerEvent *ev, std::function<void(QPointerEvent*)> next);
+    void handlePointerEvent(QPointerEvent *ev, std::function<void(QList<QEventPoint>)> next);
+    void confirmGesture();
+    QPointF startingPoint();
 
 private:
     void updateGestureRect();
@@ -40,6 +46,9 @@ private:
     EdgeSwipe edge = EDGE_UNDEFINED;
     CornerSwipe corner = CORNER_UNDEFINED;
     QSize m_screenSize;
+    QPointF m_startingPoint;
+    bool m_gestureConfirmed = false;
+    QStack<QPair<QList<QEventPoint>, std::function<void(QList<QEventPoint>)>>> m_eventQueue;
 
     QRectF m_edges[EdgeSwipe::EDGE_UNDEFINED];
     QRectF m_corners[CornerSwipe::CORNER_UNDEFINED];

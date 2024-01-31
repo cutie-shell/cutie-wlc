@@ -248,58 +248,62 @@ void CwlCompositor::raise(CwlView *view)
     triggerRender();
 }
 
-void CwlCompositor::handleTouchEvent(QTouchEvent *ev)
+void CwlCompositor::handleTouchEvent(QList<QEventPoint> points)
 {
     CwlView *view = m_launcherView;
-    if (!launcherOpened) view = viewAt(ev->points().first().globalPosition().toPoint());
+    if (!launcherOpened) view = viewAt(points.first().globalPosition().toPoint());
     if(view == nullptr)
         return;
-    foreach (QEventPoint point, ev->points()) {
-        seatFor(ev)->touch()->sendTouchPointEvent(
+    foreach (QEventPoint point, points) {
+        defaultSeat()->touch()->sendTouchPointEvent(
             view->surface(),
             point.id(),
             point.position() / scaleFactor() - view->getPosition(),
             (Qt::TouchPointState) point.state()
         );
     }
-    seatFor(ev)->touch()->sendFrameEvent(view->surface()->client()); 
+    defaultSeat()->touch()->sendFrameEvent(view->surface()->client()); 
 }
 
-void CwlCompositor::handleMouseMoveEvent(QMouseEvent *ev)
+void CwlCompositor::handleMouseMoveEvent(QList<QEventPoint> points)
 {
     CwlView *view = m_launcherView;
-    if (!launcherOpened) view = viewAt(ev->position().toPoint());
+    if (!launcherOpened) view = viewAt(points.first().position().toPoint());
     if(view == nullptr)
         return;
-    seatFor(ev)->sendMouseMoveEvent(
+    defaultSeat()->sendMouseMoveEvent(
         view,
-        ev->position().toPoint() / scaleFactor() - view->getPosition()
+        points.first().position().toPoint() / scaleFactor() - view->getPosition()
     );
 }
 
-void CwlCompositor::handleMousePressEvent(QMouseEvent *ev)
+void CwlCompositor::handleMousePressEvent(QList<QEventPoint> points, Qt::MouseButton btn)
 {
-    handleMouseMoveEvent(ev);
-    seatFor(ev)->sendMousePressEvent(ev->button());
+    handleMouseMoveEvent(points);
+    defaultSeat()->sendMousePressEvent(btn);
 }
 
-void CwlCompositor::handleMouseReleaseEvent(QMouseEvent *ev)
+void CwlCompositor::handleMouseReleaseEvent(QList<QEventPoint> points, Qt::MouseButton btn)
 {
-    handleMouseMoveEvent(ev);
-    seatFor(ev)->sendMouseReleaseEvent(ev->button());
+    handleMouseMoveEvent(points);
+    defaultSeat()->sendMouseReleaseEvent(btn);
 }
 
 bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
-{
-    if(m_inputMngr->getInputMethod() != nullptr)
-        m_inputMngr->getInputMethod()->hidePanel();
-    
+{    
     if (edge == EDGE_LEFT) {
         if(ev->isBeginEvent()){
             return launcherClosed && (blur() != 0.0);
         }
 
         if(ev->isUpdateEvent()){
+            if ((ev->points().first().globalPosition()
+                - m_glwindow->gesture()->startingPoint()).x()
+                > GESTURE_MINIMUM_THRESHOLD) {
+                m_glwindow->gesture()->confirmGesture();
+                if(m_inputMngr->getInputMethod() != nullptr)
+                    m_inputMngr->getInputMethod()->hidePanel();
+            }
             setBlur(1.0 - 1.0 * ev->points().first().globalPosition().x() / m_glwindow->width());
             triggerRender();
             return true;
@@ -323,6 +327,13 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
         }
 
         if(ev->isUpdateEvent()){
+            if ((- ev->points().first().globalPosition()
+                + m_glwindow->gesture()->startingPoint()).x()
+                > GESTURE_MINIMUM_THRESHOLD) {
+                m_glwindow->gesture()->confirmGesture();
+                if(m_inputMngr->getInputMethod() != nullptr)
+                    m_inputMngr->getInputMethod()->hidePanel();
+            }
             setBlur(1.0 * ev->points().first().globalPosition().x() / m_glwindow->width());
             triggerRender();
             return true;
@@ -342,11 +353,16 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
 
     if(edge == EDGE_BOTTOM){
         if(ev->isBeginEvent() || ev->isUpdateEvent()){
-            if(m_panelView != nullptr){
-                if(m_panelView->panelState > 1){
+            if (m_panelView != nullptr)
+                if(m_panelView->panelState > 1)
                     return false;
-                }
-            }
+            if (m_inputMngr->getInputMethod() != nullptr)
+                if (!m_inputMngr->getInputMethod()->isPanelHidden())
+                    return false;
+            if ((- ev->points().first().globalPosition()
+                + m_glwindow->gesture()->startingPoint()).y()
+                > GESTURE_MINIMUM_THRESHOLD)
+                m_glwindow->gesture()->confirmGesture();
             launcherClosed = false;
             setLauncherPosition(qMin(1.0, 1.0
                 - (ev->points().first().globalPosition().y()
@@ -380,6 +396,13 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
     if(edge == EDGE_TOP){
         if(!launcherClosed){
             if(ev->isBeginEvent() || ev->isUpdateEvent()){
+                if ((ev->points().first().globalPosition()
+                - m_glwindow->gesture()->startingPoint()).y()
+                > GESTURE_MINIMUM_THRESHOLD) {
+                    m_glwindow->gesture()->confirmGesture();
+                    if(m_inputMngr->getInputMethod() != nullptr)
+                        m_inputMngr->getInputMethod()->hidePanel();
+                }
                 launcherOpened = false;
                 setLauncherPosition(qMin(1.0, 1.0
                     - (ev->points().first().globalPosition().y()
