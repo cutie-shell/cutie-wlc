@@ -45,6 +45,7 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_get_input_method(Resource
 
 		connect(m_textinputV2, &TextInputManagerV2::showInputPanel, m_inputmethod, &InputMethodV2::onShowInputPanel);
 		connect(m_textinputV2, &TextInputManagerV2::hideInputPanel, m_inputmethod, &InputMethodV2::onHideInputPanel);
+		connect(m_textinputV2, &TextInputManagerV2::contentTypeChanged, m_inputmethod, &InputMethodV2::onContentTypeChanged);
 
 		connect(m_textinputV3, &TextInputManagerV3::showInputPanel, m_inputmethod, &InputMethodV2::onShowInputPanel);
 		connect(m_textinputV3, &TextInputManagerV3::hideInputPanel, m_inputmethod, &InputMethodV2::onHideInputPanel);
@@ -214,6 +215,13 @@ void InputMethodV2::onHideInputPanel()
 	this->send_done();
 	m_serial += 1;
 	m_panelHidden = true;
+}
+
+void InputMethodV2::onContentTypeChanged(uint32_t purpose)
+{
+	this->send_content_type(0, purpose);
+	this->send_done();
+	m_serial += 1;
 }
 
 void InputMethodV2::sendWithModifier()

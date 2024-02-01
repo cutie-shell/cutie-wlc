@@ -26,6 +26,7 @@ void TextInputManagerV2::zwp_text_input_manager_v2_get_text_input(Resource *reso
 
 	connect(textInput, &TextInputV2::showInputPanel, this, &TextInputManagerV2::showInputPanel);
 	connect(textInput, &TextInputV2::hideInputPanel, this, &TextInputManagerV2::hideInputPanel);
+	connect(textInput, &TextInputV2::contentTypeChanged, this, &TextInputManagerV2::contentTypeChanged);
 
 	if(m_compositor->defaultSeat()->keyboardFocus() != nullptr){
         surface = m_compositor->defaultSeat()->keyboardFocus();
@@ -49,15 +50,21 @@ void TextInputV2::zwp_text_input_v2_show_input_panel(Resource *resource)
         surface = m_compositor->defaultSeat()->keyboardFocus();
         if(surface->client()->client() == resource->client()){
         	m_compositor->findView(surface)->tiV2 = this;
+        	if(m_compositor->findView(surface)->getAppId() == "cutie-phone")
+        		emit contentTypeChanged(4);
         }
     }
-
 	emit showInputPanel();
 }
 
 void TextInputV2::zwp_text_input_v2_hide_input_panel(Resource *resource)
 {
 	emit hideInputPanel();
+}
+
+void TextInputV2::zwp_text_input_v2_set_content_type(Resource *resource, uint32_t hint, uint32_t purpose)
+{
+	qDebug()<<"TEXTINPUT HINT PURPOSE"<<hint<<purpose;
 }
 
 void TextInputV2::zwp_text_input_v2_destroy_resource(Resource *resource)

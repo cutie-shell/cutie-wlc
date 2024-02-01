@@ -25,6 +25,7 @@ public:
 signals:
 	void showInputPanel();
 	void hideInputPanel();
+	void contentTypeChanged(uint32_t purpose);
 		
 protected:
 	void zwp_text_input_manager_v2_get_text_input(Resource *resource, uint32_t id, struct ::wl_resource *seat) override;
@@ -44,10 +45,12 @@ public:
 signals:
 	void showInputPanel();
 	void hideInputPanel();
+	void contentTypeChanged(uint32_t purpose);
 
 protected:
 	void zwp_text_input_v2_show_input_panel(Resource *resource) override;
 	void zwp_text_input_v2_hide_input_panel(Resource *resource) override;
+	void zwp_text_input_v2_set_content_type(Resource *resource, uint32_t hint, uint32_t purpose) override;
 	void zwp_text_input_v2_destroy_resource(Resource *resource) override;
 
 private:

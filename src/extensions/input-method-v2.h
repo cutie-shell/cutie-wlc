@@ -67,6 +67,7 @@ protected:
 public slots:
 	void onShowInputPanel();
 	void onHideInputPanel();
+	void onContentTypeChanged(uint32_t purpose);
 
 private:
 	CwlCompositor *m_compositor;
