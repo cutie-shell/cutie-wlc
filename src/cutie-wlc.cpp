@@ -320,7 +320,6 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
                     m_inputMngr->getInputMethod()->hidePanel();
             }
             setBlur(1.0 - 1.0 * ev->points().first().globalPosition().x() / m_glwindow->width());
-            triggerRender();
             return true;
         }
 
@@ -331,7 +330,6 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
             } 
             blurAnim->start();
             m_homeOpen = false;
-            triggerRender();
             return true;
         }
     }
@@ -350,7 +348,6 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
                     m_inputMngr->getInputMethod()->hidePanel();
             }
             setBlur(1.0 * ev->points().first().globalPosition().x() / m_glwindow->width());
-            triggerRender();
             return true;
         }
 
@@ -361,7 +358,6 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
             } 
             blurAnim->start();
             m_homeOpen = false;
-            triggerRender();
             return true;
         }
     }
@@ -384,7 +380,6 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
                 / scaleFactor() 
                 - m_workspace->outputGeometry().y())
                 / m_workspace->outputGeometry().height()));
-            triggerRender();
             return true;
         }
 
@@ -397,12 +392,10 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
             if(ev->points().first().globalPosition().y() < m_glwindow->height() * 0.8){
                 launcherOpenAnim->start();
                 launcherOpened = true;
-                triggerRender();
             } else {
                 launcherClosed = true;
                 launcherOpened = false;
                 launcherCloseAnim->start();
-                triggerRender();
             }
             return true;
         }
@@ -424,22 +417,18 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
                     / scaleFactor() 
                     - m_workspace->outputGeometry().y())
                     / m_workspace->outputGeometry().height()));
-                triggerRender();
             }
 
             if(ev->isEndEvent()){
                 if(ev->points().first().globalPosition().y() < m_glwindow->height() * 0.2){
                     launcherOpenAnim->start();
                     launcherOpened = true;
-                    triggerRender();
                 } else {
                     launcherClosed = true;
                     launcherOpened = false;
                     launcherCloseAnim->start();
-                    triggerRender();
                 }
             }
-
             return true;
         }
     }
