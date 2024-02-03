@@ -48,10 +48,17 @@ signals:
 	void contentTypeChanged(uint32_t purpose);
 
 protected:
+	void zwp_text_input_v2_destroy(Resource *resource) override;
+	void zwp_text_input_v2_destroy_resource(Resource *resource) override;
+	void zwp_text_input_v2_enable(Resource *resource, struct ::wl_resource *surface) override;
+	void zwp_text_input_v2_disable(Resource *resource, struct ::wl_resource *surface) override;
 	void zwp_text_input_v2_show_input_panel(Resource *resource) override;
 	void zwp_text_input_v2_hide_input_panel(Resource *resource) override;
+	void zwp_text_input_v2_set_surrounding_text(Resource *resource, const QString &text, int32_t cursor, int32_t anchor) override;
 	void zwp_text_input_v2_set_content_type(Resource *resource, uint32_t hint, uint32_t purpose) override;
-	void zwp_text_input_v2_destroy_resource(Resource *resource) override;
+	void zwp_text_input_v2_set_cursor_rectangle(Resource *resource, int32_t x, int32_t y, int32_t width, int32_t height) override;
+	void zwp_text_input_v2_set_preferred_language(Resource *resource, const QString &language) override;
+	void zwp_text_input_v2_update_state(Resource *resource, uint32_t serial, uint32_t reason) override;
 
 private:
 	CwlCompositor *m_compositor;
