@@ -184,9 +184,6 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
 		&CwlView::onRedraw);
 	connect(view, &QWaylandView::surfaceDestroyed, this,
 		&CwlCompositor::viewSurfaceDestroyed);
-
-	m_workspace->addView(view);
-	emit m_workspace->toplevelCreated(view);
 }
 
 void CwlCompositor::initInputMethod()

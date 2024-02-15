@@ -192,6 +192,9 @@ void CwlView::onAppIdChanged()
 				&QWaylandXdgSurface::windowGeometryChanged,
 				this, &CwlView::onWindowGeometryChanged);
 		} else {
+			m_cwlcompositor->m_workspace->addView(this);
+			emit m_cwlcompositor->m_workspace->toplevelCreated(
+				this);
 			m_toplevel->sendMaximized(m_availableGeometry.size());
 			this->setPosition(m_availableGeometry.topLeft());
 			m_cwlcompositor->raise(this);
