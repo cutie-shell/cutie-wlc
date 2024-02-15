@@ -88,7 +88,7 @@ void CwlView::onAvailableGeometryChanged(QRect geometry)
 {
 	m_availableGeometry = geometry;
 	if (layer == TOP) {
-		if (isToplevel()) {
+		if (isToplevel() && !parentView()) {
 			setPosition(geometry.topLeft());
 			m_toplevel->sendMaximized(geometry.size());
 		} else if (m_toplevel->xdgSurface()->popup()) {
@@ -185,9 +185,7 @@ void CwlView::onAppIdChanged()
 					->surface());
 			parent_view->addChildView(this);
 			this->setParentView(parent_view);
-			connect(m_toplevel->parentToplevel()->xdgSurface(),
-				&QWaylandXdgSurface::windowGeometryChanged,
-				this, &CwlView::onWindowGeometryChanged);
+			onWindowGeometryChanged();
 			connect(m_toplevel->xdgSurface(),
 				&QWaylandXdgSurface::windowGeometryChanged,
 				this, &CwlView::onWindowGeometryChanged);
