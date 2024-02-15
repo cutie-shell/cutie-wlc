@@ -11,35 +11,37 @@
 
 class LayerSurfaceV1;
 
-class LayerShellV1 : public QWaylandCompositorExtensionTemplate<LayerShellV1>
-	, public QtWaylandServer::zwlr_layer_shell_v1
+class LayerShellV1 : public QWaylandCompositorExtensionTemplate<LayerShellV1>,
+		     public QtWaylandServer::zwlr_layer_shell_v1
 
 {
 	Q_OBJECT
-public:
+    public:
 	LayerShellV1(QWaylandCompositor *compositor);
 	void initialize() override;
 
-signals:
+    signals:
 	void layerShellSurfaceCreated(LayerSurfaceV1 *layerSurface);
 
 	void layerShellSurfaceTopCreated(struct ::wl_resource *surface);
 
-public Q_SLOTS:
+    public Q_SLOTS:
 
-protected:
-	void zwlr_layer_shell_v1_get_layer_surface(Resource *resource, uint32_t id, struct ::wl_resource *surface, struct ::wl_resource *output, uint32_t layer, const QString &scope) override;
+    protected:
+	void zwlr_layer_shell_v1_get_layer_surface(
+		Resource *resource, uint32_t id, struct ::wl_resource *surface,
+		struct ::wl_resource *output, uint32_t layer,
+		const QString &scope) override;
 
-private:
+    private:
 	QWaylandCompositor *m_compositor;
-
 };
 
-class  LayerSurfaceV1 : public QWaylandCompositorExtensionTemplate<LayerSurfaceV1>
-	, public QtWaylandServer::zwlr_layer_surface_v1
-{
+class LayerSurfaceV1
+	: public QWaylandCompositorExtensionTemplate<LayerSurfaceV1>,
+	  public QtWaylandServer::zwlr_layer_surface_v1 {
 	Q_OBJECT
-public:
+    public:
 	LayerSurfaceV1(struct ::wl_client *client, uint32_t id, int version);
 	QWaylandSurface *surface = nullptr;
 
@@ -53,23 +55,31 @@ public:
 	QString ls_scope;
 	bool initialized = false;
 
-signals:
+    signals:
 	void layerSurfaceDestroyed(QWaylandSurface *surface);
 	void layerSurfaceDataChanged(LayerSurfaceV1 *surface);
 
-private:
-
-protected:
-	void zwlr_layer_surface_v1_set_size(Resource *resource, uint32_t width, uint32_t height) override;
-	void zwlr_layer_surface_v1_set_anchor(Resource *resource, uint32_t anchor) override;
-	void zwlr_layer_surface_v1_set_exclusive_zone(Resource *resource, int32_t zone) override;
-	void zwlr_layer_surface_v1_set_margin(Resource *resource, int32_t top, int32_t right, int32_t bottom, int32_t left) override;
-	void zwlr_layer_surface_v1_set_keyboard_interactivity(Resource *resource, uint32_t keyboard_interactivity) override;
-	void zwlr_layer_surface_v1_get_popup(Resource *resource, struct ::wl_resource *popup) override;
-	void zwlr_layer_surface_v1_ack_configure(Resource *resource, uint32_t serial) override;
+    private:
+    protected:
+	void zwlr_layer_surface_v1_set_size(Resource *resource, uint32_t width,
+					    uint32_t height) override;
+	void zwlr_layer_surface_v1_set_anchor(Resource *resource,
+					      uint32_t anchor) override;
+	void zwlr_layer_surface_v1_set_exclusive_zone(Resource *resource,
+						      int32_t zone) override;
+	void zwlr_layer_surface_v1_set_margin(Resource *resource, int32_t top,
+					      int32_t right, int32_t bottom,
+					      int32_t left) override;
+	void zwlr_layer_surface_v1_set_keyboard_interactivity(
+		Resource *resource, uint32_t keyboard_interactivity) override;
+	void
+	zwlr_layer_surface_v1_get_popup(Resource *resource,
+					struct ::wl_resource *popup) override;
+	void zwlr_layer_surface_v1_ack_configure(Resource *resource,
+						 uint32_t serial) override;
 	void zwlr_layer_surface_v1_destroy(Resource *resource) override;
-	void zwlr_layer_surface_v1_set_layer(Resource *resource, uint32_t layer) override;
+	void zwlr_layer_surface_v1_set_layer(Resource *resource,
+					     uint32_t layer) override;
 };
-
 
 #endif //LAYER_SHELL
