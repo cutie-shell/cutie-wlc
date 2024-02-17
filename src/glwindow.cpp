@@ -36,10 +36,12 @@ void GlWindow::setDisplayOff(bool displayOff)
 	if (m_displayOff) {
 		QGuiApplication::platformNativeInterface()
 			->nativeResourceForIntegration("displayon");
-		this->requestUpdate();
-	} else
+		requestUpdate();
+	} else {
 		QGuiApplication::platformNativeInterface()
 			->nativeResourceForIntegration("displayoff");
+		m_cwlcompositor->setLauncherPosition(0.0);
+	}
 	m_displayOff = displayOff;
 	emit displayOffChanged(m_displayOff);
 }
