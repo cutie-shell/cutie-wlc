@@ -60,8 +60,6 @@ class CwlCompositor : public QWaylandCompositor {
 	GlWindow *glWindow();
 	ForeignToplevelManagerV1 *foreignTlManagerV1();
 
-	bool launcherClosed = true;
-	bool launcherOpened = false;
 	CwlView *m_launcherView = nullptr;
 	CwlWorkspace *m_workspace = nullptr;
 
