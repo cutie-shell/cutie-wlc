@@ -179,16 +179,17 @@ void CwlView::onAppIdChanged()
 	} else {
 		layer = TOP;
 		if (m_toplevel->parentToplevel()) {
-			CwlView *parent_view = m_cwlcompositor->findView(
+			CwlView *parent_view = m_cwlcompositor->findTlView(
 				m_toplevel->parentToplevel()
 					->xdgSurface()
 					->surface());
 			parent_view->addChildView(this);
 			this->setParentView(parent_view);
-			onWindowGeometryChanged();
+			m_toplevel->sendMaximized(m_availableGeometry.size());
 			connect(m_toplevel->xdgSurface(),
 				&QWaylandXdgSurface::windowGeometryChanged,
 				this, &CwlView::onWindowGeometryChanged);
+			m_cwlcompositor->raise(parent_view);
 		} else {
 			m_cwlcompositor->m_workspace->addView(this);
 			emit m_cwlcompositor->m_workspace->toplevelCreated(

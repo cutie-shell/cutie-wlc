@@ -139,6 +139,7 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
 				     view->getChildViews()) {
 					if (!childView->isToplevel())
 						continue;
+					checkPoint = position / scaleFactor();
 					QRectF geom(childView->getPosition(),
 						    childView->size() *
 							    scaleFactor());
@@ -158,6 +159,15 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
 CwlView *CwlCompositor::findView(QWaylandSurface *s)
 {
 	for (CwlView *view : getViews()) {
+		if (view->surface() == s)
+			return view;
+	}
+	return nullptr;
+}
+
+CwlView *CwlCompositor::findTlView(QWaylandSurface *s)
+{
+	for (CwlView *view : m_workspace->getToplevelViews()) {
 		if (view->surface() == s)
 			return view;
 	}

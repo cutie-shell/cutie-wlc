@@ -36,6 +36,7 @@ class CwlCompositor : public QWaylandCompositor {
 	QList<CwlView *> getToplevelViews();
 	CwlView *viewAt(const QPoint &position);
 	CwlView *findView(QWaylandSurface *s);
+	CwlView *findTlView(QWaylandSurface *s);
 	void raise(CwlView *cwlview);
 
 	void handleTouchEvent(QList<QEventPoint> points);
