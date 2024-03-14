@@ -105,8 +105,6 @@ void GlWindow::paintGL()
 			continue;
 
 		renderView(view);
-		for (CwlView *childView : view->getChildViews())
-			renderView(childView);
 	}
 
 	m_textureBlitter.release();
@@ -136,6 +134,11 @@ void GlWindow::renderView(CwlView *view)
 				targetRect, QRect(QPoint(), size()));
 		m_textureBlitter.blit(texture->textureId(), targetTransform,
 				      surfaceOrigin);
+	}
+
+	if(view->getChildViews().size() > 0) {
+		for (CwlView *childView : view->getChildViews())
+			renderView(childView);
 	}
 }
 

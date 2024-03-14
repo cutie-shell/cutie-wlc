@@ -176,11 +176,26 @@ CwlView *CwlCompositor::findView(QWaylandSurface *s)
 
 CwlView *CwlCompositor::findTlView(QWaylandSurface *s)
 {
+	CwlView *ret = nullptr;
 	for (CwlView *view : m_workspace->getToplevelViews()) {
 		if (view->surface() == s)
-			return view;
+			ret = view;
+		else if(view->getChildViews().size() > 0)
+			ret = findTreeView(s, view);
 	}
-	return nullptr;
+	return ret;
+}
+
+CwlView *CwlCompositor::findTreeView(QWaylandSurface *s, CwlView *rootView)
+{
+	CwlView *ret = nullptr;
+	for (CwlView *childView : rootView->getChildViews()) {
+		if (childView->surface() == s)
+			ret = childView;
+		else if(childView->getChildViews().size() > 0)
+			ret = findTreeView(s, childView);
+	}
+	return ret;
 }
 
 void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
@@ -226,12 +241,16 @@ void CwlCompositor::onXdgPopupCreated(QWaylandXdgPopup *popup,
 	view->setSurface(xdgSurface->surface());
 	view->m_xdgPopup = popup;
 
-	CwlView *parent_view = findView(popup->parentXdgSurface()->surface());
+	CwlView *parent_view = findTlView(popup->parentXdgSurface()->surface());
 
 	qDebug() << parent_view;
 
-	view->setPosition(popup->unconstrainedPosition() +
+	if(parent_view->isToplevel())
+		view->setPosition(popup->unconstrainedPosition() +
 			  m_workspace->availableGeometry().topLeft());
+	else
+		view->setPosition(popup->unconstrainedPosition() +
+			  m_workspace->availableGeometry().topLeft() * scaleFactor());
 
 	qDebug() << "Popup " << (uint64_t)view << " created";
 
