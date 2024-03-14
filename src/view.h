@@ -87,7 +87,6 @@ class CwlView : public QWaylandView {
     private:
 	friend class CwlCompositor;
 	CwlCompositor *m_cwlcompositor = nullptr;
-	GLenum m_textureTarget = GL_TEXTURE_2D;
 	QOpenGLTexture *m_texture = nullptr;
 	QOpenGLTextureBlitter::Origin m_origin;
 	QPointF m_position;
@@ -104,7 +103,6 @@ class CwlView : public QWaylandView {
 	bool m_isImageBuffer = false;
 	QString m_cwlAppId = "";
 	QWaylandSurfaceGrabber *m_grabber = nullptr;
-	bool m_firstRenderCall = true;
 
     public slots:
 	void onAvailableGeometryChanged(QRect geometry);

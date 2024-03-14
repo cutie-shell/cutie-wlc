@@ -21,21 +21,20 @@ CwlView::~CwlView()
 QOpenGLTexture *CwlView::getTexture()
 {
 	if (advance()) {
-		if (currentBuffer().origin() == QWaylandSurface::OriginTopLeft)
+		QWaylandBufferRef bufRef = currentBuffer();
+		if (bufRef.origin() == QWaylandSurface::OriginTopLeft)
 			m_origin = QOpenGLTextureBlitter::OriginTopLeft;
 		else
 			m_origin = QOpenGLTextureBlitter::OriginBottomLeft;
 
-		QImage img = currentBuffer().image();
-		if (img.size().width() < 1 || m_firstRenderCall) {
-			m_texture = currentBuffer().toOpenGLTexture();
-		} else {
+		if (bufRef.bufferType() == QWaylandBufferRef::BufferType::BufferType_Egl) {
+			m_texture = bufRef.toOpenGLTexture();
+		} else if (bufRef.bufferType() == QWaylandBufferRef::BufferType::BufferType_SharedMemory) {
 			m_isImageBuffer = true;
 			delete m_texture;
-			m_texture = new QOpenGLTexture(img);
+			m_texture = new QOpenGLTexture(bufRef.image());
 		}
 	}
-	m_firstRenderCall = false;
 	return m_texture;
 }
 
