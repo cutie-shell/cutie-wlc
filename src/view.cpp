@@ -210,6 +210,10 @@ void CwlView::onWindowGeometryChanged()
 		QRect currentGeometry =
 			m_toplevel->xdgSurface()->windowGeometry();
 		currentGeometry.moveCenter(parentGeometry.center());
+		if(currentGeometry.size().height() > m_availableGeometry.size().height() || 
+			currentGeometry.size().width() > m_availableGeometry.size().width() ||
+			(currentGeometry.size() == m_availableGeometry.size() && currentGeometry.topLeft() != m_availableGeometry.topLeft()))
+			m_toplevel->sendUnmaximized(m_availableGeometry.size() * 0.8);
 		this->setPosition(currentGeometry.topLeft());
 	}
 }
