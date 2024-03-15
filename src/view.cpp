@@ -63,9 +63,19 @@ bool CwlView::isToplevel()
 	return m_isTopLevel;
 }
 
+bool CwlView::isPopup()
+{
+	return m_isPopup;
+}
+
 QWaylandXdgToplevel *CwlView::getTopLevel()
 {
 	return m_toplevel;
+}
+
+QWaylandXdgPopup *CwlView::getPopup()
+{
+	return m_xdgPopup;
 }
 
 LayerSurfaceV1 *CwlView::getLayerSurface()
@@ -130,6 +140,12 @@ void CwlView::setTopLevel(QWaylandXdgToplevel *toplevel)
 	m_isTopLevel = true;
 	connect(m_toplevel, &QWaylandXdgToplevel::appIdChanged, this,
 		&CwlView::onAppIdChanged);
+}
+
+void CwlView::setPopUp(QWaylandXdgPopup *popup)
+{
+	m_xdgPopup = popup;
+	m_isPopup = true;
 }
 
 void CwlView::setAppId()
@@ -301,4 +317,19 @@ void CwlView::onSurfaceChanged()
 	if (m_grabber)
 		delete m_grabber;
 	m_grabber = new QWaylandSurfaceGrabber(surface());
+}
+
+void CwlView::onPopUpGeometryChanged()
+{
+	if (!m_availableGeometry.contains(m_xdgPopup->configuredGeometry())) {
+		QRect intersected = m_xdgPopup->configuredGeometry().intersected(m_availableGeometry);
+		if(intersected.topLeft() == m_xdgPopup->configuredGeometry().topLeft()) {
+			QRect newRect =  m_xdgPopup->configuredGeometry();
+			newRect.translate(intersected.size().width() - 
+								m_xdgPopup->configuredGeometry().size().width(),
+							intersected.size().height() -
+								m_xdgPopup->configuredGeometry().size().height());
+			this->setPosition(newRect.topLeft());
+		}
+	}
 }

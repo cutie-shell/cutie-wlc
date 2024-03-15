@@ -57,11 +57,13 @@ class CwlView : public QWaylandView {
 	CwlTopPanel panelState = PANEL_UNDEFINED;
 
 	bool isToplevel();
+	bool isPopup();
 	LayerSurfaceV1 *getLayerSurface();
 	bool isHidden();
 	void setHidden(bool hide);
 
 	QWaylandXdgToplevel *getTopLevel();
+	QWaylandXdgPopup *getPopup();
 
 	QList<CwlView *> getChildViews();
 	void removeChildView(CwlView *view);
@@ -69,6 +71,7 @@ class CwlView : public QWaylandView {
 	CwlView *parentView();
 	void setParentView(CwlView *view);
 	void setTopLevel(QWaylandXdgToplevel *toplevel);
+	void setPopUp(QWaylandXdgPopup *popup);
 
 	void setAppId();
 
@@ -99,6 +102,7 @@ class CwlView : public QWaylandView {
 	QList<CwlView *> m_childViewList;
 	QRect m_availableGeometry;
 	bool m_isTopLevel = false;
+	bool m_isPopup = false;
 	bool m_isLayerShell = false;
 	bool m_isImageBuffer = false;
 	QString m_cwlAppId = "";
@@ -114,6 +118,7 @@ class CwlView : public QWaylandView {
 	void onLayerSurfaceDataChanged(LayerSurfaceV1 *surface);
 	void onDestinationSizeChanged();
 	void onSurfaceChanged();
+	void onPopUpGeometryChanged();
 };
 
 QT_END_NAMESPACE
