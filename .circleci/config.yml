@@ -4,7 +4,7 @@ setup: true
 
 orbs:
   continuation: circleci/continuation@0.1.2
-  eriki73-debs-buildd: eriki73-debs/eriki73-debs-buildd-orb@volatile
+  cutie-shell-buildd: cutie-shell/cutie-shell-buildd-orb@volatile
 
 jobs:
   setup:
@@ -12,7 +12,7 @@ jobs:
     resource_class: small
     steps:
       - checkout
-      - eriki73-debs-buildd/generate
+      - cutie-shell-buildd/generate
       - continuation/continue:
           configuration_path: generated_config.yml
 
