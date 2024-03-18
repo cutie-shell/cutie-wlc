@@ -13,9 +13,7 @@ InputMethodManagerV2::InputMethodManagerV2(CwlCompositor *compositor)
 void InputMethodManagerV2::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	CwlCompositor *compositor =
-		static_cast<CwlCompositor *>(extensionContainer());
-	init(compositor->display(), 1);
+	init(m_compositor->display(), 1);
 }
 
 void InputMethodManagerV2::zwp_input_method_manager_v2_bind_resource(
@@ -85,6 +83,9 @@ InputMethodV2::InputMethodV2(struct ::wl_client *client, uint32_t id,
 	: QtWaylandServer::zwp_input_method_v2(client, id, version)
 {
 	m_compositor = compositor;
+	connect(m_compositor->defaultSeat(),
+		&QWaylandSeat::keyboardFocusChanged, this,
+		&InputMethodV2::onKeyboardFocusChanged);
 }
 
 void InputMethodV2::hidePanel()
@@ -240,6 +241,19 @@ void InputMethodV2::onHideInputPanel()
 
 void InputMethodV2::onContentTypeChanged(uint32_t purpose)
 {
+	setContentType(purpose);
+	QWaylandSurface *currentSurface =
+		m_compositor->defaultSeat()->keyboardFocus();
+	if (!currentSurface)
+		return;
+	CwlView *curentView = m_compositor->findView(currentSurface);
+	if (!curentView)
+		return;
+	curentView->imContentType = purpose;
+}
+
+void InputMethodV2::setContentType(uint32_t purpose)
+{
 	this->send_content_type(0, purpose);
 	this->send_done();
 	m_serial += 1;
@@ -276,4 +290,12 @@ void InputMethodV2::sendWithModifier()
 bool InputMethodV2::isPanelHidden()
 {
 	return m_panelHidden;
+}
+
+void InputMethodV2::onKeyboardFocusChanged(QWaylandSurface *newFocus,
+					   QWaylandSurface *oldFocus)
+{
+	CwlView *newView = m_compositor->findView(newFocus);
+	if (newView)
+		setContentType(newView->imContentType);
 }

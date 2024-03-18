@@ -80,6 +80,7 @@ class CwlView : public QWaylandView {
 	TextInputV1 *tiV1 = nullptr;
 	TextInputV2 *tiV2 = nullptr;
 	TextInputV3 *tiV3 = nullptr;
+	uint32_t imContentType = 0;
 
 	QWaylandSurfaceGrabber *grabber();
 
