@@ -61,6 +61,8 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_get_input_method(
 			m_inputmethod, &InputMethodV2::onShowInputPanel);
 		connect(m_textinputV3, &TextInputManagerV3::hideInputPanel,
 			m_inputmethod, &InputMethodV2::onHideInputPanel);
+		connect(m_textinputV3, &TextInputManagerV3::contentTypeChanged,
+			m_inputmethod, &InputMethodV2::onContentTypeChanged);
 
 	} else {
 		qWarning()
