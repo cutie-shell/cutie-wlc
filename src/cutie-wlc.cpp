@@ -83,6 +83,7 @@ void CwlCompositor::create()
 	qputenv("CUTIE_SHELL", QByteArray("true"));
 	qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
 	qputenv("EGL_PLATFORM", QByteArray("wayland"));
+	qputenv("QT_IM_MODULE", QByteArray("textinputv3"));
 	qunsetenv("QT_QPA_GENERIC_PLUGINS");
 	qunsetenv("QT_SCALE_FACTOR");
 	qputenv("WAYLAND_DISPLAY", socketName());

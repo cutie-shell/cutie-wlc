@@ -9,7 +9,6 @@ int main(int argc, char *argv[])
 	int shellScaleFactor = qEnvironmentVariable("QT_SCALE_FACTOR").toInt();
 	qunsetenv("QT_SCALE_FACTOR");
 	qunsetenv("GTK_IM_MODULE");
-	qunsetenv("QT_IM_MODULE");
 
 	QGuiApplication app(argc, argv);
 
