@@ -18,5 +18,5 @@ Package: cutie-wlc
 Architecture: any
 Multi-Arch: foreign
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}, qt6-text-input-v3
 Description: This package contains a Wayland compositor for Cutie based on QtWaylandCompositor.
