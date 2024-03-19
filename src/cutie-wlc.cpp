@@ -40,6 +40,8 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
 		&CwlCompositor::animationValueChanged);
 	connect(unblurAnim, &QVariantAnimation::valueChanged, this,
 		&CwlCompositor::animationValueChanged);
+	connect(unblurAnim, &QVariantAnimation::finished, this,
+		[this]() { m_workspace->showDesktop(true); });
 	connect(launcherOpenAnim, &QVariantAnimation::valueChanged, this,
 		&CwlCompositor::animationValueChanged);
 	connect(launcherCloseAnim, &QVariantAnimation::valueChanged, this,
@@ -293,7 +295,6 @@ void CwlCompositor::raise(CwlView *view)
 	defaultSeat()->setKeyboardFocus(view->surface());
 
 	if (view == m_homeView) {
-		m_workspace->showDesktop(true);
 		m_homeOpen = true;
 		unblurAnim->start();
 	} else {
