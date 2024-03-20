@@ -509,6 +509,7 @@ void CwlCompositor::viewSurfaceDestroyed()
 
 	if (view->parentView()) {
 		view->parentView()->removeChildView(view);
+		raise(view->parentView());
 	} else if (view == m_launcherView) {
 		m_launcherView = nullptr;
 	} else {
