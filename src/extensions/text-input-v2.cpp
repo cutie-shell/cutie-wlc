@@ -38,7 +38,7 @@ void TextInputManagerV2::zwp_text_input_manager_v2_get_text_input(
 		surface = m_compositor->defaultSeat()->keyboardFocus();
 		if (surface->client()->client() == resource->client()) {
 			textInput->send_enter(0, surface->resource());
-			m_compositor->findView(surface)->tiV2 = textInput;
+			m_compositor->findTlView(surface)->tiV2 = textInput;
 		}
 	}
 }
@@ -56,7 +56,7 @@ void TextInputV2::zwp_text_input_v2_show_input_panel(Resource *resource)
 	if (m_compositor->defaultSeat()->keyboardFocus() != nullptr) {
 		surface = m_compositor->defaultSeat()->keyboardFocus();
 		if (surface->client()->client() == resource->client()) {
-			m_compositor->findView(surface)->tiV2 = this;
+			m_compositor->findTlView(surface)->tiV2 = this;
 		}
 	}
 	emit showInputPanel();

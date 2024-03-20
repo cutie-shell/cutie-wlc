@@ -194,7 +194,7 @@ void InputMethodV2::zwp_input_method_v2_commit(Resource *resource,
 		return;
 	}
 
-	CwlView *v = m_compositor->findView(
+	CwlView *v = m_compositor->findTlView(
 		m_compositor->defaultSeat()->keyboardFocus());
 
 	if (v->tiV1 != nullptr) {

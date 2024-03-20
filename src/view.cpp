@@ -1,6 +1,7 @@
 #include <view.h>
 #include <cutie-wlc.h>
 #include <QOpenGLTexture>
+#include <QtWaylandCompositor/QWaylandSeat>
 
 CwlView::CwlView(CwlCompositor *cwlcompositor, QRect geometry)
 	: m_cwlcompositor(cwlcompositor)
@@ -117,6 +118,7 @@ QList<CwlView *> CwlView::getChildViews()
 void CwlView::removeChildView(CwlView *view)
 {
 	m_childViewList.removeAll(view);
+	emit m_cwlcompositor->m_workspace->toplevelDestroyed(view);
 }
 
 void CwlView::addChildView(CwlView *view)
@@ -205,6 +207,9 @@ void CwlView::onAppIdChanged()
 				&QWaylandXdgSurface::windowGeometryChanged,
 				this, &CwlView::onWindowGeometryChanged);
 			m_cwlcompositor->raise(parent_view);
+			emit m_cwlcompositor->m_workspace->toplevelCreated(
+				this);
+			m_cwlcompositor->defaultSeat()->setKeyboardFocus(this->surface());
 		} else {
 			m_cwlcompositor->m_workspace->addView(this);
 			emit m_cwlcompositor->m_workspace->toplevelCreated(
