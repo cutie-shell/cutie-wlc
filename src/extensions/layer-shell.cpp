@@ -57,8 +57,24 @@ void LayerSurfaceV1::zwlr_layer_surface_v1_set_anchor(Resource *resource,
 void LayerSurfaceV1::zwlr_layer_surface_v1_set_exclusive_zone(
 	Resource *resource, int32_t zone)
 {
-	ls_zone = zone;
-	emit layerSurfaceDataChanged(this);
+
+	if(zone < 0) {
+		ls_zone = zone;
+		emit layerSurfaceDataChanged(this);
+		return;
+	}
+
+	m_targetZone = zone;
+	if(m_targetZone < ls_zone) {
+		animationRunning = true;
+		m_closing = true;
+		m_animationStep = (ls_zone - m_targetZone) * 0.06;
+	} else {
+		animationRunning = true;
+		m_closing = false;
+		m_animationStep = (m_targetZone - ls_zone) * 0.06;
+	}
+	animationNext();
 }
 
 void LayerSurfaceV1::zwlr_layer_surface_v1_set_margin(Resource *resource,
@@ -105,4 +121,29 @@ void LayerSurfaceV1::zwlr_layer_surface_v1_set_layer(Resource *resource,
 {
 	ls_layer = layer;
 	emit layerSurfaceDataChanged(this);
+}
+
+void LayerSurfaceV1::animationNext()
+{
+	if(m_targetZone == ls_zone) {
+		animationRunning = false;
+		emit layerSurfaceDataChanged(this);
+		return;
+	}
+
+	if(m_closing) {
+		ls_zone -= m_animationStep;
+		if(ls_zone < 0){
+			animationRunning = false;
+			ls_zone = 0;
+		}
+		emit layerSurfaceDataChanged(this);
+	} else {
+		ls_zone += m_animationStep;
+		if(ls_zone > m_targetZone){
+			animationRunning = false;
+			ls_zone = m_targetZone;
+		}
+		emit layerSurfaceDataChanged(this);
+	}
 }

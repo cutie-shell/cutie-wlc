@@ -132,14 +132,11 @@ void CwlWorkspace::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
 {
 	if (!surface->initialized)
 		return;
-	if (surface->ls_zone > 0)
-		surface->send_configure(surface->ls_serial,
-					surface->size.width(),
-					surface->size.height());
-	else
-		surface->send_configure(surface->ls_serial,
-					surface->size.width(),
-					surface->size.height());
+	surface->send_configure(surface->ls_serial,
+		surface->size.width(),
+		surface->size.height());
+	if(surface->animationRunning)
+		return;
 	updateAvailableGeometry();
 }
 

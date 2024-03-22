@@ -264,7 +264,7 @@ void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
 				 m_cwlcompositor->m_workspace->outputGeometry()
 					 .bottom() :
 				 m_availableGeometry.bottom()) -
-			m_layerSurface->size.height());
+			m_layerSurface->ls_zone);
 	else if (m_layerSurface->ls_zone < 0)
 		position.setY(m_cwlcompositor->m_workspace->outputGeometry()
 				      .center()

@@ -34,7 +34,7 @@ class LayerShellV1 : public QWaylandCompositorExtensionTemplate<LayerShellV1>,
 		const QString &scope) override;
 
     private:
-	QWaylandCompositor *m_compositor;
+	QWaylandCompositor *m_compositor = nullptr;
 };
 
 class LayerSurfaceV1
@@ -54,12 +54,18 @@ class LayerSurfaceV1
 	uint32_t ls_serial;
 	QString ls_scope;
 	bool initialized = false;
+	bool animationRunning = false;
+	void animationNext();
 
     signals:
 	void layerSurfaceDestroyed(QWaylandSurface *surface);
 	void layerSurfaceDataChanged(LayerSurfaceV1 *surface);
 
     private:
+    int32_t m_targetZone;
+    bool m_closing = false;
+    uint32_t m_animationStep = 0;
+
     protected:
 	void zwlr_layer_surface_v1_set_size(Resource *resource, uint32_t width,
 					    uint32_t height) override;

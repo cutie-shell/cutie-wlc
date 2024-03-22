@@ -74,6 +74,8 @@ void GlWindow::paintGL()
 	else
 		renderViews = m_cwlcompositor->getViews();
 
+	CwlView *animatedView = nullptr;
+
 	for (CwlView *view : renderViews) {
 		QString appId;
 		if (view && view->isToplevel())
@@ -104,11 +106,18 @@ void GlWindow::paintGL()
 		    view->layer == CwlViewLayer::TOP)
 			continue;
 
+		if(view->getLayerSurface() != nullptr)
+			if(view->getLayerSurface()->animationRunning)
+				animatedView = view;
+
 		renderView(view);
 	}
 
 	m_textureBlitter.release();
 	m_cwlcompositor->endRender();
+
+	if(animatedView != nullptr)
+		animatedView->getLayerSurface()->animationNext();
 }
 
 void GlWindow::renderView(CwlView *view)
