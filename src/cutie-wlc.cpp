@@ -506,10 +506,15 @@ bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
 void CwlCompositor::viewSurfaceDestroyed()
 {
 	CwlView *view = qobject_cast<CwlView *>(sender());
+	CwlView *parent = view->parentView();
 
-	if (view->parentView()) {
-		view->parentView()->removeChildView(view);
-		raise(view->parentView());
+	if (parent != nullptr) {
+		if(!view->isPopup())
+			raise(parent);
+		else
+			view->getPopup()->sendPopupDone();
+
+		parent->removeChildView(view);
 	} else if (view == m_launcherView) {
 		m_launcherView = nullptr;
 	} else {

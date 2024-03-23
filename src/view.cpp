@@ -224,7 +224,19 @@ void CwlView::onAppIdChanged()
 
 void CwlView::onWindowGeometryChanged()
 {
-	qDebug()<<"CwlView::onWindowGeometryChanged() NOT USED";
+	if (parentView()) {
+		QRect parentGeometry = parentView()
+					       ->getTopLevel()
+					       ->xdgSurface()
+					       ->windowGeometry();
+		QRect currentGeometry =
+			m_toplevel->xdgSurface()->windowGeometry();
+		if(currentGeometry.size().height() <= m_availableGeometry.size().height() || 
+				currentGeometry.size().width() <= m_availableGeometry.size().width()){
+			currentGeometry.moveCenter(m_availableGeometry.center());
+		}
+		this->setPosition(currentGeometry.topLeft());
+	}
 }
 
 void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
