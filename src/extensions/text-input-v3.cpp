@@ -8,16 +8,14 @@ TextInputManagerV3::TextInputManagerV3()
 
 TextInputManagerV3::TextInputManagerV3(CwlCompositor *compositor)
 	: QWaylandCompositorExtensionTemplate(compositor)
+	, m_compositor(compositor)
 {
-	m_compositor = compositor;
 }
 
 void TextInputManagerV3::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	QWaylandCompositor *compositor =
-		static_cast<QWaylandCompositor *>(extensionContainer());
-	init(compositor->display(), 1);
+	init(m_compositor->display(), 1);
 }
 
 void TextInputManagerV3::zwp_text_input_manager_v3_get_text_input(
