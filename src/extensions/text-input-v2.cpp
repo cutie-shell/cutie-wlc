@@ -69,7 +69,7 @@ void TextInputV2::zwp_text_input_v2_set_content_type(Resource *resource,
 						     uint32_t hint,
 						     uint32_t purpose)
 {
-	emit contentTypeChanged(purpose);
+	emit contentTypeChanged(hint, purpose);
 }
 
 void TextInputV2::zwp_text_input_v2_destroy(Resource *resource)

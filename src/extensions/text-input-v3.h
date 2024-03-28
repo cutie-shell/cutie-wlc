@@ -26,7 +26,7 @@ class TextInputManagerV3
     signals:
 	void showInputPanel();
 	void hideInputPanel();
-	void contentTypeChanged(uint32_t purpose);
+	void contentTypeChanged(uint32_t hint, uint32_t purpose);
 
     protected:
 	void zwp_text_input_manager_v3_get_text_input(
@@ -48,7 +48,7 @@ class TextInputV3 : public QWaylandCompositorExtensionTemplate<TextInputV3>,
     signals:
 	void showInputPanel();
 	void hideInputPanel();
-	void contentTypeChanged(uint32_t purpose);
+	void contentTypeChanged(uint32_t hint, uint32_t purpose);
 
     protected:
 	void zwp_text_input_v3_enable(Resource *resource) override;

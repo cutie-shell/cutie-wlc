@@ -239,9 +239,9 @@ void InputMethodV2::onHideInputPanel()
 	m_panelHidden = true;
 }
 
-void InputMethodV2::onContentTypeChanged(uint32_t purpose)
+void InputMethodV2::onContentTypeChanged(uint32_t hint, uint32_t purpose)
 {
-	setContentType(purpose);
+	setContentType(hint, purpose);
 	QWaylandSurface *currentSurface =
 		m_compositor->defaultSeat()->keyboardFocus();
 	if (!currentSurface)
@@ -249,12 +249,13 @@ void InputMethodV2::onContentTypeChanged(uint32_t purpose)
 	CwlView *curentView = m_compositor->findView(currentSurface);
 	if (!curentView)
 		return;
-	curentView->imContentType = purpose;
+	curentView->imContentHint = hint;
+	curentView->imContentPurpose = purpose;
 }
 
-void InputMethodV2::setContentType(uint32_t purpose)
+void InputMethodV2::setContentType(uint32_t hint, uint32_t purpose)
 {
-	this->send_content_type(0, purpose);
+	this->send_content_type(hint, purpose);
 	this->send_done();
 	m_serial += 1;
 }
@@ -297,5 +298,6 @@ void InputMethodV2::onKeyboardFocusChanged(QWaylandSurface *newFocus,
 {
 	CwlView *newView = m_compositor->findView(newFocus);
 	if (newView)
-		setContentType(newView->imContentType);
+		setContentType(newView->imContentHint,
+			       newView->imContentPurpose);
 }

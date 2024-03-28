@@ -59,7 +59,7 @@ class InputMethodV2 : public QWaylandCompositorExtensionTemplate<InputMethodV2>,
 		      CwlCompositor *compositor);
 	void hidePanel();
 	bool isPanelHidden();
-	void setContentType(uint32_t purpose);
+	void setContentType(uint32_t hint, uint32_t purpose);
 
     protected:
 	void zwp_input_method_v2_commit_string(Resource *resource,
@@ -82,7 +82,7 @@ class InputMethodV2 : public QWaylandCompositorExtensionTemplate<InputMethodV2>,
     public slots:
 	void onShowInputPanel();
 	void onHideInputPanel();
-	void onContentTypeChanged(uint32_t purpose);
+	void onContentTypeChanged(uint32_t hint, uint32_t purpose);
 	void onKeyboardFocusChanged(QWaylandSurface *newFocus,
 				    QWaylandSurface *oldFocus);
 

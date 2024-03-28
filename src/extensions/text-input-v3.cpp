@@ -106,13 +106,11 @@ void TextInputV3::zwp_text_input_v3_commit(Resource *resource)
 		}
 	}
 
-	if (m_newContentHint != m_contentHint) {
+	if (m_newContentHint != m_contentHint ||
+	    m_newContentPurpose != m_contentPurpose) {
 		m_contentHint = m_newContentHint;
-	}
-
-	if (m_newContentPurpose != m_contentPurpose) {
 		m_contentPurpose = m_newContentPurpose;
-		emit contentTypeChanged(m_contentPurpose);
+		emit contentTypeChanged(m_contentHint, m_contentPurpose);
 	}
 }
 
