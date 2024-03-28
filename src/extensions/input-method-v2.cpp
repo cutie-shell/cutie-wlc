@@ -47,6 +47,8 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_get_input_method(
 			m_inputmethod, &InputMethodV2::onShowInputPanel);
 		connect(m_textinputV1, &TextInputManagerV1::hideInputPanel,
 			m_inputmethod, &InputMethodV2::onHideInputPanel);
+		connect(m_textinputV1, &TextInputManagerV1::contentTypeChanged,
+			m_inputmethod, &InputMethodV2::onContentTypeChanged);
 
 		connect(m_textinputV2, &TextInputManagerV2::showInputPanel,
 			m_inputmethod, &InputMethodV2::onShowInputPanel);

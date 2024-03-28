@@ -29,6 +29,8 @@ void TextInputManagerV1::zwp_text_input_manager_v1_create_text_input(
 		&TextInputManagerV1::showInputPanel);
 	connect(textInput, &TextInputV1::hideInputPanel, this,
 		&TextInputManagerV1::hideInputPanel);
+	connect(textInput, &TextInputV1::contentTypeChanged, this,
+		&TextInputManagerV1::contentTypeChanged);
 
 	if (m_compositor->defaultSeat()->keyboardFocus() != nullptr) {
 		surface = m_compositor->defaultSeat()->keyboardFocus();
@@ -97,6 +99,7 @@ void TextInputV1::zwp_text_input_v1_set_content_type(Resource *resource,
 						     uint32_t hint,
 						     uint32_t purpose)
 {
+	emit contentTypeChanged(hint, purpose);
 }
 
 void TextInputV1::zwp_text_input_v1_set_cursor_rectangle(Resource *resource,
