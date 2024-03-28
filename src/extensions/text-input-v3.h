@@ -72,6 +72,12 @@ class TextInputV3 : public QWaylandCompositorExtensionTemplate<TextInputV3>,
 
     private:
 	CwlCompositor *m_compositor;
+	bool m_enabled = false;
+	bool m_newEnabled = false;
+	uint m_contentHint = 0;
+	uint m_contentPurpose = 0;
+	uint m_newContentHint = 0;
+	uint m_newContentPurpose = 0;
 };
 
 #endif //TEXT_INPUT_V3

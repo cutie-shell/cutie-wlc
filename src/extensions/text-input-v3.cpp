@@ -54,20 +54,12 @@ TextInputV3::TextInputV3(wl_client *client, uint32_t id, int version,
 
 void TextInputV3::zwp_text_input_v3_enable(Resource *resource)
 {
-	QWaylandSurface *surface;
-	if (m_compositor->defaultSeat()->keyboardFocus() != nullptr) {
-		surface = m_compositor->defaultSeat()->keyboardFocus();
-		if (surface->client()->client() == resource->client()) {
-			m_compositor->findTlView(surface)->tiV3 = this;
-		}
-	}
-
-	emit showInputPanel();
+	m_newEnabled = true;
 }
 
 void TextInputV3::zwp_text_input_v3_disable(Resource *resource)
 {
-	emit hideInputPanel();
+	m_newEnabled = false;
 }
 
 void TextInputV3::zwp_text_input_v3_set_surrounding_text(Resource *resource,
@@ -86,7 +78,8 @@ void TextInputV3::zwp_text_input_v3_set_content_type(Resource *resource,
 						     uint32_t hint,
 						     uint32_t purpose)
 {
-	emit contentTypeChanged(purpose);
+	m_newContentHint = hint;
+	m_newContentPurpose = purpose;
 }
 
 void TextInputV3::zwp_text_input_v3_set_cursor_rectangle(Resource *resource,
@@ -98,6 +91,29 @@ void TextInputV3::zwp_text_input_v3_set_cursor_rectangle(Resource *resource,
 
 void TextInputV3::zwp_text_input_v3_commit(Resource *resource)
 {
+	if (m_newEnabled != m_enabled) {
+		m_enabled = m_newEnabled;
+		if (m_enabled) {
+			QWaylandSurface *surface =
+				m_compositor->defaultSeat()->keyboardFocus();
+			if (surface &&
+			    surface->client()->client() == resource->client())
+				m_compositor->findTlView(surface)->tiV3 = this;
+
+			emit showInputPanel();
+		} else {
+			emit hideInputPanel();
+		}
+	}
+
+	if (m_newContentHint != m_contentHint) {
+		m_contentHint = m_newContentHint;
+	}
+
+	if (m_newContentPurpose != m_contentPurpose) {
+		m_contentPurpose = m_newContentPurpose;
+		emit contentTypeChanged(m_contentPurpose);
+	}
 }
 
 void TextInputV3::zwp_text_input_v3_bind_resource(Resource *resource)
