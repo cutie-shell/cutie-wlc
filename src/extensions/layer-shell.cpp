@@ -2,16 +2,14 @@
 
 LayerShellV1::LayerShellV1(QWaylandCompositor *compositor)
 	: QWaylandCompositorExtensionTemplate(compositor)
+	, m_compositor(compositor)
 {
-	m_compositor = compositor;
 }
 
 void LayerShellV1::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	QWaylandCompositor *compositor =
-		static_cast<QWaylandCompositor *>(extensionContainer());
-	init(compositor->display(), 1);
+	init(m_compositor->display(), 1);
 }
 
 void LayerShellV1::zwlr_layer_shell_v1_get_layer_surface(
