@@ -56,6 +56,7 @@ class ForeignToplevelHandleV1
 
     private slots:
 	void onToplevelTitleChanged();
+	void onToplevelAppIdChanged();
 
     protected:
 	void zwlr_foreign_toplevel_handle_v1_bind_resource(
