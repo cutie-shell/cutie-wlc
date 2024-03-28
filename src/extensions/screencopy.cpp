@@ -4,16 +4,14 @@
 
 ScreencopyManagerV1::ScreencopyManagerV1(CwlCompositor *compositor)
 	: QWaylandCompositorExtensionTemplate(compositor)
+	, m_compositor(compositor)
 {
-	m_compositor = compositor;
 }
 
 void ScreencopyManagerV1::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	CwlCompositor *compositor =
-		static_cast<CwlCompositor *>(extensionContainer());
-	init(compositor->display(), 3);
+	init(m_compositor->display(), 3);
 }
 
 void ScreencopyManagerV1::zwlr_screencopy_manager_v1_capture_output(
