@@ -156,15 +156,17 @@ void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_unset_minimized(
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_activate(
 	Resource *resource, struct ::wl_resource *seat)
 {
-	if(m_view->parentView())
+	if (m_view->parentView())
 		m_compositor->raise(m_view->parentView());
 	else
 		m_compositor->raise(m_view);
 
-	if(m_view->getChildViews().size() > 0)
-		m_compositor->defaultSeat()->setKeyboardFocus(m_view->getChildViews().last()->surface());
+	if (m_view->getChildViews().size() > 0)
+		m_compositor->defaultSeat()->setKeyboardFocus(
+			m_view->getChildViews().last()->surface());
 	else
-		m_compositor->defaultSeat()->setKeyboardFocus(m_view->surface());
+		m_compositor->defaultSeat()->setKeyboardFocus(
+			m_view->surface());
 }
 
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_close(

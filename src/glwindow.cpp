@@ -136,7 +136,7 @@ void GlWindow::renderView(CwlView *view)
 				      surfaceOrigin);
 	}
 
-	if(view->getChildViews().size() > 0) {
+	if (view->getChildViews().size() > 0) {
 		for (CwlView *childView : view->getChildViews())
 			renderView(childView);
 	}

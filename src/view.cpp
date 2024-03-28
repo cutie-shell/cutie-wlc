@@ -28,9 +28,12 @@ QOpenGLTexture *CwlView::getTexture()
 		else
 			m_origin = QOpenGLTextureBlitter::OriginBottomLeft;
 
-		if (bufRef.bufferType() == QWaylandBufferRef::BufferType::BufferType_Egl) {
+		if (bufRef.bufferType() ==
+		    QWaylandBufferRef::BufferType::BufferType_Egl) {
 			m_texture = bufRef.toOpenGLTexture();
-		} else if (bufRef.bufferType() == QWaylandBufferRef::BufferType::BufferType_SharedMemory) {
+		} else if (bufRef.bufferType() ==
+			   QWaylandBufferRef::BufferType::
+				   BufferType_SharedMemory) {
 			m_isImageBuffer = true;
 			delete m_texture;
 			m_texture = new QOpenGLTexture(bufRef.image());
@@ -210,7 +213,8 @@ void CwlView::onAppIdChanged()
 			m_cwlcompositor->raise(parent_view);
 			emit m_cwlcompositor->m_workspace->toplevelCreated(
 				this);
-			m_cwlcompositor->defaultSeat()->setKeyboardFocus(this->surface());
+			m_cwlcompositor->defaultSeat()->setKeyboardFocus(
+				this->surface());
 		} else {
 			m_cwlcompositor->m_workspace->addView(this);
 			emit m_cwlcompositor->m_workspace->toplevelCreated(
@@ -231,9 +235,12 @@ void CwlView::onWindowGeometryChanged()
 					       ->windowGeometry();
 		QRect currentGeometry =
 			m_toplevel->xdgSurface()->windowGeometry();
-		if(currentGeometry.size().height() <= m_availableGeometry.size().height() || 
-				currentGeometry.size().width() <= m_availableGeometry.size().width()){
-			currentGeometry.moveCenter(m_availableGeometry.center());
+		if (currentGeometry.size().height() <=
+			    m_availableGeometry.size().height() ||
+		    currentGeometry.size().width() <=
+			    m_availableGeometry.size().width()) {
+			currentGeometry.moveCenter(
+				m_availableGeometry.center());
 		}
 		this->setPosition(currentGeometry.topLeft());
 	}
@@ -327,13 +334,21 @@ void CwlView::onSurfaceChanged()
 void CwlView::onPopUpGeometryChanged()
 {
 	if (!m_availableGeometry.contains(m_xdgPopup->configuredGeometry())) {
-		QRect intersected = m_xdgPopup->configuredGeometry().intersected(m_availableGeometry);
-		if(intersected.topLeft() == m_xdgPopup->configuredGeometry().topLeft()) {
-			QRect newRect =  m_xdgPopup->configuredGeometry();
-			newRect.translate(intersected.size().width() - 
-								m_xdgPopup->configuredGeometry().size().width(),
-							intersected.size().height() -
-								m_xdgPopup->configuredGeometry().size().height());
+		QRect intersected =
+			m_xdgPopup->configuredGeometry().intersected(
+				m_availableGeometry);
+		if (intersected.topLeft() ==
+		    m_xdgPopup->configuredGeometry().topLeft()) {
+			QRect newRect = m_xdgPopup->configuredGeometry();
+			newRect.translate(
+				intersected.size().width() -
+					m_xdgPopup->configuredGeometry()
+						.size()
+						.width(),
+				intersected.size().height() -
+					m_xdgPopup->configuredGeometry()
+						.size()
+						.height());
 			this->setPosition(newRect.topLeft());
 		}
 	}

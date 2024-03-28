@@ -55,7 +55,8 @@ void CutieShell::cutie_shell_private_get_thumbnail(
 
 	connect(toplevelHandle->view()->grabber(),
 		&QWaylandSurfaceGrabber::success, [=](const QImage &_fb) {
-			QImage fb = _fb.convertedTo(QImage::Format_ARGB32_Premultiplied);
+			QImage fb = _fb.convertedTo(
+				QImage::Format_ARGB32_Premultiplied);
 			frame->setFrameBuffer(
 				fb, QDateTime::currentSecsSinceEpoch(),
 				(QDateTime::currentMSecsSinceEpoch() % 1000) *
