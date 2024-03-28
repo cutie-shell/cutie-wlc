@@ -9,9 +9,7 @@ OutputPowerManagerV1::OutputPowerManagerV1(CwlCompositor *compositor)
 void OutputPowerManagerV1::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	CwlCompositor *compositor =
-		static_cast<CwlCompositor *>(extensionContainer());
-	init(compositor->display(), 1);
+	init(m_compositor->display(), 1);
 }
 
 void OutputPowerManagerV1::zwlr_output_power_manager_v1_get_output_power(
