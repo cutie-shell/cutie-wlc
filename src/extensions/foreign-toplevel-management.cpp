@@ -46,6 +46,8 @@ void ForeignToplevelManagerV1::zwlr_foreign_toplevel_manager_v1_destroy_resource
 void ForeignToplevelManagerV1::zwlr_foreign_toplevel_manager_v1_stop(
 	Resource *resource)
 {
+	send_finished();
+	delete this;
 }
 
 void ForeignToplevelManagerV1::onToplevelCreated(CwlView *view)
