@@ -22,7 +22,11 @@ void LayerShellV1::zwlr_layer_shell_v1_get_layer_surface(
 		new LayerSurfaceV1(resource->client(), id, resource->version());
 	obj->surface = QWaylandSurface::fromResource(surface);
 	obj->ls_layer = layer;
+	obj->new_ls_layer = layer;
 	obj->ls_scope = scope;
+
+	connect(obj->surface, &QWaylandSurface::redraw, obj,
+		&LayerSurfaceV1::onCommit);
 
 	if (layer == 2)
 		emit layerShellSurfaceTopCreated(surface);
@@ -39,26 +43,19 @@ void LayerSurfaceV1::zwlr_layer_surface_v1_set_size(Resource *resource,
 						    uint32_t width,
 						    uint32_t height)
 {
-	QSize newSize(width, height);
-	if (newSize != size) {
-		size = QSize(width, height);
-		qDebug() << size;
-		emit layerSurfaceDataChanged(this);
-	}
+	newSize = QSize(width, height);
 }
 
 void LayerSurfaceV1::zwlr_layer_surface_v1_set_anchor(Resource *resource,
 						      uint32_t anchor)
 {
-	ls_anchor = anchor;
-	emit layerSurfaceDataChanged(this);
+	new_ls_anchor = anchor;
 }
 
 void LayerSurfaceV1::zwlr_layer_surface_v1_set_exclusive_zone(
 	Resource *resource, int32_t zone)
 {
-	ls_zone = zone;
-	emit layerSurfaceDataChanged(this);
+	new_ls_zone = zone;
 }
 
 void LayerSurfaceV1::zwlr_layer_surface_v1_set_margin(Resource *resource,
@@ -67,14 +64,13 @@ void LayerSurfaceV1::zwlr_layer_surface_v1_set_margin(Resource *resource,
 						      int32_t bottom,
 						      int32_t left)
 {
-	margins = QMargins(left, top, right, bottom);
+	newMargins = QMargins(left, top, right, bottom);
 }
 
 void LayerSurfaceV1::zwlr_layer_surface_v1_set_keyboard_interactivity(
 	Resource *resource, uint32_t keyboard_interactivity)
 {
-	ls_keyboard_interactivity = keyboard_interactivity;
-	emit layerSurfaceDataChanged(this);
+	new_ls_keyboard_interactivity = keyboard_interactivity;
 }
 
 void LayerSurfaceV1::zwlr_layer_surface_v1_get_popup(
@@ -103,6 +99,44 @@ void LayerSurfaceV1::zwlr_layer_surface_v1_destroy(Resource *resource)
 void LayerSurfaceV1::zwlr_layer_surface_v1_set_layer(Resource *resource,
 						     uint32_t layer)
 {
-	ls_layer = layer;
-	emit layerSurfaceDataChanged(this);
+	new_ls_layer = layer;
+}
+
+void LayerSurfaceV1::onCommit()
+{
+	bool dataChanged = false;
+
+	if (newSize != size) {
+		size = newSize;
+		qDebug() << size;
+		dataChanged = true;
+	}
+
+	if (newMargins != margins) {
+		margins = newMargins;
+		dataChanged = true;
+	}
+
+	if (new_ls_anchor != ls_anchor) {
+		ls_anchor = new_ls_anchor;
+		dataChanged = true;
+	}
+
+	if (new_ls_zone != ls_zone) {
+		ls_zone = new_ls_zone;
+		dataChanged = true;
+	}
+
+	if (new_ls_keyboard_interactivity != ls_keyboard_interactivity) {
+		ls_keyboard_interactivity = new_ls_keyboard_interactivity;
+		dataChanged = true;
+	}
+
+	if (new_ls_layer != ls_layer) {
+		ls_layer = new_ls_layer;
+		dataChanged = true;
+	}
+
+	if (dataChanged)
+		emit layerSurfaceDataChanged(this);
 }

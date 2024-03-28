@@ -53,13 +53,23 @@ class LayerSurfaceV1
 	uint32_t ls_keyboard_interactivity;
 	uint32_t ls_serial;
 	QString ls_scope;
+
+	QMargins newMargins;
+	QSize newSize;
+	int new_ls_zone;
+	uint new_ls_anchor;
+	uint32_t new_ls_layer;
+	uint32_t new_ls_keyboard_interactivity;
+
 	bool initialized = false;
 
     signals:
 	void layerSurfaceDestroyed(QWaylandSurface *surface);
 	void layerSurfaceDataChanged(LayerSurfaceV1 *surface);
 
-    private:
+    public slots:
+	void onCommit();
+
     protected:
 	void zwlr_layer_surface_v1_set_size(Resource *resource, uint32_t width,
 					    uint32_t height) override;
