@@ -15,9 +15,7 @@ OutputManagerV1::OutputManagerV1(CwlCompositor *compositor)
 void OutputManagerV1::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	CwlCompositor *compositor =
-		static_cast<CwlCompositor *>(extensionContainer());
-	init(compositor->display(), 3);
+	init(m_compositor->display(), 3);
 }
 
 void OutputManagerV1::onDisplayOffChanged(bool displayOff)
