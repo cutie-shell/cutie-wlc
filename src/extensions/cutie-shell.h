@@ -17,8 +17,15 @@ class CutieShell : public QWaylandCompositorExtensionTemplate<CutieShell>,
 {
 	Q_OBJECT
     public:
-	enum SpecialKey : uint32_t { POWER_PRESS = 0, POWER_RELEASE = 1 };
-
+	enum SpecialKey : uint32_t {
+		POWER_PRESS = 0,
+		POWER_RELEASE = 1,
+		VOLUME_UP_PRESS = 2,
+		VOLUME_UP_RELEASE = 3,
+		VOLUME_DOWN_PRESS = 4,
+		VOLUME_DOWN_RELEASE = 5
+	};
+	
 	CutieShell(CwlCompositor *compositor);
 	void initialize() override;
 

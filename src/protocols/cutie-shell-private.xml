@@ -49,6 +49,10 @@
 
         <entry name="power_press" value="0" summary="the power key pressed"/>
         <entry name="power_release" value="1" summary="the power key released"/>
+        <entry name="volume_up_press" value="2" summary="the volume up key pressed"/>
+        <entry name="volume_up_release" value="3" summary="the volume up released"/>
+        <entry name="volume_down_press" value="4" summary="the volume down key pressed"/>
+        <entry name="volume_down_release" value="5" summary="the volume down released"/>
       </enum>
 
       <event name="thumbnail_damage">
