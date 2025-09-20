@@ -6,13 +6,10 @@ A Wayland compositor for Cutie based on QtWaylandCompositor.
 
 ## Building and installing
 
-```
+```bash
 mkdir build
 cd build
 cmake ..
 make
 sudo make install
 ```
-
-## Troubleshooting
-None
