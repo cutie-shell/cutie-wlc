@@ -6,7 +6,9 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui WaylandCompositor)
-find_package(PkgConfig)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+pkg_get_variable(WAYLAND_PROTOCOLS_DATADIR wayland-protocols pkgdatadir)
 
 qt_standard_project_setup()
 
