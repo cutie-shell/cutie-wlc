@@ -50,8 +50,6 @@ class CwlCompositor : public QWaylandCompositor {
 	void handleMouseReleaseEvent(QList<QEventPoint> points,
 				     Qt::MouseButton btn);
 
-	bool handleGesture(QPointerEvent *ev, int edge, int corner);
-
 	void handleKeyPress(quint32 nativeScanCode);
 	void handleKeyRelease(quint32 nativeScanCode);
 
@@ -64,6 +62,7 @@ class CwlCompositor : public QWaylandCompositor {
 	CwlView *getTopPanel();
 	GlWindow *glWindow();
 	ForeignToplevelManagerV1 *foreignTlManagerV1();
+	CwlGestureManager *gestureManager();
 
 	CwlView *m_launcherView = nullptr;
 	CwlWorkspace *m_workspace = nullptr;

@@ -1,4 +1,5 @@
 #include <gesture.h>
+#include <gesture-manager.h>
 #include <QDebug>
 
 CwlGesture::CwlGesture(CwlCompositor *compositor, QSize screenSize)
@@ -37,19 +38,19 @@ void CwlGesture::handlePointerEvent(
 				corner = (CornerSwipe)c;
 
 		if (edge < EDGE_UNDEFINED || corner < CORNER_UNDEFINED)
-			handled = m_cwlcompositor->handleGesture(ev, edge,
-								 corner);
+			handled = m_cwlcompositor->gestureManager()
+					  ->handleGesture(ev, edge, corner);
 	}
 
 	if (ev->isUpdateEvent())
 		if (edge < EDGE_UNDEFINED || corner < CORNER_UNDEFINED)
-			handled = m_cwlcompositor->handleGesture(ev, edge,
-								 corner);
+			handled = m_cwlcompositor->gestureManager()
+					  ->handleGesture(ev, edge, corner);
 
 	if (ev->isEndEvent())
 		if (edge < EDGE_UNDEFINED || corner < CORNER_UNDEFINED) {
-			handled = m_cwlcompositor->handleGesture(ev, edge,
-								 corner);
+			handled = m_cwlcompositor->gestureManager()
+					  ->handleGesture(ev, edge, corner);
 			corner = CORNER_UNDEFINED;
 			edge = EDGE_UNDEFINED;
 

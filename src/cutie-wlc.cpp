@@ -311,12 +311,6 @@ void CwlCompositor::handleMouseReleaseEvent(QList<QEventPoint> points,
 	defaultSeat()->sendMouseReleaseEvent(btn);
 }
 
-bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
-{
-	// Delegate to gesture manager
-	return m_gestureManager->handleGesture(ev, edge, corner);
-}
-
 void CwlCompositor::viewSurfaceDestroyed()
 {
 	CwlView *view = qobject_cast<CwlView *>(sender());
@@ -463,6 +457,11 @@ InputMethodManagerV2 *CwlCompositor::getInputMethodManager() const
 ForeignToplevelManagerV1 *CwlCompositor::foreignTlManagerV1()
 {
 	return m_foreignTlManagerV1;
+}
+
+CwlGestureManager *CwlCompositor::gestureManager()
+{
+	return m_gestureManager;
 }
 
 void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
