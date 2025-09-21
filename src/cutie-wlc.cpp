@@ -313,25 +313,8 @@ void CwlCompositor::handleMouseReleaseEvent(QList<QEventPoint> points,
 
 bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
 {
-	switch (edge) {
-	case EDGE_LEFT:
-		return handleLeftEdgeGesture(ev);
-	case EDGE_RIGHT:
-		return handleRightEdgeGesture(ev);
-	case EDGE_BOTTOM:
-		return handleBottomEdgeGesture(ev);
-	case EDGE_TOP:
-		return handleTopEdgeGesture(ev);
-	default:
-		break;
-	}
-
-	// Handle corner gestures if no edge gesture was processed
-	if (corner == CORNER_BR || corner == CORNER_BL) {
-		return handleCornerGesture(ev, corner);
-	}
-
-	return false;
+	// Delegate to gesture manager
+	return m_gestureManager->handleGesture(ev, edge, corner);
 }
 
 void CwlCompositor::viewSurfaceDestroyed()
@@ -435,6 +418,46 @@ void CwlCompositor::setLauncherPosition(double position)
 		setBlur(m_launcherPosition);
 	m_launcherView->setPosition(newPos);
 	emit launcherPositionChanged(m_launcherPosition);
+}
+
+void CwlCompositor::startBlurAnimation()
+{
+	blurAnim->start();
+}
+
+void CwlCompositor::startUnblurAnimation()
+{
+	unblurAnim->start();
+}
+
+void CwlCompositor::startLauncherOpenAnimation()
+{
+	launcherOpenAnim->start();
+}
+
+void CwlCompositor::startLauncherCloseAnimation()
+{
+	launcherCloseAnim->start();
+}
+
+bool CwlCompositor::isHomeOpen() const
+{
+	return m_homeOpen;
+}
+
+void CwlCompositor::setHomeOpen(bool open)
+{
+	m_homeOpen = open;
+}
+
+CwlView *CwlCompositor::getPanelView() const
+{
+	return m_panelView;
+}
+
+InputMethodManagerV2 *CwlCompositor::getInputMethodManager() const
+{
+	return m_inputMngr;
 }
 
 ForeignToplevelManagerV1 *CwlCompositor::foreignTlManagerV1()
@@ -554,142 +577,6 @@ void CwlCompositor::setupWorkspaceConnections()
 	connect(m_workspace, &CwlWorkspace::toplevelDestroyed,
 		m_foreignTlManagerV1,
 		&ForeignToplevelManagerV1::onToplevelDestroyed);
-}
-
-bool CwlCompositor::handleLeftEdgeGesture(QPointerEvent *ev)
-{
-	if (ev->isBeginEvent()) {
-		return (launcherPosition() == 0.0) && (blur() != 0.0);
-	}
-
-	if (ev->isUpdateEvent()) {
-		if ((ev->points().first().globalPosition() -
-		     m_glwindow->gesture()->startingPoint())
-			    .x() > GESTURE_MINIMUM_THRESHOLD) {
-			m_glwindow->gesture()->confirmGesture();
-		}
-		setBlur(1.0 - 1.0 * ev->points().first().globalPosition().x() /
-				      m_glwindow->width());
-		return true;
-	}
-
-	if (ev->isEndEvent()) {
-		if (ev->points().first().globalPosition().x() >
-		    GESTURE_ACCEPT_THRESHOLD) {
-			raise(m_homeView);
-			return true;
-		}
-		blurAnim->start();
-		m_homeOpen = false;
-		return true;
-	}
-
-	return false;
-}
-
-bool CwlCompositor::handleRightEdgeGesture(QPointerEvent *ev)
-{
-	if (ev->isBeginEvent()) {
-		return (launcherPosition() == 0.0) && (blur() != 0.0);
-	}
-
-	if (ev->isUpdateEvent()) {
-		if ((-ev->points().first().globalPosition() +
-		     m_glwindow->gesture()->startingPoint())
-			    .x() > GESTURE_MINIMUM_THRESHOLD) {
-			m_glwindow->gesture()->confirmGesture();
-		}
-		setBlur(1.0 * ev->points().first().globalPosition().x() /
-			m_glwindow->width());
-		return true;
-	}
-
-	if (ev->isEndEvent()) {
-		if (ev->points().first().globalPosition().x() <
-		    m_glwindow->width() - GESTURE_ACCEPT_THRESHOLD) {
-			raise(m_homeView);
-			return true;
-		}
-		blurAnim->start();
-		m_homeOpen = false;
-		return true;
-	}
-
-	return false;
-}
-
-bool CwlCompositor::handleBottomEdgeGesture(QPointerEvent *ev)
-{
-	if (ev->isBeginEvent() || ev->isUpdateEvent()) {
-		if (m_panelView != nullptr)
-			if (m_panelView->panelState > 1)
-				return false;
-		if (m_inputMngr->getInputMethod() != nullptr)
-			if (!m_inputMngr->getInputMethod()->isPanelHidden())
-				return false;
-		if ((-ev->points().first().globalPosition() +
-		     m_glwindow->gesture()->startingPoint())
-			    .y() > GESTURE_MINIMUM_THRESHOLD) {
-			m_glwindow->gesture()->confirmGesture();
-			setLauncherPosition(qMin(
-				1.0,
-				1.0 - (ev->points().first().globalPosition().y() /
-					       scaleFactor() -
-				       m_workspace->outputGeometry().y()) /
-						m_workspace->outputGeometry()
-							.height()));
-		}
-		return true;
-	}
-
-	if (ev->isEndEvent()) {
-		if (m_panelView != nullptr) {
-			if (m_panelView->panelState > 1) {
-				return false;
-			}
-		}
-		if (ev->points().first().globalPosition().y() <
-		    m_glwindow->height() * 0.8)
-			launcherOpenAnim->start();
-		else
-			launcherCloseAnim->start();
-		return true;
-	}
-
-	return false;
-}
-
-bool CwlCompositor::handleTopEdgeGesture(QPointerEvent *ev)
-{
-	if (launcherPosition() <= 0.0) {
-		return false;
-	}
-
-	if (ev->isBeginEvent() || ev->isUpdateEvent()) {
-		if ((ev->points().first().globalPosition() -
-		     m_glwindow->gesture()->startingPoint())
-			    .y() > GESTURE_MINIMUM_THRESHOLD) {
-			m_glwindow->gesture()->confirmGesture();
-		}
-		setLauncherPosition(qMin(
-			1.0,
-			1.0 - (ev->points().first().globalPosition().y() /
-				       scaleFactor() -
-			       m_workspace->outputGeometry().y()) /
-					m_workspace->outputGeometry().height()));
-		return true;
-	}
-
-	if (ev->isEndEvent()) {
-		if (ev->points().first().globalPosition().y() <
-		    m_glwindow->height() * 0.2)
-			launcherOpenAnim->start();
-		else
-			launcherCloseAnim->start();
-		return true;
-	}
-
-	return false;
 }
 
 bool CwlCompositor::handleCornerGesture(QPointerEvent *ev, int corner)

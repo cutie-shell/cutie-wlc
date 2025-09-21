@@ -76,6 +76,20 @@ class CwlCompositor : public QWaylandCompositor {
 	double launcherPosition();
 	void setLauncherPosition(double position);
 
+	// Animation control methods for gesture manager
+	void startBlurAnimation();
+	void startUnblurAnimation();
+	void startLauncherOpenAnimation();
+	void startLauncherCloseAnimation();
+
+	// Home state management
+	bool isHomeOpen() const;
+	void setHomeOpen(bool open);
+
+	// Panel and input method access
+	CwlView *getPanelView() const;
+	InputMethodManagerV2 *getInputMethodManager() const;
+
 	void grabSurface(QWaylandSurfaceGrabber *grabber,
 			 const QWaylandBufferRef &buffer) override;
 
@@ -107,11 +121,7 @@ class CwlCompositor : public QWaylandCompositor {
 	void setupSignalConnections();
 	void setupWorkspaceConnections();
 
-	// Gesture handling methods
-	bool handleLeftEdgeGesture(QPointerEvent *ev);
-	bool handleRightEdgeGesture(QPointerEvent *ev);
-	bool handleBottomEdgeGesture(QPointerEvent *ev);
-	bool handleTopEdgeGesture(QPointerEvent *ev);
+	// Corner gesture handling method (still needed)
 	bool handleCornerGesture(QPointerEvent *ev, int corner);
 
 	GlWindow *m_glwindow = nullptr;
