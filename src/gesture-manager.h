@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointerEvent>
 #include <QHash>
+#include <QTimer>
 #include <memory>
 
 class CwlCompositor;
@@ -28,6 +29,21 @@ enum class GestureType : uint32_t {
 };
 
 /**
+ * @brief Gesture state enumeration for tracking gesture lifecycle
+ * 
+ * This enum tracks the current state of active gestures for better
+ * state management and conflict resolution.
+ */
+enum class GestureState : uint32_t {
+	IDLE = 0, // No gesture activity
+	DETECTING = 1, // Gesture detection in progress
+	ACTIVE = 2, // Gesture confirmed and executing
+	CANCELLING = 3, // Gesture being cancelled
+	COMPLETED = 4, // Gesture completed successfully
+	FAILED = 5 // Gesture failed or was rejected
+};
+
+/**
  * @brief Gesture mapping key combining type and optional corner position
  * 
  * For edge gestures, only type is used. For corner gestures, both
@@ -42,6 +58,38 @@ struct GestureKey {
 	{
 		return type == other.type &&
 		       cornerPosition == other.cornerPosition;
+	}
+};
+
+/**
+ * @brief Active gesture tracking structure
+ * 
+ * Tracks the state and properties of an active gesture for
+ * state management and conflict resolution.
+ */
+struct ActiveGesture {
+	GestureKey key;
+	GestureState state;
+	IGestureAction *action;
+	QPointerEvent *lastEvent; // Store copy for cancellation
+	qint64 startTime; // Timestamp when gesture started
+	int priority; // Gesture priority for conflict resolution
+
+	ActiveGesture()
+		: action(nullptr)
+		, lastEvent(nullptr)
+		, startTime(0)
+		, priority(0)
+	{
+	}
+	ActiveGesture(const GestureKey &k, IGestureAction *a, int prio = 0)
+		: key(k)
+		, state(GestureState::DETECTING)
+		, action(a)
+		, lastEvent(nullptr)
+		, startTime(0)
+		, priority(prio)
+	{
 	}
 };
 
@@ -92,6 +140,23 @@ class CwlGestureManager : public QObject {
 	void clearGestureMapping(GestureType type);
 	void clearCornerGestureMapping(int cornerPosition);
 
+	// Gesture state management
+	bool startGesture(const GestureKey &key, QPointerEvent *ev,
+			  IGestureAction *action, int priority = 0);
+	void updateGestureState(const GestureKey &key, GestureState newState);
+	void completeGesture(const GestureKey &key);
+	void cancelGesture(const GestureKey &key);
+	void cancelAllGestures();
+	bool isGestureActive(const GestureKey &key) const;
+	GestureState getGestureState(const GestureKey &key) const;
+	QList<ActiveGesture> getActiveGestures() const;
+
+	// Gesture conflict resolution
+	bool hasConflictingGestures(const GestureKey &key) const;
+	void resolveGestureConflicts(const GestureKey &newGesture,
+				     int priority);
+	bool canStartGesture(const GestureKey &key, int priority) const;
+
     private:
 	void initializeActions();
 	void initializeGestureMapping();
@@ -100,6 +165,12 @@ class CwlGestureManager : public QObject {
 				    int cornerPosition = -1) const;
 	IGestureAction *findActionForGesture(QPointerEvent *ev, int edge,
 					     int corner) const;
+
+	// State management helper methods
+	void cleanupExpiredGestures();
+	void onGestureTimeout();
+	bool isConflictingGesture(const GestureKey &existing,
+				  const GestureKey &newGesture) const;
 
 	CwlCompositor *m_compositor;
 
@@ -112,6 +183,12 @@ class CwlGestureManager : public QObject {
 
 	// New gesture mapping registry
 	QHash<GestureKey, IGestureAction *> m_gestureRegistry;
+
+	// Gesture state management
+	QHash<GestureKey, ActiveGesture> m_activeGestures;
+	QTimer *m_gestureTimeout;
+	static constexpr int GESTURE_TIMEOUT_MS =
+		5000; // 5 second timeout for gestures
 };
 
 #endif // GESTURE_MANAGER_H

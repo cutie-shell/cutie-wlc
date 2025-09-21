@@ -4,17 +4,29 @@
 #include "gesture.h"
 #include "glwindow.h"
 #include "extensions/input-method-v2.h"
+#include <QDateTime>
 
 CwlGestureManager::CwlGestureManager(CwlCompositor *compositor, QObject *parent)
 	: QObject(parent)
 	, m_compositor(compositor)
+	, m_gestureTimeout(new QTimer(this))
 {
 	initializeActions();
 	initializeGestureMapping();
+
+	// Initialize gesture timeout timer
+	m_gestureTimeout->setSingleShot(false);
+	m_gestureTimeout->setInterval(1000); // Check every second
+	connect(m_gestureTimeout, &QTimer::timeout, this,
+		&CwlGestureManager::onGestureTimeout);
+	m_gestureTimeout->start();
 }
 
 CwlGestureManager::~CwlGestureManager()
 {
+	// Cancel all active gestures before cleanup
+	cancelAllGestures();
+
 	// Clean up corner actions (they are raw pointers in the hash)
 	for (auto it = m_cornerActions.begin(); it != m_cornerActions.end();
 	     ++it) {
@@ -45,10 +57,45 @@ void CwlGestureManager::initializeActions()
 
 bool CwlGestureManager::handleGesture(QPointerEvent *ev, int edge, int corner)
 {
+	// Clean up any expired gestures first
+	cleanupExpiredGestures();
+
+	// Create gesture key for the detected gesture
+	GestureKey gestureKey;
+	if (edge != EDGE_UNDEFINED) {
+		gestureKey = createGestureKey(convertEdgeToGestureType(edge));
+	} else if (corner == CORNER_BR || corner == CORNER_BL) {
+		GestureType cornerType = (corner == CORNER_BR) ?
+						 GestureType::CORNER_BR :
+						 GestureType::CORNER_BL;
+		gestureKey = createGestureKey(cornerType, corner);
+	} else {
+		return false; // No valid gesture detected
+	}
+
+	// Check if we can start this gesture (considering conflicts and priority)
+	if (!canStartGesture(gestureKey, 0)) {
+		return false;
+	}
+
 	// Use the new registry-based approach
 	IGestureAction *action = findActionForGesture(ev, edge, corner);
 	if (action && action->canExecute(m_compositor)) {
-		return action->execute(ev, m_compositor);
+		// Start gesture state tracking
+		if (startGesture(gestureKey, ev, action, 0)) {
+			bool result = action->execute(ev, m_compositor);
+			if (result) {
+				updateGestureState(gestureKey,
+						   GestureState::ACTIVE);
+				return true;
+			} else {
+				// Gesture execution failed
+				updateGestureState(gestureKey,
+						   GestureState::FAILED);
+				cancelGesture(gestureKey);
+				return false;
+			}
+		}
 	}
 
 	// Fallback to legacy approach for backward compatibility
@@ -390,4 +437,223 @@ void CwlGestureManager::clearCornerGestureMapping(int cornerPosition)
 		delete it.value();
 		m_gestureRegistry.remove(key);
 	}
+}
+
+// Gesture State Management Implementation
+
+bool CwlGestureManager::startGesture(const GestureKey &key, QPointerEvent *ev,
+				     IGestureAction *action, int priority)
+{
+	if (!canStartGesture(key, priority)) {
+		return false;
+	}
+
+	// Resolve any conflicts with existing gestures
+	resolveGestureConflicts(key, priority);
+
+	// Create and store the active gesture
+	ActiveGesture activeGesture(key, action, priority);
+	activeGesture.startTime = QDateTime::currentMSecsSinceEpoch();
+	activeGesture.lastEvent =
+		ev; // Note: In production, you'd want to clone the event
+	activeGesture.state = GestureState::DETECTING;
+
+	m_activeGestures[key] = activeGesture;
+	return true;
+}
+
+void CwlGestureManager::updateGestureState(const GestureKey &key,
+					   GestureState newState)
+{
+	auto it = m_activeGestures.find(key);
+	if (it != m_activeGestures.end()) {
+		it.value().state = newState;
+
+		// If gesture is completed or failed, schedule cleanup
+		if (newState == GestureState::COMPLETED ||
+		    newState == GestureState::FAILED) {
+			// Use a single-shot timer to delay cleanup
+			QTimer::singleShot(100, [this, key]() {
+				m_activeGestures.remove(key);
+			});
+		}
+	}
+}
+
+void CwlGestureManager::completeGesture(const GestureKey &key)
+{
+	updateGestureState(key, GestureState::COMPLETED);
+}
+
+void CwlGestureManager::cancelGesture(const GestureKey &key)
+{
+	auto it = m_activeGestures.find(key);
+	if (it != m_activeGestures.end()) {
+		ActiveGesture &gesture = it.value();
+
+		// Set state to cancelling
+		gesture.state = GestureState::CANCELLING;
+
+		// If the action supports cancellation, call it
+		if (gesture.action && gesture.lastEvent) {
+			// Note: In a real implementation, you might want to add a
+			// cancel() method to IGestureAction interface
+			// gesture.action->cancel(gesture.lastEvent, m_compositor);
+		}
+
+		// Remove the gesture
+		m_activeGestures.remove(key);
+	}
+}
+
+void CwlGestureManager::cancelAllGestures()
+{
+	QList<GestureKey> gestureKeys = m_activeGestures.keys();
+	for (const GestureKey &key : gestureKeys) {
+		cancelGesture(key);
+	}
+}
+
+bool CwlGestureManager::isGestureActive(const GestureKey &key) const
+{
+	auto it = m_activeGestures.find(key);
+	if (it != m_activeGestures.end()) {
+		GestureState state = it.value().state;
+		return state == GestureState::DETECTING ||
+		       state == GestureState::ACTIVE;
+	}
+	return false;
+}
+
+GestureState CwlGestureManager::getGestureState(const GestureKey &key) const
+{
+	auto it = m_activeGestures.find(key);
+	if (it != m_activeGestures.end()) {
+		return it.value().state;
+	}
+	return GestureState::IDLE;
+}
+
+QList<ActiveGesture> CwlGestureManager::getActiveGestures() const
+{
+	return m_activeGestures.values();
+}
+
+// Gesture Conflict Resolution Implementation
+
+bool CwlGestureManager::hasConflictingGestures(const GestureKey &key) const
+{
+	for (auto it = m_activeGestures.begin(); it != m_activeGestures.end();
+	     ++it) {
+		if (isConflictingGesture(it.key(), key)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void CwlGestureManager::resolveGestureConflicts(const GestureKey &newGesture,
+						int priority)
+{
+	QList<GestureKey> conflictingGestures;
+
+	// Find all conflicting gestures
+	for (auto it = m_activeGestures.begin(); it != m_activeGestures.end();
+	     ++it) {
+		if (isConflictingGesture(it.key(), newGesture)) {
+			const ActiveGesture &existing = it.value();
+			// Cancel lower priority gestures
+			if (existing.priority <= priority) {
+				conflictingGestures.append(it.key());
+			}
+		}
+	}
+
+	// Cancel conflicting gestures
+	for (const GestureKey &key : conflictingGestures) {
+		cancelGesture(key);
+	}
+}
+
+bool CwlGestureManager::canStartGesture(const GestureKey &key,
+					int priority) const
+{
+	// Check if there are conflicting gestures with higher priority
+	for (auto it = m_activeGestures.begin(); it != m_activeGestures.end();
+	     ++it) {
+		if (isConflictingGesture(it.key(), key)) {
+			const ActiveGesture &existing = it.value();
+			if (existing.priority > priority) {
+				return false; // Higher priority gesture is active
+			}
+		}
+	}
+	return true;
+}
+
+// Helper Methods Implementation
+
+void CwlGestureManager::cleanupExpiredGestures()
+{
+	qint64 currentTime = QDateTime::currentMSecsSinceEpoch();
+	QList<GestureKey> expiredGestures;
+
+	for (auto it = m_activeGestures.begin(); it != m_activeGestures.end();
+	     ++it) {
+		const ActiveGesture &gesture = it.value();
+		if (currentTime - gesture.startTime > GESTURE_TIMEOUT_MS) {
+			expiredGestures.append(it.key());
+		}
+	}
+
+	// Cancel expired gestures
+	for (const GestureKey &key : expiredGestures) {
+		cancelGesture(key);
+	}
+}
+
+void CwlGestureManager::onGestureTimeout()
+{
+	cleanupExpiredGestures();
+}
+
+bool CwlGestureManager::isConflictingGesture(const GestureKey &existing,
+					     const GestureKey &newGesture) const
+{
+	// Same gesture type is always conflicting
+	if (existing == newGesture) {
+		return true;
+	}
+
+	// Edge gestures conflict with each other (only one edge gesture at a time)
+	if ((existing.type == GestureType::LEFT_EDGE ||
+	     existing.type == GestureType::RIGHT_EDGE ||
+	     existing.type == GestureType::TOP_EDGE ||
+	     existing.type == GestureType::BOTTOM_EDGE) &&
+	    (newGesture.type == GestureType::LEFT_EDGE ||
+	     newGesture.type == GestureType::RIGHT_EDGE ||
+	     newGesture.type == GestureType::TOP_EDGE ||
+	     newGesture.type == GestureType::BOTTOM_EDGE)) {
+		return true;
+	}
+
+	// Corner gestures on the same side might conflict
+	if (existing.cornerPosition != -1 && newGesture.cornerPosition != -1) {
+		// Bottom corners conflict with each other
+		if ((existing.cornerPosition == CORNER_BL ||
+		     existing.cornerPosition == CORNER_BR) &&
+		    (newGesture.cornerPosition == CORNER_BL ||
+		     newGesture.cornerPosition == CORNER_BR)) {
+			return true;
+		}
+		// Top corners conflict with each other
+		if ((existing.cornerPosition == CORNER_TL ||
+		     existing.cornerPosition == CORNER_TR) &&
+		    (newGesture.cornerPosition == CORNER_TL ||
+		     newGesture.cornerPosition == CORNER_TR)) {
+			return true;
+		}
+	}
+
+	return false;
 }
