@@ -308,7 +308,7 @@ void CwlView::onDestinationSizeChanged()
 		    m_layerSurface->ls_zone) {
 			panelState = PANEL_FOLDED;
 		} else if (this->surface()->destinationSize().height() >
-			 m_layerSurface->ls_zone) {
+			   m_layerSurface->ls_zone) {
 			panelState = PANEL_UNFOLDING;
 		}
 	}

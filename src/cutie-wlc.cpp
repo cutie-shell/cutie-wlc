@@ -72,7 +72,8 @@ void CwlCompositor::create()
 	launchCutieComponent(launcher);
 	launchCutieComponent("cutie-panel");
 	launchCutieComponent("cutie-keyboard");
-	launchCutieComponent("env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd");
+	launchCutieComponent(
+		"env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd");
 	launchCutieComponent("loginctl activate");
 }
 
@@ -664,17 +665,17 @@ void CwlCompositor::setupEnvironmentVariables()
 	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
 }
 
-bool CwlCompositor::launchCutieComponent(const QString& command)
+bool CwlCompositor::launchCutieComponent(const QString &command)
 {
 	QStringList args;
 	args.append("-c");
 	args.append(command);
-	
+
 	if (!QProcess::startDetached("bash", args)) {
 		qDebug() << "Failed to run:" << command;
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -685,7 +686,7 @@ void CwlCompositor::setupAnimations()
 	unblurAnim->setDuration(250);
 	launcherOpenAnim->setDuration(250);
 	launcherCloseAnim->setDuration(250);
-	
+
 	// Configure animation end values
 	blurAnim->setEndValue(1.0);
 	unblurAnim->setEndValue(0.0);
@@ -699,7 +700,7 @@ void CwlCompositor::setupAnimations()
 		&CwlCompositor::animationValueChanged);
 	connect(unblurAnim, &QVariantAnimation::finished, this,
 		[this]() { m_workspace->showDesktop(true); });
-	
+
 	// Connect launcher animations
 	connect(launcherOpenAnim, &QVariantAnimation::valueChanged, this,
 		&CwlCompositor::animationValueChanged);

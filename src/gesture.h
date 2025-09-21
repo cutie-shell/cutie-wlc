@@ -11,8 +11,10 @@
 #define GESTURE_EDGE_OFFSET 20
 #define GESTURE_CORNER_OFFSET 50
 
-#define SCALED_GESTURE_EDGE_OFFSET (GESTURE_EDGE_OFFSET * m_cwlcompositor->scaleFactor())
-#define SCALED_GESTURE_CORNER_OFFSET (GESTURE_CORNER_OFFSET * m_cwlcompositor->scaleFactor())
+#define SCALED_GESTURE_EDGE_OFFSET \
+	(GESTURE_EDGE_OFFSET * m_cwlcompositor->scaleFactor())
+#define SCALED_GESTURE_CORNER_OFFSET \
+	(GESTURE_CORNER_OFFSET * m_cwlcompositor->scaleFactor())
 
 enum EdgeSwipe : uint32_t {
 	EDGE_RIGHT = 0,

@@ -189,7 +189,7 @@ void GlWindow::keyPressEvent(QKeyEvent *event)
 
 	if (event->key() == Qt::Key_VolumeDown)
 		m_cwlcompositor->specialKey(
-			CutieShell::SpecialKey::VOLUME_DOWN_PRESS);		
+			CutieShell::SpecialKey::VOLUME_DOWN_PRESS);
 }
 
 void GlWindow::keyReleaseEvent(QKeyEvent *event)
