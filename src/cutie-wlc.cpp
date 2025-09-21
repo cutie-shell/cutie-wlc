@@ -29,25 +29,7 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
 	connect(m_layerShell, &LayerShellV1::layerShellSurfaceCreated, this,
 		&CwlCompositor::onLayerShellSurfaceCreated);
 
-	blurAnim->setDuration(250);
-	unblurAnim->setDuration(250);
-	launcherOpenAnim->setDuration(250);
-	launcherCloseAnim->setDuration(250);
-	blurAnim->setEndValue(1.0);
-	unblurAnim->setEndValue(0.0);
-	launcherOpenAnim->setEndValue(1.0);
-	launcherCloseAnim->setEndValue(0.0);
-
-	connect(blurAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(unblurAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(unblurAnim, &QVariantAnimation::finished, this,
-		[this]() { m_workspace->showDesktop(true); });
-	connect(launcherOpenAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(launcherCloseAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
+	setupAnimations();
 }
 
 CwlCompositor::~CwlCompositor()
@@ -694,4 +676,33 @@ bool CwlCompositor::launchCutieComponent(const QString& command)
 	}
 	
 	return true;
+}
+
+void CwlCompositor::setupAnimations()
+{
+	// Configure animation durations
+	blurAnim->setDuration(250);
+	unblurAnim->setDuration(250);
+	launcherOpenAnim->setDuration(250);
+	launcherCloseAnim->setDuration(250);
+	
+	// Configure animation end values
+	blurAnim->setEndValue(1.0);
+	unblurAnim->setEndValue(0.0);
+	launcherOpenAnim->setEndValue(1.0);
+	launcherCloseAnim->setEndValue(0.0);
+
+	// Connect blur animations
+	connect(blurAnim, &QVariantAnimation::valueChanged, this,
+		&CwlCompositor::animationValueChanged);
+	connect(unblurAnim, &QVariantAnimation::valueChanged, this,
+		&CwlCompositor::animationValueChanged);
+	connect(unblurAnim, &QVariantAnimation::finished, this,
+		[this]() { m_workspace->showDesktop(true); });
+	
+	// Connect launcher animations
+	connect(launcherOpenAnim, &QVariantAnimation::valueChanged, this,
+		&CwlCompositor::animationValueChanged);
+	connect(launcherCloseAnim, &QVariantAnimation::valueChanged, this,
+		&CwlCompositor::animationValueChanged);
 }
