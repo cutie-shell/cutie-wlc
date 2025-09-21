@@ -103,6 +103,14 @@ class CwlCompositor : public QWaylandCompositor {
 	void setupEnvironmentVariables();
 	bool launchCutieComponent(const QString &command);
 	void setupAnimations();
+
+	// Gesture handling methods
+	bool handleLeftEdgeGesture(QPointerEvent *ev);
+	bool handleRightEdgeGesture(QPointerEvent *ev);
+	bool handleBottomEdgeGesture(QPointerEvent *ev);
+	bool handleTopEdgeGesture(QPointerEvent *ev);
+	bool handleCornerGesture(QPointerEvent *ev, int corner);
+
 	GlWindow *m_glwindow = nullptr;
 	QWaylandXdgShell *m_xdgShell = nullptr;
 	QPointer<CwlView> m_mouseView;
