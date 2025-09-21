@@ -303,13 +303,15 @@ void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
 
 void CwlView::onDestinationSizeChanged()
 {
-	if (m_layerSurface && m_layerSurface->ls_scope == "cutie-panel")
+	if (m_layerSurface && m_layerSurface->ls_scope == "cutie-panel") {
 		if (this->surface()->destinationSize().height() <=
-		    m_layerSurface->ls_zone)
+		    m_layerSurface->ls_zone) {
 			panelState = PANEL_FOLDED;
-		else if (this->surface()->destinationSize().height() >
-			 m_layerSurface->ls_zone)
+		} else if (this->surface()->destinationSize().height() >
+			 m_layerSurface->ls_zone) {
 			panelState = PANEL_UNFOLDING;
+		}
+	}
 }
 
 void CwlView::onRedraw()

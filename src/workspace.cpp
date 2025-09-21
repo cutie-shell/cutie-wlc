@@ -82,11 +82,13 @@ void CwlWorkspace::updateViewList()
 	m_viewList = m_viewLayerList[CwlViewLayer::BACKGROUND] +
 		     m_viewLayerList[CwlViewLayer::BOTTOM];
 
-	if (!m_showDesktop && !m_viewLayerList[CwlViewLayer::TOP].isEmpty())
-		if (m_singleView)
+	if (!m_showDesktop && !m_viewLayerList[CwlViewLayer::TOP].isEmpty()) {
+		if (m_singleView) {
 			m_viewList << m_viewLayerList[CwlViewLayer::TOP].last();
-		else
+		} else {
 			m_viewList << m_viewLayerList[CwlViewLayer::TOP];
+		}
+	}
 
 	m_viewList << m_viewLayerList[CwlViewLayer::OVERLAY];
 	updateAvailableGeometry();
