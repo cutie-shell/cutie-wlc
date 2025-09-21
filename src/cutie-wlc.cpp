@@ -12,6 +12,8 @@
 #include <QTouchEvent>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLTexture>
+#include <QTimer>
+#include <QStandardPaths>
 
 CwlCompositor::CwlCompositor(GlWindow *glwindow)
 	: m_glwindow(glwindow)
@@ -67,14 +69,16 @@ void CwlCompositor::create()
 	initInputMethod();
 	setupEnvironmentVariables();
 
-	// Launch Cutie shell components
-	launchCutieComponent("cutie-home");
-	launchCutieComponent(launcher);
-	launchCutieComponent("cutie-panel");
-	launchCutieComponent("cutie-keyboard");
-	launchCutieComponent(
-		"env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd");
-	launchCutieComponent("loginctl activate");
+	// Launch Cutie shell components with improved error handling
+	launchCutieComponentWithRetry("cutie-home", 3);
+	launchCutieComponentWithRetry(launcher, 3);
+	launchCutieComponentWithRetry("cutie-panel", 3);
+	launchCutieComponentWithRetry("cutie-keyboard",
+				      2); // Less critical, fewer retries
+	launchCutieComponentWithRetry(
+		"env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd", 2);
+	launchCutieComponentWithRetry("loginctl activate",
+				      1); // System command, minimal retry
 }
 
 QList<CwlView *> CwlCompositor::getViews() const
@@ -520,11 +524,96 @@ bool CwlCompositor::launchCutieComponent(const QString &command)
 	args.append(command);
 
 	if (!QProcess::startDetached("bash", args)) {
-		qDebug() << "Failed to run:" << command;
+		QString componentName = command.split(" ").first();
+		qWarning() << "Failed to launch component:" << componentName;
+		notifyComponentFailure(componentName, "Process launch failed");
 		return false;
 	}
 
+	qDebug() << "Successfully launched component:" << command;
 	return true;
+}
+
+bool CwlCompositor::launchCutieComponentWithRetry(const QString &command,
+						  int maxRetries)
+{
+	QString componentName = command.split(" ").first();
+
+	for (int attempt = 1; attempt <= maxRetries; ++attempt) {
+		qDebug() << "Launching component" << componentName
+			 << "- attempt" << attempt << "of" << maxRetries;
+
+		if (launchCutieComponent(command)) {
+			if (attempt > 1) {
+				qInfo() << "Component" << componentName
+					<< "launched successfully after"
+					<< attempt << "attempts";
+			}
+			return true;
+		}
+
+		if (attempt < maxRetries) {
+			qWarning()
+				<< "Launch attempt" << attempt << "failed for"
+				<< componentName << "- retrying in 1 second";
+			// Use a simple delay for retry
+			QEventLoop loop;
+			QTimer::singleShot(1000, &loop, &QEventLoop::quit);
+			loop.exec();
+		}
+	}
+
+	qCritical() << "Failed to launch component" << componentName << "after"
+		    << maxRetries << "attempts";
+
+	// Track failed component
+	if (!m_failedComponents.contains(componentName)) {
+		m_failedComponents.append(componentName);
+	}
+
+	// Notify about critical component failure
+	if (isComponentCritical(componentName)) {
+		notifyComponentFailure(
+			componentName,
+			QString("Failed after %1 attempts").arg(maxRetries));
+	}
+
+	return false;
+}
+
+bool CwlCompositor::isComponentCritical(const QString &component)
+{
+	QString componentName = component.split(" ").first();
+	return m_criticalComponents.contains(componentName);
+}
+
+void CwlCompositor::notifyComponentFailure(const QString &component,
+					   const QString &error)
+{
+	QString componentName = component.split(" ").first();
+
+	if (isComponentCritical(componentName)) {
+		qCritical() << "CRITICAL COMPONENT FAILURE:" << componentName
+			    << "-" << error;
+		qCritical()
+			<< "The desktop environment may not function properly.";
+
+		// For critical components, we could potentially:
+		// - Show a notification to the user
+		// - Try alternative fallback components
+		// - Log to system journal for debugging
+
+		if (componentName == "cutie-home") {
+			qCritical()
+				<< "Home screen failed to start - desktop navigation will be unavailable";
+		} else if (componentName == "cutie-panel") {
+			qCritical()
+				<< "Panel failed to start - system controls may be inaccessible";
+		}
+	} else {
+		qWarning() << "Non-critical component failure:" << componentName
+			   << "-" << error;
+	}
 }
 
 void CwlCompositor::setupAnimations()
