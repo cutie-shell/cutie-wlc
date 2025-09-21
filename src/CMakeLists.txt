@@ -10,6 +10,7 @@ set(CWL_SOURCES
 		glwindow.cpp
 		gesture.cpp
 		gesture-manager.cpp
+		gesture-action.cpp
 		process-manager.cpp)
 
 set(CWL_HEADERS
@@ -19,6 +20,7 @@ set(CWL_HEADERS
 		glwindow.h
 		gesture.h
 		gesture-manager.h
+		gesture-action.h
 		process-manager.h)
 
 set(QML_RESOURCES)

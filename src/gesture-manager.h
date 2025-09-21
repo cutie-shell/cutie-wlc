@@ -3,14 +3,18 @@
 
 #include <QObject>
 #include <QPointerEvent>
+#include <QHash>
+#include <memory>
 
 class CwlCompositor;
+class IGestureAction;
 
 /**
  * @brief The CwlGestureManager class manages gesture handling for the compositor
  * 
  * This class extracts gesture action logic from CwlCompositor to improve
- * code organization, maintainability, and extensibility.
+ * code organization, maintainability, and extensibility. It uses action objects
+ * for loose coupling and easier testing.
  */
 class CwlGestureManager : public QObject {
 	Q_OBJECT
@@ -33,7 +37,16 @@ class CwlGestureManager : public QObject {
 	bool handleCornerGesture(QPointerEvent *ev, int corner);
 
     private:
+	void initializeActions();
+
 	CwlCompositor *m_compositor;
+
+	// Action objects for each gesture type
+	std::unique_ptr<IGestureAction> m_leftEdgeAction;
+	std::unique_ptr<IGestureAction> m_rightEdgeAction;
+	std::unique_ptr<IGestureAction> m_topEdgeAction;
+	std::unique_ptr<IGestureAction> m_bottomEdgeAction;
+	QHash<int, IGestureAction *> m_cornerActions;
 };
 
 #endif // GESTURE_MANAGER_H
