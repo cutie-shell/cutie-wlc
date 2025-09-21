@@ -5,6 +5,7 @@
 #include <screencopy.h>
 #include <foreign-toplevel-management.h>
 #include <input-method-v2.h>
+#include "process-manager.h"
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandPointer>
@@ -20,6 +21,7 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
 	, m_xdgShell(new QWaylandXdgShell(this))
 	, m_layerShell(new LayerShellV1(this))
 	, m_xdgdecoration(new QWaylandXdgDecorationManagerV1())
+	, m_processManager(new CwlProcessManager(this))
 {
 	m_glwindow->setCompositor(this);
 	connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
@@ -69,16 +71,8 @@ void CwlCompositor::create()
 	initInputMethod();
 	setupEnvironmentVariables();
 
-	// Launch Cutie shell components with improved error handling
-	launchCutieComponentWithRetry("cutie-home", 3);
-	launchCutieComponentWithRetry(launcher, 3);
-	launchCutieComponentWithRetry("cutie-panel", 3);
-	launchCutieComponentWithRetry("cutie-keyboard",
-				      2); // Less critical, fewer retries
-	launchCutieComponentWithRetry(
-		"env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd", 2);
-	launchCutieComponentWithRetry("loginctl activate",
-				      1); // System command, minimal retry
+	// Launch Cutie shell components using process manager
+	m_processManager->launchEssentialComponents(launcher);
 }
 
 QList<CwlView *> CwlCompositor::getViews() const
@@ -515,105 +509,6 @@ void CwlCompositor::setupEnvironmentVariables()
 	*/
 	qputenv("QSG_NO_VSYNC", QByteArray("1"));
 	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
-}
-
-bool CwlCompositor::launchCutieComponent(const QString &command)
-{
-	QStringList args;
-	args.append("-c");
-	args.append(command);
-
-	if (!QProcess::startDetached("bash", args)) {
-		QString componentName = command.split(" ").first();
-		qWarning() << "Failed to launch component:" << componentName;
-		notifyComponentFailure(componentName, "Process launch failed");
-		return false;
-	}
-
-	qDebug() << "Successfully launched component:" << command;
-	return true;
-}
-
-bool CwlCompositor::launchCutieComponentWithRetry(const QString &command,
-						  int maxRetries)
-{
-	QString componentName = command.split(" ").first();
-
-	for (int attempt = 1; attempt <= maxRetries; ++attempt) {
-		qDebug() << "Launching component" << componentName
-			 << "- attempt" << attempt << "of" << maxRetries;
-
-		if (launchCutieComponent(command)) {
-			if (attempt > 1) {
-				qInfo() << "Component" << componentName
-					<< "launched successfully after"
-					<< attempt << "attempts";
-			}
-			return true;
-		}
-
-		if (attempt < maxRetries) {
-			qWarning()
-				<< "Launch attempt" << attempt << "failed for"
-				<< componentName << "- retrying in 1 second";
-			// Use a simple delay for retry
-			QEventLoop loop;
-			QTimer::singleShot(1000, &loop, &QEventLoop::quit);
-			loop.exec();
-		}
-	}
-
-	qCritical() << "Failed to launch component" << componentName << "after"
-		    << maxRetries << "attempts";
-
-	// Track failed component
-	if (!m_failedComponents.contains(componentName)) {
-		m_failedComponents.append(componentName);
-	}
-
-	// Notify about critical component failure
-	if (isComponentCritical(componentName)) {
-		notifyComponentFailure(
-			componentName,
-			QString("Failed after %1 attempts").arg(maxRetries));
-	}
-
-	return false;
-}
-
-bool CwlCompositor::isComponentCritical(const QString &component)
-{
-	QString componentName = component.split(" ").first();
-	return m_criticalComponents.contains(componentName);
-}
-
-void CwlCompositor::notifyComponentFailure(const QString &component,
-					   const QString &error)
-{
-	QString componentName = component.split(" ").first();
-
-	if (isComponentCritical(componentName)) {
-		qCritical() << "CRITICAL COMPONENT FAILURE:" << componentName
-			    << "-" << error;
-		qCritical()
-			<< "The desktop environment may not function properly.";
-
-		// For critical components, we could potentially:
-		// - Show a notification to the user
-		// - Try alternative fallback components
-		// - Log to system journal for debugging
-
-		if (componentName == "cutie-home") {
-			qCritical()
-				<< "Home screen failed to start - desktop navigation will be unavailable";
-		} else if (componentName == "cutie-panel") {
-			qCritical()
-				<< "Panel failed to start - system controls may be inaccessible";
-		}
-	} else {
-		qWarning() << "Non-critical component failure:" << componentName
-			   << "-" << error;
-	}
 }
 
 void CwlCompositor::setupAnimations()

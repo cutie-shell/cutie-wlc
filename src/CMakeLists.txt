@@ -8,14 +8,16 @@ set(CWL_SOURCES
 		cutie-wlc.cpp
 		workspace.cpp
 		glwindow.cpp
-		gesture.cpp)
+		gesture.cpp
+		process-manager.cpp)
 
 set(CWL_HEADERS
 		view.h
 		cutie-wlc.h
 		workspace.h
 		glwindow.h
-		gesture.h)
+		gesture.h
+		process-manager.h)
 
 set(QML_RESOURCES)
 

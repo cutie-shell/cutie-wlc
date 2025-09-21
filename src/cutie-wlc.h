@@ -21,6 +21,7 @@ class ScreencopyManagerV1;
 class ForeignToplevelManagerV1;
 class ForeignToplevelHandleV1;
 class InputMethodManagerV2;
+class CwlProcessManager;
 
 class CwlCompositor : public QWaylandCompositor {
 	Q_OBJECT
@@ -101,12 +102,6 @@ class CwlCompositor : public QWaylandCompositor {
     private:
 	CwlView *findView(const QWaylandSurface *s) const;
 	void setupEnvironmentVariables();
-	bool launchCutieComponent(const QString &command);
-	bool launchCutieComponentWithRetry(const QString &command,
-					   int maxRetries = 3);
-	bool isComponentCritical(const QString &component);
-	void notifyComponentFailure(const QString &component,
-				    const QString &error);
 	void setupAnimations();
 
 	// Gesture handling methods
@@ -149,9 +144,8 @@ class CwlCompositor : public QWaylandCompositor {
 	bool m_homeOpen = true;
 	QString launcher = "cutie-launcher";
 
-	// Component launch tracking
-	QStringList m_failedComponents;
-	QStringList m_criticalComponents = { "cutie-home", "cutie-panel" };
+	// Process management
+	CwlProcessManager *m_processManager = nullptr;
 };
 
 QT_END_NAMESPACE
