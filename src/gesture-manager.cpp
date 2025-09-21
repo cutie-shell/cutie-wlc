@@ -1,8 +1,8 @@
 #include "gesture-manager.h"
 #include "gesture-action.h"
-#include "cutie-wlc.h"
+#include <cutie-wlc.h>
 #include "gesture.h"
-#include "glwindow.h"
+#include <glwindow.h>
 #include "extensions/input-method-v2.h"
 #include <QDateTime>
 

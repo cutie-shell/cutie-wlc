@@ -1,6 +1,6 @@
 #include "gesture-action.h"
-#include "cutie-wlc.h"
-#include "glwindow.h"
+#include <cutie-wlc.h>
+#include <glwindow.h>
 #include "gesture.h"
 #include "extensions/input-method-v2.h"
 

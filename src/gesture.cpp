@@ -1,5 +1,5 @@
-#include <gesture.h>
-#include <gesture-manager.h>
+#include "gesture.h"
+#include "gesture-manager.h"
 #include <QDebug>
 
 CwlGesture::CwlGesture(CwlCompositor *compositor, QSize screenSize)

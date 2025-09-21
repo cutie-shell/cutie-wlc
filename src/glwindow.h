@@ -5,7 +5,7 @@
 #include <QEventPoint>
 
 #include <cutie-wlc.h>
-#include <gesture.h>
+#include "gesture.h"
 
 QT_BEGIN_NAMESPACE
 
