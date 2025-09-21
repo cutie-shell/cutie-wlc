@@ -103,6 +103,8 @@ class CwlCompositor : public QWaylandCompositor {
 	CwlView *findView(const QWaylandSurface *s) const;
 	void setupEnvironmentVariables();
 	void setupAnimations();
+	void setupSignalConnections();
+	void setupWorkspaceConnections();
 
 	// Gesture handling methods
 	bool handleLeftEdgeGesture(QPointerEvent *ev);

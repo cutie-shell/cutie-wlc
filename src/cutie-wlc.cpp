@@ -24,15 +24,7 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
 	, m_processManager(new CwlProcessManager(this))
 {
 	m_glwindow->setCompositor(this);
-	connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
-
-	connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this,
-		&CwlCompositor::onXdgToplevelCreated);
-	connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this,
-		&CwlCompositor::onXdgPopupCreated);
-	connect(m_layerShell, &LayerShellV1::layerShellSurfaceCreated, this,
-		&CwlCompositor::onLayerShellSurfaceCreated);
-
+	setupSignalConnections();
 	setupAnimations();
 }
 
@@ -61,12 +53,7 @@ void CwlCompositor::create()
 	m_screencopyManager = new ScreencopyManagerV1(this);
 
 	m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
-	connect(m_workspace, &CwlWorkspace::toplevelCreated,
-		m_foreignTlManagerV1,
-		&ForeignToplevelManagerV1::onToplevelCreated);
-	connect(m_workspace, &CwlWorkspace::toplevelDestroyed,
-		m_foreignTlManagerV1,
-		&ForeignToplevelManagerV1::onToplevelDestroyed);
+	setupWorkspaceConnections();
 
 	initInputMethod();
 	setupEnvironmentVariables();
@@ -538,6 +525,33 @@ void CwlCompositor::setupAnimations()
 		&CwlCompositor::animationValueChanged);
 	connect(launcherCloseAnim, &QVariantAnimation::valueChanged, this,
 		&CwlCompositor::animationValueChanged);
+}
+
+void CwlCompositor::setupSignalConnections()
+{
+	// Core compositor signal connections
+	connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
+
+	// XDG Shell signal connections
+	connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this,
+		&CwlCompositor::onXdgToplevelCreated);
+	connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this,
+		&CwlCompositor::onXdgPopupCreated);
+
+	// Layer Shell signal connections
+	connect(m_layerShell, &LayerShellV1::layerShellSurfaceCreated, this,
+		&CwlCompositor::onLayerShellSurfaceCreated);
+}
+
+void CwlCompositor::setupWorkspaceConnections()
+{
+	// Workspace and foreign toplevel connections (requires objects from create())
+	connect(m_workspace, &CwlWorkspace::toplevelCreated,
+		m_foreignTlManagerV1,
+		&ForeignToplevelManagerV1::onToplevelCreated);
+	connect(m_workspace, &CwlWorkspace::toplevelDestroyed,
+		m_foreignTlManagerV1,
+		&ForeignToplevelManagerV1::onToplevelDestroyed);
 }
 
 bool CwlCompositor::handleLeftEdgeGesture(QPointerEvent *ev)
