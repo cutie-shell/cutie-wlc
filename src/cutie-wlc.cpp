@@ -83,24 +83,7 @@ void CwlCompositor::create()
 		&ForeignToplevelManagerV1::onToplevelDestroyed);
 
 	initInputMethod();
-
-	qputenv("CUTIE_SHELL", QByteArray("true"));
-	qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
-	qputenv("EGL_PLATFORM", QByteArray("wayland"));
-	qputenv("QT_IM_MODULE", QByteArray("textinputv3"));
-	qunsetenv("QT_QPA_GENERIC_PLUGINS");
-	qunsetenv("QT_SCALE_FACTOR");
-	qputenv("WAYLAND_DISPLAY", socketName());
-
-	/*
-		Setting QSG_NO_VSYNC and QSG_RENDER_LOOP makes resizing QtQuick apps
-		much smoother. There is a QTBUG-51112 which MIGHT be related to our issue.
-		But the bug describes actually a slightly different issue.
-
-		Might also be the hwcomposer issue https://doc.qt.io/qt-6/qtquick-visualcanvas-scenegraph.html
-	*/
-	qputenv("QSG_NO_VSYNC", QByteArray("1"));
-	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
+	setupEnvironmentVariables();
 
 	QStringList args = QStringList();
 	args.append("-c");
@@ -703,4 +686,26 @@ void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
 			emit grabber->failed(
 				QWaylandSurfaceGrabber::UnknownBufferType);
 	}
+}
+
+void CwlCompositor::setupEnvironmentVariables()
+{
+	// Set up environment variables for Cutie shell and Wayland
+	qputenv("CUTIE_SHELL", QByteArray("true"));
+	qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
+	qputenv("EGL_PLATFORM", QByteArray("wayland"));
+	qputenv("QT_IM_MODULE", QByteArray("textinputv3"));
+	qunsetenv("QT_QPA_GENERIC_PLUGINS");
+	qunsetenv("QT_SCALE_FACTOR");
+	qputenv("WAYLAND_DISPLAY", socketName());
+
+	/*
+		Setting QSG_NO_VSYNC and QSG_RENDER_LOOP makes resizing QtQuick apps
+		much smoother. There is a QTBUG-51112 which MIGHT be related to our issue.
+		But the bug describes actually a slightly different issue.
+
+		Might also be the hwcomposer issue https://doc.qt.io/qt-6/qtquick-visualcanvas-scenegraph.html
+	*/
+	qputenv("QSG_NO_VSYNC", QByteArray("1"));
+	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
 }

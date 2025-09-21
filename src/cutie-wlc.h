@@ -100,6 +100,7 @@ class CwlCompositor : public QWaylandCompositor {
 
     private:
 	CwlView *findView(const QWaylandSurface *s) const;
+	void setupEnvironmentVariables();
 	GlWindow *m_glwindow = nullptr;
 	QWaylandXdgShell *m_xdgShell = nullptr;
 	QPointer<CwlView> m_mouseView;
