@@ -59,8 +59,26 @@ void GlWindow::paintGL()
 {
 	if (m_displayOff)
 		return;
-	m_cwlcompositor->startRender();
 
+	m_cwlcompositor->startRender();
+	setupRenderingContext();
+
+	// Prepare views for rendering
+	QList<CwlView *> viewList;
+	if (m_cwlcompositor->m_launcherView)
+		viewList = m_cwlcompositor->getViews()
+			   << m_cwlcompositor->m_launcherView;
+	else
+		viewList = m_cwlcompositor->getViews();
+
+	renderViews(viewList);
+
+	m_textureBlitter.release();
+	m_cwlcompositor->endRender();
+}
+
+void GlWindow::setupRenderingContext()
+{
 	QOpenGLFunctions *functions = context()->functions();
 	functions->glClearColor(.0f, .0f, .0f, 1.f);
 	functions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -69,49 +87,51 @@ void GlWindow::paintGL()
 	m_textureBlitter.bind(m_currentTarget);
 	functions->glEnable(GL_BLEND);
 	functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
 
-	QList<CwlView *> renderViews;
-	if (m_cwlcompositor->m_launcherView)
-		renderViews = m_cwlcompositor->getViews()
-			      << m_cwlcompositor->m_launcherView;
-	else
-		renderViews = m_cwlcompositor->getViews();
+qreal GlWindow::calculateViewOpacity(CwlView *view) const
+{
+	if (!view)
+		return 1.0;
 
-	for (CwlView *view : renderViews) {
-		QString appId;
-		if (view && view->isToplevel())
-			appId = view->getAppId();
+	QString appId;
+	if (view->isToplevel())
+		appId = view->getAppId();
 
-		if (appId == "cutie-launcher")
-			m_textureBlitter.setOpacity(
-				1.0 -
-				(m_cwlcompositor->m_launcherView->getPosition()
-					 .y() *
-				 m_cwlcompositor->scaleFactor() / height()));
-		else if (view->isToplevel())
-			if (m_cwlcompositor->launcherPosition() > 0.0)
-				m_textureBlitter.setOpacity(
-					m_cwlcompositor->blur() *
-					m_cwlcompositor->m_launcherView
-						->getPosition()
-						.y() *
-					m_cwlcompositor->scaleFactor() /
-					height());
-			else
-				m_textureBlitter.setOpacity(
-					m_cwlcompositor->blur());
-		else
-			m_textureBlitter.setOpacity(1.0);
+	if (appId == "cutie-launcher") {
+		// Launcher opacity based on position
+		return 1.0 -
+		       (m_cwlcompositor->m_launcherView->getPosition().y() *
+			m_cwlcompositor->scaleFactor() / height());
+	} else if (view->isToplevel()) {
+		// Toplevel view opacity with launcher interaction
+		if (m_cwlcompositor->launcherPosition() > 0.0) {
+			return m_cwlcompositor->blur() *
+			       m_cwlcompositor->m_launcherView->getPosition()
+				       .y() *
+			       m_cwlcompositor->scaleFactor() / height();
+		} else {
+			return m_cwlcompositor->blur();
+		}
+	} else {
+		// Default opacity for other views
+		return 1.0;
+	}
+}
 
+void GlWindow::renderViews(const QList<CwlView *> &views)
+{
+	for (CwlView *view : views) {
+		// Skip top layer views when launcher is fully open
 		if (m_cwlcompositor->launcherPosition() == 1.0 &&
 		    view->layer == CwlViewLayer::TOP)
 			continue;
 
+		// Set view opacity and render
+		qreal opacity = calculateViewOpacity(view);
+		m_textureBlitter.setOpacity(opacity);
 		renderView(view);
 	}
-
-	m_textureBlitter.release();
-	m_cwlcompositor->endRender();
 }
 
 void GlWindow::renderView(CwlView *view)

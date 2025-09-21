@@ -39,6 +39,11 @@ class GlWindow : public QOpenGLWindow {
     private:
 	void renderView(CwlView *view);
 
+	// Helper methods for rendering pipeline
+	void setupRenderingContext();
+	qreal calculateViewOpacity(CwlView *view) const;
+	void renderViews(const QList<CwlView *> &views);
+
 	QOpenGLTextureBlitter m_textureBlitter;
 	GLenum m_currentTarget;
 	QOpenGLTexture *m_wallpaper = nullptr;
