@@ -188,9 +188,48 @@ bool CwlGestureManager::handleBottomEdgeGesture(QPointerEvent *ev)
 
 bool CwlGestureManager::handleCornerGesture(QPointerEvent *ev, int corner)
 {
-	// TODO: Implement corner gesture handling
-	// This will be moved from CwlCompositor::handleCornerGesture in Phase 2
-	Q_UNUSED(ev)
-	Q_UNUSED(corner)
+	if (corner != CORNER_BR && corner != CORNER_BL) {
+		return false;
+	}
+
+	if (m_compositor->launcherPosition() > 0.0) {
+		return false;
+	}
+
+	if (m_compositor->getPanelView() != nullptr)
+		if (m_compositor->getPanelView()->panelState > 1)
+			return false;
+
+	if (ev->isBeginEvent() || ev->isUpdateEvent()) {
+		if (m_compositor->getInputMethodManager()->getInputMethod() !=
+		    nullptr)
+			if (!m_compositor->getInputMethodManager()
+				     ->getInputMethod()
+				     ->isPanelHidden()) {
+				return false;
+			}
+		if ((-ev->points().first().globalPosition() +
+		     m_compositor->glWindow()->gesture()->startingPoint())
+			    .y() > GESTURE_MINIMUM_THRESHOLD) {
+			m_compositor->glWindow()->gesture()->confirmGesture();
+		}
+		return true;
+	}
+
+	if (ev->isEndEvent()) {
+		if (m_compositor->getPanelView() != nullptr) {
+			if (m_compositor->getPanelView()->panelState > 1) {
+				return false;
+			}
+		}
+		if (ev->points().first().globalPosition().y() <
+		    m_compositor->glWindow()->height() * 0.8) {
+			m_compositor->getInputMethodManager()
+				->getInputMethod()
+				->showPanel();
+			return true;
+		}
+	}
+
 	return false;
 }

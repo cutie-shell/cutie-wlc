@@ -121,9 +121,6 @@ class CwlCompositor : public QWaylandCompositor {
 	void setupSignalConnections();
 	void setupWorkspaceConnections();
 
-	// Corner gesture handling method (still needed)
-	bool handleCornerGesture(QPointerEvent *ev, int corner);
-
 	GlWindow *m_glwindow = nullptr;
 	QWaylandXdgShell *m_xdgShell = nullptr;
 	QPointer<CwlView> m_mouseView;
