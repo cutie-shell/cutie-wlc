@@ -251,54 +251,79 @@ void CwlView::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
 {
 	if (surface != m_layerSurface)
 		return;
+
+	// Handle panel-specific state
 	if (m_layerSurface->ls_scope == "cutie-panel" &&
 	    m_layerSurface->size.height() <= m_layerSurface->ls_zone)
 		panelState = PANEL_FOLDED;
 
-	QPointF position(m_availableGeometry.center().x() -
-				 m_layerSurface->size.width() / 2,
-			 m_availableGeometry.center().y() -
-				 m_layerSurface->size.height() / 2);
+	// Calculate position using helper methods
+	QPointF position = calculateInitialPosition();
+	calculateVerticalPosition(position);
+	calculateHorizontalPosition(position);
 
+	this->setPosition(position);
+}
+
+QPointF CwlView::calculateInitialPosition() const
+{
+	// Start with centered position as default
+	return QPointF(m_availableGeometry.center().x() -
+			       m_layerSurface->size.width() / 2,
+		       m_availableGeometry.center().y() -
+			       m_layerSurface->size.height() / 2);
+}
+
+void CwlView::calculateVerticalPosition(QPointF &position) const
+{
 	if (CwlViewAnchor::ANCHOR_TOP & m_layerSurface->ls_anchor &&
-	    !(CwlViewAnchor::ANCHOR_BOTTOM & m_layerSurface->ls_anchor))
+	    !(CwlViewAnchor::ANCHOR_BOTTOM & m_layerSurface->ls_anchor)) {
+		// Top anchor only
 		position.setY(m_layerSurface->ls_zone < 0 ?
 				      0 :
 				      m_availableGeometry.top());
-	else if (CwlViewAnchor::ANCHOR_BOTTOM & m_layerSurface->ls_anchor &&
-		 !(CwlViewAnchor::ANCHOR_TOP & m_layerSurface->ls_anchor))
+	} else if (CwlViewAnchor::ANCHOR_BOTTOM & m_layerSurface->ls_anchor &&
+		   !(CwlViewAnchor::ANCHOR_TOP & m_layerSurface->ls_anchor)) {
+		// Bottom anchor only
 		position.setY(
 			(m_layerSurface->ls_zone < 0 ?
 				 m_cwlcompositor->m_workspace->outputGeometry()
 					 .bottom() :
 				 m_availableGeometry.bottom()) -
 			m_layerSurface->ls_zone);
-	else if (m_layerSurface->ls_zone < 0)
+	} else if (m_layerSurface->ls_zone < 0) {
+		// Center vertically when no specific anchor or conflicting anchors
 		position.setY(m_cwlcompositor->m_workspace->outputGeometry()
 				      .center()
 				      .y() -
 			      m_layerSurface->size.height() / 2);
+	}
+}
 
+void CwlView::calculateHorizontalPosition(QPointF &position) const
+{
 	if (CwlViewAnchor::ANCHOR_LEFT & m_layerSurface->ls_anchor &&
-	    !(CwlViewAnchor::ANCHOR_RIGHT & m_layerSurface->ls_anchor))
+	    !(CwlViewAnchor::ANCHOR_RIGHT & m_layerSurface->ls_anchor)) {
+		// Left anchor only
 		position.setX(m_layerSurface->ls_zone < 0 ?
 				      0 :
 				      m_availableGeometry.left());
-	else if (CwlViewAnchor::ANCHOR_RIGHT & m_layerSurface->ls_anchor &&
-		 !(CwlViewAnchor::ANCHOR_LEFT & m_layerSurface->ls_anchor))
+	} else if (CwlViewAnchor::ANCHOR_RIGHT & m_layerSurface->ls_anchor &&
+		   !(CwlViewAnchor::ANCHOR_LEFT & m_layerSurface->ls_anchor)) {
+		// Right anchor only
 		position.setX(
 			(m_layerSurface->ls_zone < 0 ?
 				 m_cwlcompositor->m_workspace->outputGeometry()
 					 .right() :
 				 m_availableGeometry.right()) -
 			m_layerSurface->size.width());
-	else if (m_layerSurface->ls_zone < 0)
+	} else if (m_layerSurface->ls_zone < 0) {
+		// Center horizontally when no specific anchor or conflicting anchors
 		position.setX(m_cwlcompositor->m_workspace->outputGeometry()
 				      .center()
 				      .x() -
 			      m_layerSurface->size.width() / 2);
-
-	this->setPosition(position);
+	}
 }
 
 void CwlView::onDestinationSizeChanged()

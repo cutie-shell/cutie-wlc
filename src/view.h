@@ -120,6 +120,13 @@ class CwlView : public QWaylandView {
 	void onDestinationSizeChanged();
 	void onSurfaceChanged();
 	void onPopUpGeometryChanged();
+
+    private:
+	// Helper methods for layer surface positioning
+	QPointF calculateInitialPosition() const;
+	void calculateVerticalPosition(QPointF &position) const;
+	void calculateHorizontalPosition(QPointF &position) const;
+	void applyAnchorConstraints(QPointF &position) const;
 };
 
 QT_END_NAMESPACE
