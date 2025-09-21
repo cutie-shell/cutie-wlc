@@ -85,41 +85,13 @@ void CwlCompositor::create()
 	initInputMethod();
 	setupEnvironmentVariables();
 
-	QStringList args = QStringList();
-	args.append("-c");
-	args.append("cutie-home");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append(launcher);
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("cutie-panel");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("cutie-keyboard");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("loginctl activate");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
+	// Launch Cutie shell components
+	launchCutieComponent("cutie-home");
+	launchCutieComponent(launcher);
+	launchCutieComponent("cutie-panel");
+	launchCutieComponent("cutie-keyboard");
+	launchCutieComponent("env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd");
+	launchCutieComponent("loginctl activate");
 }
 
 QList<CwlView *> CwlCompositor::getViews() const
@@ -708,4 +680,18 @@ void CwlCompositor::setupEnvironmentVariables()
 	*/
 	qputenv("QSG_NO_VSYNC", QByteArray("1"));
 	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
+}
+
+bool CwlCompositor::launchCutieComponent(const QString& command)
+{
+	QStringList args;
+	args.append("-c");
+	args.append(command);
+	
+	if (!QProcess::startDetached("bash", args)) {
+		qDebug() << "Failed to run:" << command;
+		return false;
+	}
+	
+	return true;
 }
