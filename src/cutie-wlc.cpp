@@ -6,7 +6,7 @@
 #include <foreign-toplevel-management.h>
 #include <input-method-v2.h>
 #include "process-manager.h"
-#include "gesture-manager.h"
+#include "gesture/gesture-manager.h"
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandPointer>

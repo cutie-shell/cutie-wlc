@@ -8,9 +8,9 @@ set(CWL_SOURCES
 		cutie-wlc.cpp
 		workspace.cpp
 		glwindow.cpp
-		gesture.cpp
-		gesture-manager.cpp
-		gesture-action.cpp
+		gesture/gesture.cpp
+		gesture/gesture-manager.cpp
+		gesture/gesture-action.cpp
 		process-manager.cpp)
 
 set(CWL_HEADERS
@@ -18,9 +18,9 @@ set(CWL_HEADERS
 		cutie-wlc.h
 		workspace.h
 		glwindow.h
-		gesture.h
-		gesture-manager.h
-		gesture-action.h
+		gesture/gesture.h
+		gesture/gesture-manager.h
+		gesture/gesture-action.h
 		process-manager.h)
 
 set(QML_RESOURCES)
@@ -30,7 +30,8 @@ add_subdirectory(extensions)
 qt_add_executable(${PROJECT_NAME} ${CWL_SOURCES} ${CWL_HEADERS})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}/extensions)
+	${CMAKE_CURRENT_SOURCE_DIR}/extensions
+	${CMAKE_CURRENT_SOURCE_DIR}/gesture)
 
 qt6_generate_wayland_protocol_server_sources(
 ${PROJECT_NAME}
