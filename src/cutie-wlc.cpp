@@ -6,6 +6,7 @@
 #include <foreign-toplevel-management.h>
 #include <input-method-v2.h>
 #include "process-manager.h"
+#include "gesture-manager.h"
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandPointer>
@@ -47,6 +48,7 @@ void CwlCompositor::create()
 		QWaylandXdgToplevel::ServerSideDecoration);
 
 	m_workspace = new CwlWorkspace(this);
+	m_gestureManager = new CwlGestureManager(this, this);
 	m_cutieshell = new CutieShell(this);
 	m_outputManager = new OutputManagerV1(this);
 	m_outputPowerManager = new OutputPowerManagerV1(this);

@@ -22,6 +22,7 @@ class ForeignToplevelManagerV1;
 class ForeignToplevelHandleV1;
 class InputMethodManagerV2;
 class CwlProcessManager;
+class CwlGestureManager;
 
 class CwlCompositor : public QWaylandCompositor {
 	Q_OBJECT
@@ -148,6 +149,9 @@ class CwlCompositor : public QWaylandCompositor {
 
 	// Process management
 	CwlProcessManager *m_processManager = nullptr;
+
+	// Gesture management
+	CwlGestureManager *m_gestureManager = nullptr;
 };
 
 QT_END_NAMESPACE
