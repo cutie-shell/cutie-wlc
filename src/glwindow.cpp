@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLTexture>
 #include <QMouseEvent>
+#include <opengl/opengl-guards.h>
 #include <QGuiApplication>
 #include <qpa/qplatformnativeinterface.h>
 #include <qpa/qplatformscreen.h>
@@ -52,7 +53,7 @@ void GlWindow::setDisplayOff(bool displayOff)
 
 void GlWindow::initializeGL()
 {
-	m_textureBlitter.create();
+	m_textureBlitter.reset(new OpenGLTextureBlitterGuard());
 	emit glReady();
 }
 
@@ -65,7 +66,9 @@ void GlWindow::paintGL()
 		return;
 
 	m_cwlcompositor->startRender();
-	setupRenderingContext();
+
+	OpenGLStateGuard stateGuard;
+	setupRenderingContext(&stateGuard);
 
 	// Prepare views for rendering
 	QList<CwlView *> viewList;
@@ -77,20 +80,20 @@ void GlWindow::paintGL()
 
 	renderViews(viewList);
 
-	m_textureBlitter.release();
+	if (m_textureBlitter)
+		m_textureBlitter->release();
 	m_cwlcompositor->endRender();
 }
 
-void GlWindow::setupRenderingContext()
+void GlWindow::setupRenderingContext(OpenGLStateGuard *stateGuard)
 {
-	QOpenGLFunctions *functions = context()->functions();
-	functions->glClearColor(.0f, .0f, .0f, 1.f);
-	functions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	stateGuard->setClearColor(.0f, .0f, .0f, 1.f);
+	stateGuard->clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	m_currentTarget = GL_TEXTURE_2D;
-	m_textureBlitter.bind(m_currentTarget);
-	functions->glEnable(GL_BLEND);
-	functions->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (m_textureBlitter)
+		m_textureBlitter->bind(m_currentTarget);
+	stateGuard->enableAlphaBlending();
 }
 
 qreal GlWindow::calculateViewOpacity(CwlView *view) const
@@ -136,7 +139,9 @@ void GlWindow::renderViews(const QList<CwlView *> &views)
 
 		// Set view opacity and render
 		qreal opacity = calculateViewOpacity(view);
-		m_textureBlitter.setOpacity(opacity);
+		if (m_textureBlitter) {
+			m_textureBlitter->setOpacity(opacity);
+		}
 		renderView(view);
 	}
 }
@@ -148,7 +153,8 @@ void GlWindow::renderView(CwlView *view)
 		return;
 	if (texture->target() != m_currentTarget) {
 		m_currentTarget = texture->target();
-		m_textureBlitter.bind(m_currentTarget);
+		if (m_textureBlitter)
+			m_textureBlitter->bind(m_currentTarget);
 	}
 
 	QWaylandSurface *surface = view->surface();
@@ -162,8 +168,9 @@ void GlWindow::renderView(CwlView *view)
 		QMatrix4x4 targetTransform =
 			QOpenGLTextureBlitter::targetTransform(
 				targetRect, QRect(QPoint(), size()));
-		m_textureBlitter.blit(texture->textureId(), targetTransform,
-				      surfaceOrigin);
+		if (m_textureBlitter)
+			m_textureBlitter->blit(texture->textureId(),
+					       targetTransform, surfaceOrigin);
 	}
 
 	if (view->getChildViews().size() > 0) {

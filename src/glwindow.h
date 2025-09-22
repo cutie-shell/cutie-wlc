@@ -9,6 +9,7 @@
 
 #include <cutie-wlc.h>
 #include "gesture/gesture.h"
+#include "opengl/opengl-guards.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -43,11 +44,11 @@ class GlWindow : public QOpenGLWindow {
 	void renderView(CwlView *view);
 
 	// Helper methods for rendering pipeline
-	void setupRenderingContext();
+	void setupRenderingContext(OpenGLStateGuard *stateGuard);
 	qreal calculateViewOpacity(CwlView *view) const;
 	void renderViews(const QList<CwlView *> &views);
 
-	QOpenGLTextureBlitter m_textureBlitter;
+	QScopedPointer<OpenGLTextureBlitterGuard> m_textureBlitter;
 	GLenum m_currentTarget;
 	QScopedPointer<QOpenGLTexture> m_wallpaper;
 

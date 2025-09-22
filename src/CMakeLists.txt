@@ -12,7 +12,8 @@ set(CWL_SOURCES
 		gesture/gesture.cpp
 		gesture/gesture-manager.cpp
 		gesture/gesture-action.cpp
-		process-manager.cpp)
+		process-manager.cpp
+		opengl/opengl-guards.cpp)
 
 set(CWL_HEADERS
 		view.h
@@ -23,7 +24,8 @@ set(CWL_HEADERS
 		gesture/gesture.h
 		gesture/gesture-manager.h
 		gesture/gesture-action.h
-		process-manager.h)
+		process-manager.h
+		opengl/opengl-guards.h)
 
 set(QML_RESOURCES)
 
@@ -33,7 +35,8 @@ qt_add_executable(${PROJECT_NAME} ${CWL_SOURCES} ${CWL_HEADERS})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/extensions
-	${CMAKE_CURRENT_SOURCE_DIR}/gesture)
+	${CMAKE_CURRENT_SOURCE_DIR}/gesture
+	${CMAKE_CURRENT_SOURCE_DIR}/opengl)
 
 qt6_generate_wayland_protocol_server_sources(
 ${PROJECT_NAME}

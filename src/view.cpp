@@ -1,5 +1,6 @@
 #include <view.h>
 #include <cutie-wlc.h>
+#include <opengl/opengl-guards.h>
 #include <QOpenGLTexture>
 #include <QtWaylandCompositor/QWaylandSeat>
 
@@ -18,6 +19,9 @@ CwlView::~CwlView()
 
 QOpenGLTexture *CwlView::getTexture()
 {
+	// Use RAII for automatic OpenGL state management during texture operations
+	OpenGLStateGuard stateGuard;
+
 	if (advance()) {
 		QWaylandBufferRef bufRef = currentBuffer();
 		if (bufRef.origin() == QWaylandSurface::OriginTopLeft)

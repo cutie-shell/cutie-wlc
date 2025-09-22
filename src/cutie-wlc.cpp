@@ -8,6 +8,7 @@
 #include "process-manager.h"
 #include "gesture/gesture-manager.h"
 #include "animation-controller.h"
+#include "opengl-guards.h"
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandPointer>
@@ -471,15 +472,27 @@ void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
 		emit grabber->success(buffer.image());
 	} else {
 		if (QOpenGLContext::currentContext()) {
-			QOpenGLFramebufferObject fbo(buffer.size());
-			fbo.bind();
-			QOpenGLTextureBlitter blitter;
-			blitter.create();
+			// Use RAII wrappers for exception safety and automatic cleanup
+			OpenGLFramebufferGuard fboGuard(buffer.size());
+			if (!fboGuard.isValid()) {
+				emit grabber->failed(QWaylandSurfaceGrabber::
+							     UnknownBufferType);
+				return;
+			}
 
-			glViewport(0, 0, buffer.size().width(),
-				   buffer.size().height());
-			glClearColor(0.f, 0.f, 0.f, 0.f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			OpenGLTextureBlitterGuard blitterGuard;
+			if (!blitterGuard.isValid()) {
+				emit grabber->failed(QWaylandSurfaceGrabber::
+							     UnknownBufferType);
+				return;
+			}
+
+			OpenGLStateGuard stateGuard;
+			stateGuard.setViewport(0, 0, buffer.size().width(),
+					       buffer.size().height());
+			stateGuard.setClearColor(0.f, 0.f, 0.f, 0.f);
+			stateGuard.clear(GL_COLOR_BUFFER_BIT |
+					 GL_DEPTH_BUFFER_BIT);
 
 			QOpenGLTextureBlitter::Origin surfaceOrigin =
 				buffer.origin() ==
@@ -488,15 +501,16 @@ void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
 					QOpenGLTextureBlitter::OriginBottomLeft;
 
 			auto texture = buffer.toOpenGLTexture();
-			blitter.bind(texture->target());
-			blitter.blit(texture->textureId(), QMatrix4x4(),
-				     surfaceOrigin);
-			blitter.release();
+			blitterGuard.bind(texture->target());
+			blitterGuard.blit(texture->textureId(), QMatrix4x4(),
+					  surfaceOrigin);
 
-			emit grabber->success(fbo.toImage());
-		} else
+			emit grabber->success(fboGuard.toImage());
+			// RAII destructors automatically handle cleanup
+		} else {
 			emit grabber->failed(
 				QWaylandSurfaceGrabber::UnknownBufferType);
+		}
 	}
 }
 
