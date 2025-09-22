@@ -7,7 +7,6 @@
 #include <cutie-shell.h>
 #include <QEventPoint>
 #include <QProcess>
-#include <QPropertyAnimation>
 #include <QWaylandXdgDecorationManagerV1>
 
 QT_BEGIN_NAMESPACE
@@ -23,6 +22,7 @@ class ForeignToplevelHandleV1;
 class InputMethodManagerV2;
 class CwlProcessManager;
 class CwlGestureManager;
+class CwlAnimationController;
 
 class CwlCompositor : public QWaylandCompositor {
 	Q_OBJECT
@@ -63,6 +63,7 @@ class CwlCompositor : public QWaylandCompositor {
 	GlWindow *glWindow();
 	ForeignToplevelManagerV1 *foreignTlManagerV1();
 	CwlGestureManager *gestureManager();
+	CwlAnimationController *animationController();
 
 	CwlView *m_launcherView = nullptr;
 	CwlWorkspace *m_workspace = nullptr;
@@ -111,12 +112,10 @@ class CwlCompositor : public QWaylandCompositor {
 	void onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface);
 	void viewSurfaceDestroyed();
 	void initInputMethod();
-	void animationValueChanged(const QVariant &value);
 
     private:
 	CwlView *findView(const QWaylandSurface *s) const;
 	void setupEnvironmentVariables();
-	void setupAnimations();
 	void setupSignalConnections();
 	void setupWorkspaceConnections();
 
@@ -137,16 +136,6 @@ class CwlCompositor : public QWaylandCompositor {
 	CwlView *m_homeView = nullptr;
 	CwlView *m_panelView = nullptr;
 
-	QPropertyAnimation *blurAnim =
-		new QPropertyAnimation(this, "blur", this);
-	QPropertyAnimation *unblurAnim =
-		new QPropertyAnimation(this, "blur", this);
-
-	QPropertyAnimation *launcherCloseAnim =
-		new QPropertyAnimation(this, "launcherPosition", this);
-	QPropertyAnimation *launcherOpenAnim =
-		new QPropertyAnimation(this, "launcherPosition", this);
-
 	int m_scaleFactor = 1;
 	double m_blur = 0.0;
 	double m_launcherPosition = 1.0;
@@ -158,6 +147,9 @@ class CwlCompositor : public QWaylandCompositor {
 
 	// Gesture management
 	CwlGestureManager *m_gestureManager = nullptr;
+
+	// Animation management
+	CwlAnimationController *m_animationController = nullptr;
 };
 
 QT_END_NAMESPACE

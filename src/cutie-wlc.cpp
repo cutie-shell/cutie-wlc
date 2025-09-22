@@ -7,6 +7,7 @@
 #include <input-method-v2.h>
 #include "process-manager.h"
 #include "gesture/gesture-manager.h"
+#include "animation-controller.h"
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandPointer>
@@ -26,7 +27,6 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
 {
 	m_glwindow->setCompositor(this);
 	setupSignalConnections();
-	setupAnimations();
 }
 
 CwlCompositor::~CwlCompositor()
@@ -49,6 +49,7 @@ void CwlCompositor::create()
 
 	m_workspace = new CwlWorkspace(this);
 	m_gestureManager = new CwlGestureManager(this, this);
+	m_animationController = new CwlAnimationController(this, this);
 	m_cutieshell = new CutieShell(this);
 	m_outputManager = new OutputManagerV1(this);
 	m_outputPowerManager = new OutputPowerManagerV1(this);
@@ -149,7 +150,7 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
 	view->setTopLevel(toplevel);
 
 	if (m_launcherView != nullptr)
-		launcherCloseAnim->start();
+		m_animationController->startLauncherCloseAnimation();
 
 	connect(m_workspace, &CwlWorkspace::availableGeometryChanged, view,
 		&CwlView::onAvailableGeometryChanged);
@@ -167,11 +168,6 @@ void CwlCompositor::initInputMethod()
 	m_inputMngr = new InputMethodManagerV2(this);
 	connect(m_inputMngr, &InputMethodManagerV2::imDestroyed, this,
 		&CwlCompositor::initInputMethod);
-}
-
-void CwlCompositor::animationValueChanged(const QVariant &value)
-{
-	triggerRender();
 }
 
 void CwlCompositor::onHideKeyboard()
@@ -260,10 +256,10 @@ void CwlCompositor::raise(CwlView *view)
 
 	if (view == m_homeView) {
 		m_homeOpen = true;
-		unblurAnim->start();
+		m_animationController->startUnblurAnimation();
 	} else {
 		m_homeOpen = false;
-		blurAnim->start();
+		m_animationController->startBlurAnimation();
 	}
 
 	triggerRender();
@@ -416,22 +412,22 @@ void CwlCompositor::setLauncherPosition(double position)
 
 void CwlCompositor::startBlurAnimation()
 {
-	blurAnim->start();
+	m_animationController->startBlurAnimation();
 }
 
 void CwlCompositor::startUnblurAnimation()
 {
-	unblurAnim->start();
+	m_animationController->startUnblurAnimation();
 }
 
 void CwlCompositor::startLauncherOpenAnimation()
 {
-	launcherOpenAnim->start();
+	m_animationController->startLauncherOpenAnimation();
 }
 
 void CwlCompositor::startLauncherCloseAnimation()
 {
-	launcherCloseAnim->start();
+	m_animationController->startLauncherCloseAnimation();
 }
 
 bool CwlCompositor::isHomeOpen() const
@@ -462,6 +458,11 @@ ForeignToplevelManagerV1 *CwlCompositor::foreignTlManagerV1()
 CwlGestureManager *CwlCompositor::gestureManager()
 {
 	return m_gestureManager;
+}
+
+CwlAnimationController *CwlCompositor::animationController()
+{
+	return m_animationController;
 }
 
 void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
@@ -520,35 +521,6 @@ void CwlCompositor::setupEnvironmentVariables()
 	*/
 	qputenv("QSG_NO_VSYNC", QByteArray("1"));
 	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
-}
-
-void CwlCompositor::setupAnimations()
-{
-	// Configure animation durations
-	blurAnim->setDuration(250);
-	unblurAnim->setDuration(250);
-	launcherOpenAnim->setDuration(250);
-	launcherCloseAnim->setDuration(250);
-
-	// Configure animation end values
-	blurAnim->setEndValue(1.0);
-	unblurAnim->setEndValue(0.0);
-	launcherOpenAnim->setEndValue(1.0);
-	launcherCloseAnim->setEndValue(0.0);
-
-	// Connect blur animations
-	connect(blurAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(unblurAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(unblurAnim, &QVariantAnimation::finished, this,
-		[this]() { m_workspace->showDesktop(true); });
-
-	// Connect launcher animations
-	connect(launcherOpenAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(launcherCloseAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
 }
 
 void CwlCompositor::setupSignalConnections()

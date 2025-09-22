@@ -8,6 +8,7 @@ set(CWL_SOURCES
 		cutie-wlc.cpp
 		workspace.cpp
 		glwindow.cpp
+		animation-controller.cpp
 		gesture/gesture.cpp
 		gesture/gesture-manager.cpp
 		gesture/gesture-action.cpp
@@ -18,6 +19,7 @@ set(CWL_HEADERS
 		cutie-wlc.h
 		workspace.h
 		glwindow.h
+		animation-controller.h
 		gesture/gesture.h
 		gesture/gesture-manager.h
 		gesture/gesture-action.h
