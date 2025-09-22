@@ -13,7 +13,7 @@ CwlProcessManager::CwlProcessManager(QObject *parent)
 	, m_maxRetryAttempts(0)
 {
 	m_retryTimer->setSingleShot(true);
-	connect(m_retryTimer, &QTimer::timeout, this,
+	connect(m_retryTimer.data(), &QTimer::timeout, this,
 		&CwlProcessManager::onRetryTimeout);
 }
 

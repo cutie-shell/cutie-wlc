@@ -3,6 +3,7 @@
 
 #include "wayland-util.h"
 
+#include <QPointer>
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandSurface>
@@ -42,11 +43,11 @@ class InputMethodManagerV2
 	void zwp_input_method_manager_v2_destroy(Resource *resource) override;
 
     private:
-	CwlCompositor *m_compositor = nullptr;
-	InputMethodV2 *m_inputmethod = nullptr;
-	TextInputManagerV1 *m_textinputV1 = nullptr;
-	TextInputManagerV2 *m_textinputV2 = nullptr;
-	TextInputManagerV3 *m_textinputV3 = nullptr;
+	QPointer<CwlCompositor> m_compositor;
+	QPointer<InputMethodV2> m_inputmethod;
+	QPointer<TextInputManagerV1> m_textinputV1;
+	QPointer<TextInputManagerV2> m_textinputV2;
+	QPointer<TextInputManagerV3> m_textinputV3;
 };
 
 class InputMethodV2 : public QWaylandCompositorExtensionTemplate<InputMethodV2>,
@@ -88,7 +89,7 @@ class InputMethodV2 : public QWaylandCompositorExtensionTemplate<InputMethodV2>,
 				    QWaylandSurface *oldFocus);
 
     private:
-	CwlCompositor *m_compositor;
+	QPointer<CwlCompositor> m_compositor;
 	void sendWithModifier();
 	uint32_t m_serial = 0;
 	QString m_lastString = "";

@@ -23,7 +23,7 @@ CwlCompositor::CwlCompositor(GlWindow *glwindow)
 	, m_xdgShell(new QWaylandXdgShell(this))
 	, m_layerShell(new LayerShellV1(this))
 	, m_xdgdecoration(new QWaylandXdgDecorationManagerV1())
-	, m_processManager(new CwlProcessManager(this))
+	, m_processManager(std::make_unique<CwlProcessManager>(this))
 {
 	m_glwindow->setCompositor(this);
 	setupSignalConnections();
@@ -35,7 +35,7 @@ CwlCompositor::~CwlCompositor()
 
 void CwlCompositor::create()
 {
-	m_output = new QWaylandOutput(this, m_glwindow);
+	m_output.reset(new QWaylandOutput(this, m_glwindow));
 	QWaylandOutputMode mode(m_glwindow->size(), 60000);
 	m_output->addMode(mode, true);
 	QWaylandCompositor::create();
@@ -48,14 +48,15 @@ void CwlCompositor::create()
 		QWaylandXdgToplevel::ServerSideDecoration);
 
 	m_workspace = new CwlWorkspace(this);
-	m_gestureManager = new CwlGestureManager(this, this);
-	m_animationController = new CwlAnimationController(this, this);
-	m_cutieshell = new CutieShell(this);
-	m_outputManager = new OutputManagerV1(this);
-	m_outputPowerManager = new OutputPowerManagerV1(this);
-	m_screencopyManager = new ScreencopyManagerV1(this);
+	m_gestureManager = std::make_unique<CwlGestureManager>(this, this);
+	m_animationController =
+		std::make_unique<CwlAnimationController>(this, this);
+	m_cutieshell = std::make_unique<CutieShell>(this);
+	m_outputManager = std::make_unique<OutputManagerV1>(this);
+	m_outputPowerManager = std::make_unique<OutputPowerManagerV1>(this);
+	m_screencopyManager = std::make_unique<ScreencopyManagerV1>(this);
 
-	m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
+	m_foreignTlManagerV1 = std::make_unique<ForeignToplevelManagerV1>(this);
 	setupWorkspaceConnections();
 
 	initInputMethod();
@@ -162,11 +163,9 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
 
 void CwlCompositor::initInputMethod()
 {
-	if (m_inputMngr != nullptr)
-		delete m_inputMngr;
-
-	m_inputMngr = new InputMethodManagerV2(this);
-	connect(m_inputMngr, &InputMethodManagerV2::imDestroyed, this,
+	m_inputMngr.reset();
+	m_inputMngr = std::make_unique<InputMethodManagerV2>(this);
+	connect(m_inputMngr.get(), &InputMethodManagerV2::imDestroyed, this,
 		&CwlCompositor::initInputMethod);
 }
 
@@ -447,22 +446,22 @@ CwlView *CwlCompositor::getPanelView() const
 
 InputMethodManagerV2 *CwlCompositor::getInputMethodManager() const
 {
-	return m_inputMngr;
+	return m_inputMngr.get();
 }
 
 ForeignToplevelManagerV1 *CwlCompositor::foreignTlManagerV1()
 {
-	return m_foreignTlManagerV1;
+	return m_foreignTlManagerV1.get();
 }
 
 CwlGestureManager *CwlCompositor::gestureManager()
 {
-	return m_gestureManager;
+	return m_gestureManager.get();
 }
 
 CwlAnimationController *CwlCompositor::animationController()
 {
-	return m_animationController;
+	return m_animationController.get();
 }
 
 void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
@@ -529,23 +528,23 @@ void CwlCompositor::setupSignalConnections()
 	connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
 
 	// XDG Shell signal connections
-	connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this,
+	connect(m_xdgShell.get(), &QWaylandXdgShell::toplevelCreated, this,
 		&CwlCompositor::onXdgToplevelCreated);
-	connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this,
+	connect(m_xdgShell.get(), &QWaylandXdgShell::popupCreated, this,
 		&CwlCompositor::onXdgPopupCreated);
 
 	// Layer Shell signal connections
-	connect(m_layerShell, &LayerShellV1::layerShellSurfaceCreated, this,
-		&CwlCompositor::onLayerShellSurfaceCreated);
+	connect(m_layerShell.get(), &LayerShellV1::layerShellSurfaceCreated,
+		this, &CwlCompositor::onLayerShellSurfaceCreated);
 }
 
 void CwlCompositor::setupWorkspaceConnections()
 {
 	// Workspace and foreign toplevel connections (requires objects from create())
 	connect(m_workspace, &CwlWorkspace::toplevelCreated,
-		m_foreignTlManagerV1,
+		m_foreignTlManagerV1.get(),
 		&ForeignToplevelManagerV1::onToplevelCreated);
 	connect(m_workspace, &CwlWorkspace::toplevelDestroyed,
-		m_foreignTlManagerV1,
+		m_foreignTlManagerV1.get(),
 		&ForeignToplevelManagerV1::onToplevelDestroyed);
 }

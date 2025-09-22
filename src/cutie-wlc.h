@@ -8,6 +8,8 @@
 #include <QEventPoint>
 #include <QProcess>
 #include <QWaylandXdgDecorationManagerV1>
+#include <QScopedPointer>
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 
@@ -120,19 +122,19 @@ class CwlCompositor : public QWaylandCompositor {
 	void setupWorkspaceConnections();
 
 	GlWindow *m_glwindow = nullptr;
-	QWaylandXdgShell *m_xdgShell = nullptr;
+	QScopedPointer<QWaylandXdgShell> m_xdgShell;
 	QPointer<CwlView> m_mouseView;
-	LayerShellV1 *m_layerShell = nullptr;
-	QPointF *m_appPointStart = nullptr;
+	QScopedPointer<LayerShellV1> m_layerShell;
+	std::unique_ptr<QPointF> m_appPointStart;
 	CwlView *m_appView = nullptr;
-	CutieShell *m_cutieshell = nullptr;
-	OutputManagerV1 *m_outputManager = nullptr;
-	OutputPowerManagerV1 *m_outputPowerManager = nullptr;
-	ScreencopyManagerV1 *m_screencopyManager = nullptr;
-	ForeignToplevelManagerV1 *m_foreignTlManagerV1 = nullptr;
-	QWaylandOutput *m_output = nullptr;
-	QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
-	InputMethodManagerV2 *m_inputMngr = nullptr;
+	std::unique_ptr<CutieShell> m_cutieshell;
+	std::unique_ptr<OutputManagerV1> m_outputManager;
+	std::unique_ptr<OutputPowerManagerV1> m_outputPowerManager;
+	std::unique_ptr<ScreencopyManagerV1> m_screencopyManager;
+	std::unique_ptr<ForeignToplevelManagerV1> m_foreignTlManagerV1;
+	QScopedPointer<QWaylandOutput> m_output;
+	QScopedPointer<QWaylandXdgDecorationManagerV1> m_xdgdecoration;
+	std::unique_ptr<InputMethodManagerV2> m_inputMngr;
 	CwlView *m_homeView = nullptr;
 	CwlView *m_panelView = nullptr;
 
@@ -143,13 +145,13 @@ class CwlCompositor : public QWaylandCompositor {
 	QString launcher = "cutie-launcher";
 
 	// Process management
-	CwlProcessManager *m_processManager = nullptr;
+	std::unique_ptr<CwlProcessManager> m_processManager;
 
 	// Gesture management
-	CwlGestureManager *m_gestureManager = nullptr;
+	std::unique_ptr<CwlGestureManager> m_gestureManager;
 
 	// Animation management
-	CwlAnimationController *m_animationController = nullptr;
+	std::unique_ptr<CwlAnimationController> m_animationController;
 };
 
 QT_END_NAMESPACE

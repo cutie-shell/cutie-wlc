@@ -20,9 +20,8 @@ GlWindow::GlWindow()
 void GlWindow::setCompositor(CwlCompositor *cwlcompositor)
 {
 	m_cwlcompositor = cwlcompositor;
-	if (m_gesture)
-		delete m_gesture;
-	m_gesture = new CwlGesture(cwlcompositor, QSize(width(), height()));
+	m_gesture.reset(
+		new CwlGesture(cwlcompositor, QSize(width(), height())));
 }
 
 bool GlWindow::displayOff()
@@ -40,8 +39,10 @@ void GlWindow::setDisplayOff(bool displayOff)
 			     QPlatformScreen::PowerStateOn);
 
 	if (displayOff) {
-		m_cwlcompositor->setLauncherPosition(0.0);
-		m_cwlcompositor->onHideKeyboard();
+		if (m_cwlcompositor) {
+			m_cwlcompositor->setLauncherPosition(0.0);
+			m_cwlcompositor->onHideKeyboard();
+		}
 	} else
 		requestUpdate();
 
@@ -58,6 +59,9 @@ void GlWindow::initializeGL()
 void GlWindow::paintGL()
 {
 	if (m_displayOff)
+		return;
+
+	if (!m_cwlcompositor)
 		return;
 
 	m_cwlcompositor->startRender();
@@ -91,7 +95,7 @@ void GlWindow::setupRenderingContext()
 
 qreal GlWindow::calculateViewOpacity(CwlView *view) const
 {
-	if (!view)
+	if (!view || !m_cwlcompositor)
 		return 1.0;
 
 	QString appId;
@@ -121,6 +125,9 @@ qreal GlWindow::calculateViewOpacity(CwlView *view) const
 
 void GlWindow::renderViews(const QList<CwlView *> &views)
 {
+	if (!m_cwlcompositor)
+		return;
+
 	for (CwlView *view : views) {
 		// Skip top layer views when launcher is fully open
 		if (m_cwlcompositor->launcherPosition() == 1.0 &&
@@ -137,7 +144,7 @@ void GlWindow::renderViews(const QList<CwlView *> &views)
 void GlWindow::renderView(CwlView *view)
 {
 	QOpenGLTexture *texture = view->getTexture();
-	if (!texture)
+	if (!texture || !m_cwlcompositor)
 		return;
 	if (texture->target() != m_currentTarget) {
 		m_currentTarget = texture->target();
@@ -167,6 +174,8 @@ void GlWindow::renderView(CwlView *view)
 
 void GlWindow::touchEvent(QTouchEvent *ev)
 {
+	if (!m_gesture || !m_cwlcompositor)
+		return;
 	m_gesture->handlePointerEvent(ev, [this](QList<QEventPoint> points) {
 		m_cwlcompositor->handleTouchEvent(points);
 	});
@@ -174,6 +183,8 @@ void GlWindow::touchEvent(QTouchEvent *ev)
 
 void GlWindow::mouseMoveEvent(QMouseEvent *ev)
 {
+	if (!m_gesture || !m_cwlcompositor)
+		return;
 	m_gesture->handlePointerEvent(ev, [this](QList<QEventPoint> points) {
 		m_cwlcompositor->handleMouseMoveEvent(points);
 	});
@@ -181,6 +192,8 @@ void GlWindow::mouseMoveEvent(QMouseEvent *ev)
 
 void GlWindow::mousePressEvent(QMouseEvent *ev)
 {
+	if (!m_gesture || !m_cwlcompositor)
+		return;
 	Qt::MouseButton btn = ev->button();
 	m_gesture->handlePointerEvent(ev, [this,
 					   btn](QList<QEventPoint> points) {
@@ -190,6 +203,8 @@ void GlWindow::mousePressEvent(QMouseEvent *ev)
 
 void GlWindow::mouseReleaseEvent(QMouseEvent *ev)
 {
+	if (!m_gesture || !m_cwlcompositor)
+		return;
 	Qt::MouseButton btn = ev->button();
 	m_gesture->handlePointerEvent(ev, [this,
 					   btn](QList<QEventPoint> points) {
@@ -199,6 +214,9 @@ void GlWindow::mouseReleaseEvent(QMouseEvent *ev)
 
 void GlWindow::keyPressEvent(QKeyEvent *event)
 {
+	if (!m_cwlcompositor)
+		return;
+
 	if (event->key() == Qt::Key_PowerOff)
 		m_cwlcompositor->specialKey(
 			CutieShell::SpecialKey::POWER_PRESS);
@@ -214,6 +232,9 @@ void GlWindow::keyPressEvent(QKeyEvent *event)
 
 void GlWindow::keyReleaseEvent(QKeyEvent *event)
 {
+	if (!m_cwlcompositor)
+		return;
+
 	if (event->key() == Qt::Key_PowerOff)
 		m_cwlcompositor->specialKey(
 			CutieShell::SpecialKey::POWER_RELEASE);

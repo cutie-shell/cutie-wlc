@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QScopedPointer>
 #include <QStringList>
 
 class QTimer;
@@ -121,7 +122,7 @@ class CwlProcessManager : public QObject {
 	QStringList m_criticalComponents;
 
 	// Retry management
-	QTimer *m_retryTimer;
+	QScopedPointer<QTimer> m_retryTimer;
 	QString m_currentRetryCommand;
 	int m_currentRetryAttempt;
 	int m_maxRetryAttempts;

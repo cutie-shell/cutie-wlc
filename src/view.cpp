@@ -13,10 +13,7 @@ CwlView::CwlView(CwlCompositor *cwlcompositor, QRect geometry)
 
 CwlView::~CwlView()
 {
-	if (m_isImageBuffer)
-		delete m_texture;
-	if (m_grabber)
-		delete m_grabber;
+	m_imageTexture.reset();
 }
 
 QOpenGLTexture *CwlView::getTexture()
@@ -30,16 +27,21 @@ QOpenGLTexture *CwlView::getTexture()
 
 		if (bufRef.bufferType() ==
 		    QWaylandBufferRef::BufferType::BufferType_Egl) {
-			m_texture = bufRef.toOpenGLTexture();
+			m_eglTexture = bufRef.toOpenGLTexture();
 		} else if (bufRef.bufferType() ==
 			   QWaylandBufferRef::BufferType::
 				   BufferType_SharedMemory) {
 			m_isImageBuffer = true;
-			delete m_texture;
-			m_texture = new QOpenGLTexture(bufRef.image());
+			m_imageTexture.reset(
+				new QOpenGLTexture(bufRef.image()));
 		}
 	}
-	return m_texture;
+
+	if (m_isImageBuffer) {
+		return m_imageTexture.data();
+	} else {
+		return m_eglTexture;
+	}
 }
 
 QOpenGLTextureBlitter::Origin CwlView::textureOrigin()
@@ -132,7 +134,7 @@ void CwlView::addChildView(CwlView *view)
 
 CwlView *CwlView::parentView()
 {
-	return m_parentView;
+	return m_parentView.data();
 }
 
 void CwlView::setParentView(CwlView *view)
@@ -349,14 +351,12 @@ void CwlView::onRedraw()
 
 QWaylandSurfaceGrabber *CwlView::grabber()
 {
-	return m_grabber;
+	return m_grabber.data();
 }
 
 void CwlView::onSurfaceChanged()
 {
-	if (m_grabber)
-		delete m_grabber;
-	m_grabber = new QWaylandSurfaceGrabber(surface());
+	m_grabber.reset(new QWaylandSurfaceGrabber(surface()));
 }
 
 void CwlView::onPopUpGeometryChanged()

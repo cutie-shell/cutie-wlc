@@ -3,11 +3,14 @@
 CwlWorkspace::CwlWorkspace(CwlCompositor *compositor)
 	: m_compositor(compositor)
 {
-	m_outputGeometry = compositor->defaultOutput()->geometry();
-	m_outputGeometry =
-		QRect(m_outputGeometry.topLeft() / compositor->scaleFactor(),
-		      m_outputGeometry.size() / compositor->scaleFactor());
-	m_availableGeometry = m_outputGeometry;
+	if (m_compositor) {
+		m_outputGeometry = m_compositor->defaultOutput()->geometry();
+		m_outputGeometry = QRect(m_outputGeometry.topLeft() /
+						 m_compositor->scaleFactor(),
+					 m_outputGeometry.size() /
+						 m_compositor->scaleFactor());
+		m_availableGeometry = m_outputGeometry;
+	}
 }
 
 QRect CwlWorkspace::availableGeometry()

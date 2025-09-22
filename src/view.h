@@ -7,6 +7,8 @@
 #include <QtWaylandCompositor/QWaylandXdgSurface>
 #include <QTimer>
 #include <QOpenGLTextureBlitter>
+#include <QPointer>
+#include <QScopedPointer>
 
 #include <layer-shell.h>
 
@@ -91,14 +93,15 @@ class CwlView : public QWaylandView {
     private:
 	friend class CwlCompositor;
 	CwlCompositor *m_cwlcompositor = nullptr;
-	QOpenGLTexture *m_texture = nullptr;
+	QScopedPointer<QOpenGLTexture> m_imageTexture;
+	QOpenGLTexture *m_eglTexture = nullptr;
 	QOpenGLTextureBlitter::Origin m_origin;
 	QPointF m_position;
 	QSize m_size;
 	QWaylandXdgPopup *m_xdgPopup = nullptr;
 	QWaylandXdgToplevel *m_toplevel = nullptr;
 	LayerSurfaceV1 *m_layerSurface = nullptr;
-	CwlView *m_parentView = nullptr;
+	QPointer<CwlView> m_parentView;
 	bool m_hidden = false;
 	QList<CwlView *> m_childViewList;
 	QRect m_availableGeometry;
@@ -107,7 +110,7 @@ class CwlView : public QWaylandView {
 	bool m_isLayerShell = false;
 	bool m_isImageBuffer = false;
 	QString m_cwlAppId = "";
-	QWaylandSurfaceGrabber *m_grabber = nullptr;
+	QScopedPointer<QWaylandSurfaceGrabber> m_grabber;
 
     public slots:
 	void onAvailableGeometryChanged(QRect geometry);

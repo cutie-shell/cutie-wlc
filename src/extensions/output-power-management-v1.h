@@ -2,6 +2,7 @@
 
 #include "wayland-util.h"
 
+#include <QPointer>
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandSurface>
@@ -24,7 +25,7 @@ class OutputPowerManagerV1
 		struct ::wl_resource *output) override;
 
     private:
-	CwlCompositor *m_compositor;
+	QPointer<CwlCompositor> m_compositor;
 };
 
 class OutputPowerV1 : public QWaylandCompositorExtensionTemplate<OutputPowerV1>,
@@ -42,5 +43,5 @@ class OutputPowerV1 : public QWaylandCompositorExtensionTemplate<OutputPowerV1>,
 	void onDisplayOffChanged(bool displayOff);
 
     private:
-	GlWindow *m_glWindow = nullptr;
+	QPointer<GlWindow> m_glWindow;
 };
