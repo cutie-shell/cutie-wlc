@@ -79,24 +79,76 @@ QList<CwlView *> CwlCompositor::getToplevelViews()
 
 CwlView *CwlCompositor::viewAt(const QPoint &position)
 {
+	// Validate input position
+	if (position.isNull()) {
+		qDebug() << "CwlCompositor::viewAt: Invalid position (null)";
+		return nullptr;
+	}
+
+	// Validate scale factor
+	int scale = scaleFactor();
+	if (scale <= 0) {
+		qWarning() << "CwlCompositor::viewAt: Invalid scale factor:"
+			   << scale;
+		scale = 1; // Safe fallback
+	}
+
 	CwlView *ret = nullptr;
-	for (auto it = getViews().crbegin(); it != getViews().crend(); ++it) {
+	const QList<CwlView *> views = getViews();
+
+	for (auto it = views.crbegin(); it != views.crend(); ++it) {
 		CwlView *view = *it;
-		QRectF geom(view->getPosition(), view->size() * scaleFactor());
+		if (!view) {
+			qWarning()
+				<< "CwlCompositor::viewAt: Null view in views list";
+			continue;
+		}
+
+		// Validate view size before calculations
+		QSize viewSize = view->size();
+		if (viewSize.isEmpty() || !viewSize.isValid()) {
+			qDebug()
+				<< "CwlCompositor::viewAt: View has invalid size:"
+				<< viewSize;
+			continue;
+		}
+
+		QRectF geom(view->getPosition(), viewSize * scale);
 		QPoint checkPoint = position;
 
-		if (view->getAppId() == "cutie-keyboard")
-			checkPoint = position / scaleFactor();
+		// Safe string comparison for app ID
+		QString appId = view->getAppId();
+		if (appId == "cutie-keyboard") {
+			checkPoint = position / scale;
+		}
 
 		if (geom.contains(checkPoint)) {
-			if (view->getChildViews().size() > 0) {
-				for (CwlView *childView :
-				     view->getChildViews()) {
-					checkPoint = position / scaleFactor();
-					QRectF geom(childView->getPosition(),
-						    childView->size() *
-							    scaleFactor());
-					if (geom.contains(checkPoint)) {
+			// Check child views with validation
+			const QList<CwlView *> &childViews =
+				view->getChildViews();
+			if (!childViews.isEmpty()) {
+				for (CwlView *childView : childViews) {
+					if (!childView) {
+						qWarning()
+							<< "CwlCompositor::viewAt: Null child view detected";
+						continue;
+					}
+
+					// Validate child view size
+					QSize childSize = childView->size();
+					if (childSize.isEmpty() ||
+					    !childSize.isValid()) {
+						qDebug()
+							<< "CwlCompositor::viewAt: Child view has invalid size:"
+							<< childSize;
+						continue;
+					}
+
+					checkPoint = position / scale;
+					QRectF childGeom(
+						childView->getPosition(),
+						childSize * scale);
+					if (childGeom.contains(checkPoint)) {
 						ret = childView;
 						return ret;
 					}
@@ -111,21 +163,55 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
 
 CwlView *CwlCompositor::findView(QWaylandSurface *s)
 {
-	for (CwlView *view : getViews()) {
-		if (view->surface() == s)
+	if (!s) {
+		qWarning() << "CwlCompositor::findView: Null surface provided";
+		return nullptr;
+	}
+
+	const QList<CwlView *> views = getViews();
+	for (CwlView *view : views) {
+		if (!view) {
+			qWarning()
+				<< "CwlCompositor::findView: Null view in views list";
+			continue;
+		}
+
+		if (view->surface() == s) {
 			return view;
+		}
 	}
 	return nullptr;
 }
 
 CwlView *CwlCompositor::findTlView(QWaylandSurface *s)
 {
+	if (!s) {
+		qWarning()
+			<< "CwlCompositor::findTlView: Null surface provided";
+		return nullptr;
+	}
+
+	if (!m_workspace) {
+		qWarning()
+			<< "CwlCompositor::findTlView: No workspace available";
+		return nullptr;
+	}
+
 	CwlView *ret = nullptr;
-	for (CwlView *view : m_workspace->getToplevelViews()) {
-		if (view->surface() == s)
+	const QList<CwlView *> toplevelViews = m_workspace->getToplevelViews();
+
+	for (CwlView *view : toplevelViews) {
+		if (!view) {
+			qWarning()
+				<< "CwlCompositor::findTlView: Null view in toplevel views list";
+			continue;
+		}
+
+		if (view->surface() == s) {
 			ret = view;
-		else if (view->getChildViews().size() > 0)
+		} else if (!view->getChildViews().isEmpty()) {
 			ret = findTreeView(s, view);
+		}
 	}
 	return ret;
 }

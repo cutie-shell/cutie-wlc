@@ -12,21 +12,65 @@ CwlProcessManager::CwlProcessManager(QObject *parent)
 	, m_currentRetryAttempt(0)
 	, m_maxRetryAttempts(0)
 {
+	// Validate timer creation
+	if (!m_retryTimer) {
+		qCritical()
+			<< "CwlProcessManager: Failed to create retry timer";
+		return;
+	}
+
 	m_retryTimer->setSingleShot(true);
-	connect(m_retryTimer.data(), &QTimer::timeout, this,
-		&CwlProcessManager::onRetryTimeout);
+
+	// Validate signal connection with error checking
+	if (!connect(m_retryTimer.data(), &QTimer::timeout, this,
+		     &CwlProcessManager::onRetryTimeout)) {
+		qWarning()
+			<< "CwlProcessManager: Failed to connect retry timer timeout signal";
+	}
 }
 
 bool CwlProcessManager::launchComponent(const QString &command)
 {
+	// Validate command before attempting launch
+	if (command.isEmpty()) {
+		qWarning()
+			<< "CwlProcessManager::launchComponent: Empty command provided";
+		return false;
+	}
+
 	QStringList args;
 	args.append("-c");
 	args.append(command);
 
-	if (!QProcess::startDetached("bash", args)) {
+	// Validate args list
+	if (args.size() != 2) {
+		qWarning()
+			<< "CwlProcessManager::launchComponent: Failed to construct argument list";
+		return false;
+	}
+
+	try {
+		if (!QProcess::startDetached("bash", args)) {
+			QString componentName = extractComponentName(command);
+			qWarning() << "Failed to launch component:"
+				   << componentName;
+			notifyComponentFailure(componentName,
+					       "Process launch failed");
+			return false;
+		}
+	} catch (const std::exception &e) {
 		QString componentName = extractComponentName(command);
-		qWarning() << "Failed to launch component:" << componentName;
-		notifyComponentFailure(componentName, "Process launch failed");
+		qCritical() << "Exception launching component" << componentName
+			    << ":" << e.what();
+		notifyComponentFailure(componentName,
+				       QString("Exception: %1").arg(e.what()));
+		return false;
+	} catch (...) {
+		QString componentName = extractComponentName(command);
+		qCritical() << "Unknown exception launching component"
+			    << componentName;
+		notifyComponentFailure(componentName,
+				       "Unknown exception during launch");
 		return false;
 	}
 
@@ -37,7 +81,27 @@ bool CwlProcessManager::launchComponent(const QString &command)
 bool CwlProcessManager::launchComponentWithRetry(const QString &command,
 						 int maxRetries)
 {
+	// Validate input parameters
+	if (command.isEmpty()) {
+		qWarning()
+			<< "CwlProcessManager::launchComponentWithRetry: Empty command provided";
+		return false;
+	}
+
+	if (maxRetries < 1) {
+		qWarning()
+			<< "CwlProcessManager::launchComponentWithRetry: Invalid maxRetries value:"
+			<< maxRetries;
+		return false;
+	}
+
 	QString componentName = extractComponentName(command);
+	if (componentName.isEmpty()) {
+		qWarning()
+			<< "CwlProcessManager::launchComponentWithRetry: Could not extract component name from command:"
+			<< command;
+		return false;
+	}
 
 	for (int attempt = 1; attempt <= maxRetries; ++attempt) {
 		qDebug() << "Launching component" << componentName
@@ -58,29 +122,38 @@ bool CwlProcessManager::launchComponentWithRetry(const QString &command,
 				<< "Launch attempt" << attempt << "failed for"
 				<< componentName << "- retrying in 1 second";
 
-			// Use a simple delay for retry
-			QEventLoop loop;
-			QTimer::singleShot(1000, &loop, &QEventLoop::quit);
-			loop.exec();
+			// Use a simple delay for retry with error handling
+			try {
+				QEventLoop loop;
+				QTimer::singleShot(1000, &loop,
+						   &QEventLoop::quit);
+				loop.exec();
+			} catch (const std::exception &e) {
+				qWarning() << "Exception during retry delay for"
+					   << componentName << ":" << e.what();
+				// Continue with next attempt despite delay failure
+			} catch (...) {
+				qWarning()
+					<< "Unknown exception during retry delay for"
+					<< componentName;
+				// Continue with next attempt despite delay failure
+			}
 		}
 	}
 
 	qCritical() << "Failed to launch component" << componentName << "after"
 		    << maxRetries << "attempts";
 
-	// Track failed component
+	// Track failed component with validation
 	if (!m_failedComponents.contains(componentName)) {
 		m_failedComponents.append(componentName);
 	}
 
 	// Notify about component failure
 	bool critical = isComponentCritical(componentName);
-	notifyComponentFailure(
-		componentName,
-		QString("Failed after %1 attempts").arg(maxRetries));
-	emit componentLaunchFailed(
-		componentName,
-		QString("Failed after %1 attempts").arg(maxRetries), critical);
+	QString errorMsg = QString("Failed after %1 attempts").arg(maxRetries);
+	notifyComponentFailure(componentName, errorMsg);
+	emit componentLaunchFailed(componentName, errorMsg, critical);
 
 	return false;
 }
@@ -152,5 +225,28 @@ void CwlProcessManager::notifyComponentFailure(const QString &component,
 
 QString CwlProcessManager::extractComponentName(const QString &command) const
 {
-	return command.split(" ").first();
+	// Validate command before processing
+	if (command.isEmpty()) {
+		qWarning()
+			<< "CwlProcessManager::extractComponentName: Empty command provided";
+		return QString();
+	}
+
+	QStringList parts = command.split(" ");
+	if (parts.isEmpty()) {
+		qWarning()
+			<< "CwlProcessManager::extractComponentName: Failed to split command:"
+			<< command;
+		return QString();
+	}
+
+	QString componentName = parts.first();
+	if (componentName.isEmpty()) {
+		qWarning()
+			<< "CwlProcessManager::extractComponentName: Component name is empty for command:"
+			<< command;
+		return QString();
+	}
+
+	return componentName;
 }

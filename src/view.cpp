@@ -2,7 +2,10 @@
 #include <cutie-wlc.h>
 #include <opengl/opengl-guards.h>
 #include <QOpenGLTexture>
+#include <QOpenGLContext>
 #include <QtWaylandCompositor/QWaylandSeat>
+#include <stdexcept>
+#include <QDebug>
 
 CwlView::CwlView(CwlCompositor *cwlcompositor, QRect geometry)
 	: m_cwlcompositor(cwlcompositor)
@@ -19,32 +22,111 @@ CwlView::~CwlView()
 
 QOpenGLTexture *CwlView::getTexture()
 {
+	// Validate OpenGL context first
+	QOpenGLContext *currentContext = QOpenGLContext::currentContext();
+	if (!currentContext) {
+		qWarning() << "CwlView::getTexture: No current OpenGL context";
+		return nullptr;
+	}
+
 	// Use RAII for automatic OpenGL state management during texture operations
 	OpenGLStateGuard stateGuard;
 
+	// Validate surface before processing
+	if (!surface()) {
+		qWarning() << "CwlView::getTexture: No surface available";
+		return nullptr;
+	}
+
 	if (advance()) {
 		QWaylandBufferRef bufRef = currentBuffer();
+
+		// Validate buffer reference
+		if (!bufRef.hasBuffer()) {
+			qDebug() << "CwlView::getTexture: No buffer available";
+			return nullptr;
+		}
+
+		// Set texture origin based on buffer
 		if (bufRef.origin() == QWaylandSurface::OriginTopLeft)
 			m_origin = QOpenGLTextureBlitter::OriginTopLeft;
 		else
 			m_origin = QOpenGLTextureBlitter::OriginBottomLeft;
 
-		if (bufRef.bufferType() ==
-		    QWaylandBufferRef::BufferType::BufferType_Egl) {
-			m_eglTexture = bufRef.toOpenGLTexture();
-		} else if (bufRef.bufferType() ==
-			   QWaylandBufferRef::BufferType::
-				   BufferType_SharedMemory) {
-			m_isImageBuffer = true;
-			m_imageTexture.reset(
-				new QOpenGLTexture(bufRef.image()));
+		try {
+			if (bufRef.bufferType() ==
+			    QWaylandBufferRef::BufferType::BufferType_Egl) {
+				// Handle EGL texture creation with error checking
+				m_eglTexture = bufRef.toOpenGLTexture();
+				if (!m_eglTexture) {
+					qWarning()
+						<< "CwlView::getTexture: Failed to create EGL texture";
+					return nullptr;
+				}
+			} else if (bufRef.bufferType() ==
+				   QWaylandBufferRef::BufferType::
+					   BufferType_SharedMemory) {
+				// Handle shared memory texture creation with validation
+				QImage image = bufRef.image();
+				if (image.isNull()) {
+					qWarning()
+						<< "CwlView::getTexture: Invalid image from shared memory buffer";
+					return nullptr;
+				}
+
+				m_isImageBuffer = true;
+				m_imageTexture.reset(new QOpenGLTexture(image));
+
+				// Validate texture creation
+				if (!m_imageTexture ||
+				    !m_imageTexture->isCreated()) {
+					qWarning()
+						<< "CwlView::getTexture: Failed to create texture from image";
+					m_imageTexture.reset();
+					m_isImageBuffer = false;
+					return nullptr;
+				}
+			} else {
+				qWarning()
+					<< "CwlView::getTexture: Unsupported buffer type:"
+					<< bufRef.bufferType();
+				return nullptr;
+			}
+		} catch (const std::exception &e) {
+			qCritical()
+				<< "CwlView::getTexture: Exception during texture creation:"
+				<< e.what();
+			return nullptr;
+		} catch (...) {
+			qCritical()
+				<< "CwlView::getTexture: Unknown exception during texture creation";
+			return nullptr;
 		}
 	}
 
+	// Return appropriate texture with validation
 	if (m_isImageBuffer) {
-		return m_imageTexture.data();
+		if (m_imageTexture && m_imageTexture->isCreated()) {
+			return m_imageTexture.data();
+		} else {
+			qWarning()
+				<< "CwlView::getTexture: Image texture not valid";
+			return nullptr;
+		}
 	} else {
-		return m_eglTexture;
+		if (m_eglTexture) {
+			// Additional validation for EGL textures
+			if (m_eglTexture->textureId() == 0) {
+				qWarning()
+					<< "CwlView::getTexture: EGL texture has invalid ID";
+				return nullptr;
+			}
+			return m_eglTexture;
+		} else {
+			qDebug()
+				<< "CwlView::getTexture: No EGL texture available";
+			return nullptr;
+		}
 	}
 }
 

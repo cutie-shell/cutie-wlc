@@ -4,11 +4,15 @@
 #include <QMatrix4x4>
 #include <QOpenGLFunctions>
 #include <QOpenGLTexture>
+#include <QOpenGLContext>
 #include <QMouseEvent>
 #include <opengl/opengl-guards.h>
 #include <QGuiApplication>
 #include <qpa/qplatformnativeinterface.h>
 #include <qpa/qplatformscreen.h>
+#include <QtWaylandCompositor/QWaylandSeat>
+#include <stdexcept>
+#include <QDebug>
 #include <QtWaylandCompositor/QWaylandSeat>
 
 GlWindow::GlWindow()
@@ -148,34 +152,140 @@ void GlWindow::renderViews(const QList<CwlView *> &views)
 
 void GlWindow::renderView(CwlView *view)
 {
-	QOpenGLTexture *texture = view->getTexture();
-	if (!texture || !m_cwlcompositor)
+	// Comprehensive validation before rendering
+	if (!view) {
+		qWarning() << "GlWindow::renderView: Null view provided";
 		return;
-	if (texture->target() != m_currentTarget) {
-		m_currentTarget = texture->target();
-		if (m_textureBlitter)
-			m_textureBlitter->bind(m_currentTarget);
 	}
 
-	QWaylandSurface *surface = view->surface();
-	if (surface && surface->hasContent()) {
+	if (!m_cwlcompositor) {
+		qWarning() << "GlWindow::renderView: No compositor available";
+		return;
+	}
+
+	// Validate OpenGL context
+	QOpenGLContext *currentContext = QOpenGLContext::currentContext();
+	if (!currentContext) {
+		qWarning() << "GlWindow::renderView: No current OpenGL context";
+		return;
+	}
+
+	// Get texture with comprehensive error handling
+	QOpenGLTexture *texture = view->getTexture();
+	if (!texture) {
+		// getTexture() already logs appropriate warnings
+		return;
+	}
+
+	// Validate texture before using it
+	if (texture->textureId() == 0) {
+		qWarning() << "GlWindow::renderView: Invalid texture ID (0)";
+		return;
+	}
+
+	// Validate texture blitter
+	if (!m_textureBlitter || !m_textureBlitter->isValid()) {
+		qWarning() << "GlWindow::renderView: Invalid texture blitter";
+		return;
+	}
+
+	try {
+		// Safe texture target handling
+		GLenum textureTarget = texture->target();
+		if (textureTarget != GL_TEXTURE_2D) {
+			qDebug()
+				<< "GlWindow::renderView: Non-standard texture target:"
+				<< textureTarget << "(continuing anyway)";
+			// Continue anyway as Qt should handle different targets
+		}
+
+		if (textureTarget != m_currentTarget) {
+			m_currentTarget = textureTarget;
+			m_textureBlitter->bind(m_currentTarget);
+		}
+
+		// Validate surface before proceeding
+		QWaylandSurface *surface = view->surface();
+		if (!surface) {
+			qWarning()
+				<< "GlWindow::renderView: View has no surface";
+			return;
+		}
+
+		if (!surface->hasContent()) {
+			qDebug()
+				<< "GlWindow::renderView: Surface has no content";
+			return;
+		}
+
+		// Validate view dimensions
 		QSize viewSize = view->size();
+		if (viewSize.isEmpty() || !viewSize.isValid()) {
+			qWarning() << "GlWindow::renderView: Invalid view size:"
+				   << viewSize;
+			return;
+		}
+
 		QPointF viewPosition = view->getPosition();
 		auto surfaceOrigin = view->textureOrigin();
-		QRectF targetRect(viewPosition * m_cwlcompositor->scaleFactor(),
-				  viewSize * m_cwlcompositor->scaleFactor());
+
+		// Validate scale factor
+		int scaleFactor = m_cwlcompositor->scaleFactor();
+		if (scaleFactor <= 0) {
+			qWarning()
+				<< "GlWindow::renderView: Invalid scale factor:"
+				<< scaleFactor;
+			scaleFactor = 1; // Safe fallback
+		}
+
+		QRectF targetRect(viewPosition * scaleFactor,
+				  viewSize * scaleFactor);
+
+		// Validate target rectangle
+		if (targetRect.isEmpty() || !targetRect.isValid()) {
+			qWarning()
+				<< "GlWindow::renderView: Invalid target rectangle:"
+				<< targetRect;
+			return;
+		}
 
 		QMatrix4x4 targetTransform =
 			QOpenGLTextureBlitter::targetTransform(
 				targetRect, QRect(QPoint(), size()));
-		if (m_textureBlitter)
-			m_textureBlitter->blit(texture->textureId(),
-					       targetTransform, surfaceOrigin);
+
+		// Perform the actual blit operation with error handling
+		GLuint textureId = texture->textureId();
+		if (textureId == 0) {
+			qWarning()
+				<< "GlWindow::renderView: Texture ID became invalid during rendering";
+			return;
+		}
+
+		m_textureBlitter->blit(textureId, targetTransform,
+				       surfaceOrigin);
+
+	} catch (const std::exception &e) {
+		qCritical()
+			<< "GlWindow::renderView: Exception during rendering:"
+			<< e.what();
+		return;
+	} catch (...) {
+		qCritical()
+			<< "GlWindow::renderView: Unknown exception during rendering";
+		return;
 	}
 
-	if (view->getChildViews().size() > 0) {
-		for (CwlView *childView : view->getChildViews())
-			renderView(childView);
+	// Recursively render child views with validation
+	const QList<CwlView *> &childViews = view->getChildViews();
+	if (!childViews.isEmpty()) {
+		for (CwlView *childView : childViews) {
+			if (childView) { // Validate each child view
+				renderView(childView);
+			} else {
+				qWarning()
+					<< "GlWindow::renderView: Null child view detected";
+			}
+		}
 	}
 }
 
