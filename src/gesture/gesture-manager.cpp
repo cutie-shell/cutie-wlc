@@ -87,9 +87,10 @@ bool CwlGestureManager::handleGesture(QPointerEvent *ev, int edge, int corner)
 			}
 			return result;
 		}
-		
+
 		// Start gesture state tracking for new gesture
-		if (ev->isBeginEvent() && startGesture(gestureKey, ev, action, 0)) {
+		if (ev->isBeginEvent() &&
+		    startGesture(gestureKey, ev, action, 0)) {
 			bool result = action->execute(ev, m_compositor);
 			if (result) {
 				updateGestureState(gestureKey,

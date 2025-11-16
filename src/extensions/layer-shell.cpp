@@ -170,7 +170,7 @@ int32_t LayerSurfaceV1::targetZone()
 void LayerSurfaceV1::setTargetZone(int32_t targetZone)
 {
 	if (m_targetZone != targetZone) {
-		if(targetZone == 0 && ls_scope == "cutie-keyboard")
+		if (targetZone == 0 && ls_scope == "cutie-keyboard")
 			emit hideKeyboard();
 		m_targetZone = targetZone;
 		emit targetZoneChanged(m_targetZone);

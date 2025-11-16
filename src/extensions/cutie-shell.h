@@ -25,7 +25,7 @@ class CutieShell : public QWaylandCompositorExtensionTemplate<CutieShell>,
 		VOLUME_DOWN_PRESS = 4,
 		VOLUME_DOWN_RELEASE = 5
 	};
-	
+
 	CutieShell(CwlCompositor *compositor);
 	void initialize() override;
 
