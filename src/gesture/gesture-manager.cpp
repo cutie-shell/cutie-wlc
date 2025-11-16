@@ -479,8 +479,15 @@ bool CwlGestureManager::startGesture(const GestureKey &key, QPointerEvent *ev,
 	// Create and store the active gesture
 	ActiveGesture activeGesture(key, action, priority);
 	activeGesture.startTime = QDateTime::currentMSecsSinceEpoch();
-	activeGesture.lastEvent =
-		ev; // Note: In production, you'd want to clone the event
+	// Store a safe copy of the event points and the event phase so the
+	// active gesture doesn't refer to a potentially destroyed QPointerEvent.
+	activeGesture.lastEventPoints = ev->points();
+	if (ev->isBeginEvent())
+		activeGesture.lastEventPhase = 1;
+	else if (ev->isUpdateEvent())
+		activeGesture.lastEventPhase = 2;
+	else if (ev->isEndEvent())
+		activeGesture.lastEventPhase = 3;
 	activeGesture.state = GestureState::DETECTING;
 
 	m_activeGestures[key] = activeGesture;
@@ -519,11 +526,14 @@ void CwlGestureManager::cancelGesture(const GestureKey &key)
 		// Set state to cancelling
 		gesture.state = GestureState::CANCELLING;
 
-		// If the action supports cancellation, call it
-		if (gesture.action && gesture.lastEvent) {
-			// Note: In a real implementation, you might want to add a
-			// cancel() method to IGestureAction interface
-			// gesture.action->cancel(gesture.lastEvent, m_compositor);
+		// If the action supports cancellation, call it.
+		// We store a copy of the last event points in ActiveGesture so
+		// there is no dangling pointer risk. If actions implement a
+		// cancel API in the future, they can be called here with the
+		// copied event points.
+		if (gesture.action && !gesture.lastEventPoints.isEmpty()) {
+			// Example future call (not implemented yet):
+			// gesture.action->cancel(gesture.lastEventPoints, gesture.lastEventPhase, m_compositor);
 		}
 
 		// Remove the gesture

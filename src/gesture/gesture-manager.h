@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QPointerEvent>
+#include <QList>
 #include <QHash>
 #include <QTimer>
 #include <memory>
@@ -71,13 +72,18 @@ struct ActiveGesture {
 	GestureKey key;
 	GestureState state;
 	IGestureAction *action;
-	QPointerEvent *lastEvent; // Store copy for cancellation
+	// Store a copy of the last event points for safe cancellation handling
+	// instead of keeping a raw pointer to an event that may be destroyed.
+	QList<QEventPoint> lastEventPoints;
+	// Phase of the last event: 0 = unknown, 1 = begin, 2 = update, 3 = end
+	int lastEventPhase = 0;
 	qint64 startTime; // Timestamp when gesture started
 	int priority; // Gesture priority for conflict resolution
 
 	ActiveGesture()
 		: action(nullptr)
-		, lastEvent(nullptr)
+		, lastEventPoints()
+		, lastEventPhase(0)
 		, startTime(0)
 		, priority(0)
 	{
@@ -86,7 +92,8 @@ struct ActiveGesture {
 		: key(k)
 		, state(GestureState::DETECTING)
 		, action(a)
-		, lastEvent(nullptr)
+		, lastEventPoints()
+		, lastEventPhase(0)
 		, startTime(0)
 		, priority(prio)
 	{
