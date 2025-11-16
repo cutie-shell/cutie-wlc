@@ -15,6 +15,12 @@ qt_standard_project_setup()
 
 add_subdirectory(src)
 
+# Add tests subdirectory (use option to enable/disable)
+option(BUILD_TESTING "Build tests" ON)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
+
 target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${GLES2_INCLUDE_DIRS})
