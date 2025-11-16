@@ -81,3 +81,11 @@ add_cutie_test(test-input-router
 
 # Link against mocks library for CwlView meta-object
 target_link_libraries(test-input-router cutie-wlc-mocks)
+
+add_cutie_test(test-surface-compositor
+    test-surface-compositor.cpp
+    ${CMAKE_SOURCE_DIR}/src/surface/surface-compositor.cpp
+)
+
+# Link against mocks library for CwlView meta-object
+target_link_libraries(test-surface-compositor cutie-wlc-mocks)
