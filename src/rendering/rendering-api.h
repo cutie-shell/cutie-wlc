@@ -33,10 +33,7 @@
 class IRenderingAPI : public QObject {
 	Q_OBJECT
     public:
-	explicit IRenderingAPI(QObject *parent = nullptr)
-		: QObject(parent)
-	{
-	}
+	explicit IRenderingAPI(QObject *parent = nullptr);
 	virtual ~IRenderingAPI() = default;
 
 	/**

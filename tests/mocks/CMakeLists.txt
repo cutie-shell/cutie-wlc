@@ -3,10 +3,13 @@
 
 # Mock library that can be linked by tests
 add_library(cutie-wlc-mocks STATIC
+    ${CMAKE_SOURCE_DIR}/src/rendering/rendering-api.cpp
     mock-rendering-api.cpp
     mock-rendering-api.h
     mock-surface-compositor.cpp
     mock-surface-compositor.h
+    mock-view.cpp
+    mock-view.h
 )
 
 # Link against required libraries

@@ -19,6 +19,8 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/rendering
     ${CMAKE_SOURCE_DIR}/src/input
     ${CMAKE_SOURCE_DIR}/src/surface
+    ${CMAKE_SOURCE_DIR}/src/extensions
+    ${CMAKE_BINARY_DIR}/src  # For generated Wayland protocol headers
 )
 
 # Helper function to add a test executable
@@ -38,6 +40,8 @@ function(add_cutie_test TEST_NAME)
     # Include directories
     target_include_directories(${TEST_NAME} PRIVATE
         ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/src/extensions
+        ${CMAKE_BINARY_DIR}/src  # For generated Wayland protocol headers
         ${GLES2_INCLUDE_DIRS}
     )
     
@@ -68,3 +72,12 @@ add_cutie_test(test-input-device-manager
     test-input-device-manager.cpp
     ${CMAKE_SOURCE_DIR}/src/input/input-device-manager.cpp
 )
+
+add_cutie_test(test-input-router
+    test-input-router.cpp
+    ${CMAKE_SOURCE_DIR}/src/input/input-router.cpp
+    ${CMAKE_SOURCE_DIR}/src/surface/surface-compositor.cpp
+)
+
+# Link against mocks library for CwlView meta-object
+target_link_libraries(test-input-router cutie-wlc-mocks)

@@ -4,6 +4,7 @@
 # Rendering backend sources
 set(RENDERING_SOURCES
     rendering-api.h
+    rendering-api.cpp
     render-texture.h
     render-texture.cpp
     opengl-rendering-api.h
