@@ -52,7 +52,7 @@ function(add_cutie_test TEST_NAME)
 endfunction()
 
 # Add subdirectories for test organization
-# add_subdirectory(mocks)
+add_subdirectory(mocks)
 
 # Individual test files
 add_cutie_test(test-render-texture 
