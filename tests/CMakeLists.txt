@@ -54,6 +54,8 @@ endfunction()
 # Add subdirectories for test organization
 # add_subdirectory(mocks)
 
-# Individual test files will be added here as they are created
-# Example:
-# add_cutie_test(test-render-texture test-render-texture.cpp)
+# Individual test files
+add_cutie_test(test-render-texture 
+    test-render-texture.cpp
+    ${CMAKE_SOURCE_DIR}/src/rendering/render-texture.cpp
+)
