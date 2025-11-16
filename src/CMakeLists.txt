@@ -30,13 +30,20 @@ set(CWL_HEADERS
 set(QML_RESOURCES)
 
 add_subdirectory(extensions)
+add_subdirectory(rendering)
 
-qt_add_executable(${PROJECT_NAME} ${CWL_SOURCES} ${CWL_HEADERS})
+# Prepend rendering directory path to rendering sources
+foreach(source ${RENDERING_SOURCES})
+    list(APPEND CWL_RENDERING_SOURCES ${RENDERING_DIR}/${source})
+endforeach()
+
+qt_add_executable(${PROJECT_NAME} ${CWL_SOURCES} ${CWL_HEADERS} ${CWL_RENDERING_SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/extensions
 	${CMAKE_CURRENT_SOURCE_DIR}/gesture
-	${CMAKE_CURRENT_SOURCE_DIR}/opengl)
+	${CMAKE_CURRENT_SOURCE_DIR}/opengl
+	${CMAKE_CURRENT_SOURCE_DIR}/rendering)
 
 qt6_generate_wayland_protocol_server_sources(
 ${PROJECT_NAME}

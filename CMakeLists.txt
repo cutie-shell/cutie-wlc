@@ -9,14 +9,21 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui WaylandCompositor)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
 pkg_get_variable(WAYLAND_PROTOCOLS_DATADIR wayland-protocols pkgdatadir)
+pkg_check_modules(GLES2 REQUIRED glesv2)
 
 qt_standard_project_setup()
 
 add_subdirectory(src)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}/src)
+	${CMAKE_CURRENT_SOURCE_DIR}/src
+	${GLES2_INCLUDE_DIRS})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Core Qt6::Gui Qt6::GuiPrivate Qt6::WaylandCompositor)
+target_link_libraries(${PROJECT_NAME} PUBLIC 
+	Qt6::Core 
+	Qt6::Gui 
+	Qt6::GuiPrivate 
+	Qt6::WaylandCompositor
+	${GLES2_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION /usr/bin)
