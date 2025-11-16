@@ -21,6 +21,13 @@ QString LeftEdgeGestureAction::actionName() const
 	return "LeftEdgeGesture";
 }
 
+void LeftEdgeGestureAction::cancel(CwlCompositor *compositor)
+{
+	// Revert blur animation to close home view
+	compositor->startBlurAnimation();
+	compositor->setHomeOpen(false);
+}
+
 bool LeftEdgeGestureAction::handleBegin(QPointerEvent *ev,
 					CwlCompositor *compositor)
 {
@@ -71,6 +78,13 @@ QString RightEdgeGestureAction::actionName() const
 	return "RightEdgeGesture";
 }
 
+void RightEdgeGestureAction::cancel(CwlCompositor *compositor)
+{
+	// Revert blur animation to close home view
+	compositor->startBlurAnimation();
+	compositor->setHomeOpen(false);
+}
+
 bool RightEdgeGestureAction::handleBegin(QPointerEvent *ev,
 					 CwlCompositor *compositor)
 {
@@ -117,6 +131,12 @@ bool TopEdgeGestureAction::canExecute(CwlCompositor *compositor) const
 QString TopEdgeGestureAction::actionName() const
 {
 	return "TopEdgeGesture";
+}
+
+void TopEdgeGestureAction::cancel(CwlCompositor *compositor)
+{
+	// Revert launcher position animation to close it
+	compositor->startLauncherCloseAnimation();
 }
 
 bool TopEdgeGestureAction::handleBegin(QPointerEvent *ev,
@@ -182,6 +202,12 @@ bool BottomEdgeGestureAction::canExecute(CwlCompositor *compositor) const
 QString BottomEdgeGestureAction::actionName() const
 {
 	return "BottomEdgeGesture";
+}
+
+void BottomEdgeGestureAction::cancel(CwlCompositor *compositor)
+{
+	// Revert launcher position animation to close it
+	compositor->startLauncherCloseAnimation();
 }
 
 bool BottomEdgeGestureAction::handleBegin(QPointerEvent *ev,
@@ -262,6 +288,13 @@ QString BottomCornerGestureAction::actionName() const
 {
 	return QString("BottomCornerGesture_%1")
 		.arg(m_corner == CORNER_BR ? "BR" : "BL");
+}
+
+void BottomCornerGestureAction::cancel(CwlCompositor *compositor)
+{
+	// No state to revert for bottom corner gestures
+	// The input method panel is only shown on handleEnd, not during updates
+	// So cancellation doesn't need to do anything
 }
 
 bool BottomCornerGestureAction::handleBeginUpdate(QPointerEvent *ev,

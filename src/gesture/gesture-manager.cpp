@@ -73,8 +73,23 @@ bool CwlGestureManager::handleGesture(QPointerEvent *ev, int edge, int corner)
 	// Use the new registry-based approach
 	IGestureAction *action = findActionForGesture(ev, edge, corner);
 	if (action && action->canExecute(m_compositor)) {
-		// Start gesture state tracking
-		if (startGesture(gestureKey, ev, action, 0)) {
+		// Check if gesture is already active - if so, just execute it
+		if (isGestureActive(gestureKey)) {
+			bool result = action->execute(ev, m_compositor);
+			if (!result && ev->isEndEvent()) {
+				// Gesture execution failed on end event
+				updateGestureState(gestureKey,
+						   GestureState::FAILED);
+				cancelGesture(gestureKey);
+			} else if (ev->isEndEvent()) {
+				// Gesture completed successfully
+				completeGesture(gestureKey);
+			}
+			return result;
+		}
+		
+		// Start gesture state tracking for new gesture
+		if (ev->isBeginEvent() && startGesture(gestureKey, ev, action, 0)) {
 			bool result = action->execute(ev, m_compositor);
 			if (result) {
 				updateGestureState(gestureKey,
@@ -526,14 +541,9 @@ void CwlGestureManager::cancelGesture(const GestureKey &key)
 		// Set state to cancelling
 		gesture.state = GestureState::CANCELLING;
 
-		// If the action supports cancellation, call it.
-		// We store a copy of the last event points in ActiveGesture so
-		// there is no dangling pointer risk. If actions implement a
-		// cancel API in the future, they can be called here with the
-		// copied event points.
-		if (gesture.action && !gesture.lastEventPoints.isEmpty()) {
-			// Example future call (not implemented yet):
-			// gesture.action->cancel(gesture.lastEventPoints, gesture.lastEventPhase, m_compositor);
+		// Call the action's cancel method to cleanly revert UI state
+		if (gesture.action) {
+			gesture.action->cancel(m_compositor);
 		}
 
 		// Remove the gesture

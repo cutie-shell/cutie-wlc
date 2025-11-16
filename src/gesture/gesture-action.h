@@ -30,6 +30,21 @@ class IGestureAction : public QObject {
 	virtual bool execute(QPointerEvent *ev, CwlCompositor *compositor) = 0;
 
 	/**
+     * @brief Cancel the gesture action and revert any UI state changes
+     * @param compositor The compositor instance for state access
+     * 
+     * This method is called when a gesture is preempted by another gesture
+     * or cancelled by the system. Implementations should cleanly revert any
+     * UI state changes made during execute() calls. The default implementation
+     * does nothing, which is appropriate for gestures with no intermediate state.
+     */
+	virtual void cancel(CwlCompositor *compositor)
+	{
+		// Default implementation: no-op
+		// Subclasses override if they need cleanup
+	}
+
+	/**
      * @brief Check if this action can handle the current gesture state
      * @param compositor The compositor instance for state checks
      * @return true if the action can be executed, false otherwise
@@ -166,6 +181,7 @@ class LeftEdgeGestureAction : public EdgeGestureAction {
 	explicit LeftEdgeGestureAction(QObject *parent = nullptr);
 	bool canExecute(CwlCompositor *compositor) const override;
 	QString actionName() const override;
+	void cancel(CwlCompositor *compositor) override;
 
     protected:
 	bool handleBegin(QPointerEvent *ev, CwlCompositor *compositor) override;
@@ -184,6 +200,7 @@ class RightEdgeGestureAction : public EdgeGestureAction {
 	explicit RightEdgeGestureAction(QObject *parent = nullptr);
 	bool canExecute(CwlCompositor *compositor) const override;
 	QString actionName() const override;
+	void cancel(CwlCompositor *compositor) override;
 
     protected:
 	bool handleBegin(QPointerEvent *ev, CwlCompositor *compositor) override;
@@ -202,6 +219,7 @@ class TopEdgeGestureAction : public EdgeGestureAction {
 	explicit TopEdgeGestureAction(QObject *parent = nullptr);
 	bool canExecute(CwlCompositor *compositor) const override;
 	QString actionName() const override;
+	void cancel(CwlCompositor *compositor) override;
 
     protected:
 	bool handleBegin(QPointerEvent *ev, CwlCompositor *compositor) override;
@@ -220,6 +238,7 @@ class BottomEdgeGestureAction : public EdgeGestureAction {
 	explicit BottomEdgeGestureAction(QObject *parent = nullptr);
 	bool canExecute(CwlCompositor *compositor) const override;
 	QString actionName() const override;
+	void cancel(CwlCompositor *compositor) override;
 
     protected:
 	bool handleBegin(QPointerEvent *ev, CwlCompositor *compositor) override;
@@ -239,6 +258,7 @@ class BottomCornerGestureAction : public CornerGestureAction {
 					   QObject *parent = nullptr);
 	bool canExecute(CwlCompositor *compositor) const override;
 	QString actionName() const override;
+	void cancel(CwlCompositor *compositor) override;
 
     protected:
 	bool handleBeginUpdate(QPointerEvent *ev,
