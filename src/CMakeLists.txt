@@ -32,6 +32,7 @@ set(QML_RESOURCES)
 add_subdirectory(extensions)
 add_subdirectory(rendering)
 add_subdirectory(input)
+add_subdirectory(surface)
 
 # Prepend rendering directory path to rendering sources
 foreach(source ${RENDERING_SOURCES})
@@ -43,14 +44,20 @@ foreach(source ${INPUT_SOURCES})
     list(APPEND CWL_INPUT_SOURCES input/${source})
 endforeach()
 
-qt_add_executable(${PROJECT_NAME} ${CWL_SOURCES} ${CWL_HEADERS} ${CWL_RENDERING_SOURCES} ${CWL_INPUT_SOURCES})
+# Prepend surface directory path to surface sources
+foreach(source ${SURFACE_SOURCES})
+    list(APPEND CWL_SURFACE_SOURCES surface/${source})
+endforeach()
+
+qt_add_executable(${PROJECT_NAME} ${CWL_SOURCES} ${CWL_HEADERS} ${CWL_RENDERING_SOURCES} ${CWL_INPUT_SOURCES} ${CWL_SURFACE_SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/extensions
 	${CMAKE_CURRENT_SOURCE_DIR}/gesture
 	${CMAKE_CURRENT_SOURCE_DIR}/opengl
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering
-	${CMAKE_CURRENT_SOURCE_DIR}/input)
+	${CMAKE_CURRENT_SOURCE_DIR}/input
+	${CMAKE_CURRENT_SOURCE_DIR}/surface)
 
 qt6_generate_wayland_protocol_server_sources(
 ${PROJECT_NAME}
