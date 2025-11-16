@@ -51,44 +51,71 @@ void CwlInputDeviceManager::processEvent(QInputEvent *event)
 
 void CwlInputDeviceManager::handlePointerEvent(QInputEvent *event)
 {
-	// Stub implementation - no actual conversion yet
-	// TODO: In Phase 2, this will:
-	// - Cast to QMouseEvent
-	// - Extract position, button, modifiers
-	// - Create PointerEvent struct
-	// - Emit pointerEvent signal
+	QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+	if (!mouseEvent) {
+		qWarning()
+			<< "CwlInputDeviceManager: Failed to cast to QMouseEvent";
+		return;
+	}
 
-	qDebug() << "CwlInputDeviceManager: Processing pointer event (stub)";
+	PointerEvent ptrEvent;
+	ptrEvent.globalPosition = mouseEvent->globalPosition();
+	ptrEvent.button = mouseEvent->button();
+	ptrEvent.buttons = mouseEvent->buttons();
+	ptrEvent.modifiers = mouseEvent->modifiers();
 
-	// Example of what will be implemented:
-	// QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-	// PointerEvent ptrEvent;
-	// ptrEvent.globalPosition = mouseEvent->globalPosition();
-	// ptrEvent.button = mouseEvent->button();
-	// ptrEvent.buttons = mouseEvent->buttons();
-	// ptrEvent.modifiers = mouseEvent->modifiers();
-	// ptrEvent.type = /* determine from event->type() */;
-	// emit pointerEvent(ptrEvent);
+	// Determine event type
+	switch (event->type()) {
+	case QEvent::MouseButtonPress:
+		ptrEvent.type = PointerEventType::Press;
+		break;
+	case QEvent::MouseButtonRelease:
+		ptrEvent.type = PointerEventType::Release;
+		break;
+	case QEvent::MouseMove:
+		ptrEvent.type = PointerEventType::Move;
+		break;
+	default:
+		qWarning()
+			<< "CwlInputDeviceManager: Unknown pointer event type";
+		return;
+	}
+
+	qDebug() << "CwlInputDeviceManager: Emitting pointer event, type:"
+		 << static_cast<int>(ptrEvent.type);
+	emit pointerEvent(ptrEvent);
 }
 
 void CwlInputDeviceManager::handleKeyEvent(QInputEvent *event)
 {
-	// Stub implementation - no actual conversion yet
-	// TODO: In Phase 2, this will:
-	// - Cast to QKeyEvent
-	// - Extract key, scan code, modifiers, text
-	// - Create KeyboardEvent struct
-	// - Emit keyboardEvent signal
+	QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+	if (!keyEvent) {
+		qWarning()
+			<< "CwlInputDeviceManager: Failed to cast to QKeyEvent";
+		return;
+	}
 
-	qDebug() << "CwlInputDeviceManager: Processing keyboard event (stub)";
+	KeyboardEvent kbdEvent;
+	kbdEvent.nativeScanCode = keyEvent->nativeScanCode();
+	kbdEvent.key = static_cast<Qt::Key>(keyEvent->key());
+	kbdEvent.modifiers = keyEvent->modifiers();
+	kbdEvent.text = keyEvent->text();
 
-	// Example of what will be implemented:
-	// QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
-	// KeyboardEvent kbdEvent;
-	// kbdEvent.nativeScanCode = keyEvent->nativeScanCode();
-	// kbdEvent.key = static_cast<Qt::Key>(keyEvent->key());
-	// kbdEvent.modifiers = keyEvent->modifiers();
-	// kbdEvent.text = keyEvent->text();
-	// kbdEvent.type = /* determine from event->type() */;
-	// emit keyboardEvent(kbdEvent);
+	// Determine event type
+	switch (event->type()) {
+	case QEvent::KeyPress:
+		kbdEvent.type = KeyEventType::Press;
+		break;
+	case QEvent::KeyRelease:
+		kbdEvent.type = KeyEventType::Release;
+		break;
+	default:
+		qWarning()
+			<< "CwlInputDeviceManager: Unknown keyboard event type";
+		return;
+	}
+
+	qDebug() << "CwlInputDeviceManager: Emitting keyboard event, key:"
+		 << kbdEvent.key;
+	emit keyboardEvent(kbdEvent);
 }

@@ -63,3 +63,8 @@ add_cutie_test(test-render-texture
 add_cutie_test(test-input-events
     test-input-events.cpp
 )
+
+add_cutie_test(test-input-device-manager
+    test-input-device-manager.cpp
+    ${CMAKE_SOURCE_DIR}/src/input/input-device-manager.cpp
+)
