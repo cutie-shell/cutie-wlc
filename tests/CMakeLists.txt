@@ -44,15 +44,6 @@ function(add_cutie_test TEST_NAME)
         ${CMAKE_BINARY_DIR}/src  # For generated Wayland protocol headers
         ${GLES2_INCLUDE_DIRS}
     )
-    
-    # Add as a test
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
-    
-    # Set test properties
-    set_tests_properties(${TEST_NAME} PROPERTIES
-        TIMEOUT 30
-        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
-    )
 endfunction()
 
 # Add subdirectories for test organization
@@ -89,3 +80,35 @@ add_cutie_test(test-surface-compositor
 
 # Link against mocks library for CwlView meta-object
 target_link_libraries(test-surface-compositor cutie-wlc-mocks)
+
+# Register tests with CTest
+add_test(NAME test-render-texture COMMAND test-render-texture)
+add_test(NAME test-input-events COMMAND test-input-events)
+add_test(NAME test-input-device-manager COMMAND test-input-device-manager)
+add_test(NAME test-input-router COMMAND test-input-router)
+add_test(NAME test-surface-compositor COMMAND test-surface-compositor)
+
+# Set test properties
+set_tests_properties(
+    test-render-texture
+    test-input-events
+    test-input-device-manager
+    test-input-router
+    test-surface-compositor
+    PROPERTIES
+        TIMEOUT 30
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+)
+
+# Custom target to run all tests
+add_custom_target(run-tests
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --verbose
+    DEPENDS 
+        test-render-texture
+        test-input-events
+        test-input-device-manager
+        test-input-router
+        test-surface-compositor
+    COMMENT "Running all cutie-wlc tests..."
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)

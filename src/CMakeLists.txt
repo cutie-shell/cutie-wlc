@@ -57,7 +57,15 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/opengl
 	${CMAKE_CURRENT_SOURCE_DIR}/rendering
 	${CMAKE_CURRENT_SOURCE_DIR}/input
-	${CMAKE_CURRENT_SOURCE_DIR}/surface)
+	${CMAKE_CURRENT_SOURCE_DIR}/surface
+	${GLES2_INCLUDE_DIRS})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC 
+	Qt6::Core 
+	Qt6::Gui 
+	Qt6::GuiPrivate 
+	Qt6::WaylandCompositor
+	${GLES2_LIBRARIES})
 
 qt6_generate_wayland_protocol_server_sources(
 ${PROJECT_NAME}
@@ -74,3 +82,6 @@ ${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/protocols/input-method-unstable-v2.xml
 )
+
+# Install target
+install(TARGETS ${PROJECT_NAME} DESTINATION /usr/bin)

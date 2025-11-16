@@ -37,10 +37,16 @@ cmake -DBUILD_TESTING=OFF ..
 
 ## Running Tests
 
-Run all tests:
+Run all tests using CTest:
 
 ```bash
 ctest
+```
+
+Run all tests using the custom target:
+
+```bash
+make run-tests
 ```
 
 Run specific test:
@@ -53,6 +59,12 @@ Run tests with verbose output:
 
 ```bash
 ctest --verbose
+```
+
+Run tests with output on failure:
+
+```bash
+ctest --output-on-failure
 ```
 
 ## Writing Tests
@@ -95,6 +107,25 @@ QTEST_MAIN(TestExample)
 - **Unit tests**: Test individual classes in isolation
 - **Integration tests**: Test interaction between components
 - **Mock objects**: Simplified implementations for testing dependencies
+
+## Debian Package Building
+
+When building the Debian package, tests are automatically run during the build process. This is configured in `debian/rules` with:
+
+- `BUILD_TESTING=ON`: Ensures tests are built
+- `override_dh_auto_test`: Runs CTest with output on failure
+
+To build the package locally:
+
+```bash
+dpkg-buildpackage -us -uc
+```
+
+If tests fail, the package build will fail. To skip tests during package build (not recommended):
+
+```bash
+DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -uc
+```
 
 ## Code Coverage
 
