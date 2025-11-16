@@ -5,6 +5,8 @@
 add_library(cutie-wlc-mocks STATIC
     mock-rendering-api.cpp
     mock-rendering-api.h
+    mock-surface-compositor.cpp
+    mock-surface-compositor.h
 )
 
 # Link against required libraries
@@ -18,6 +20,7 @@ target_include_directories(cutie-wlc-mocks PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/rendering
+    ${CMAKE_SOURCE_DIR}/src/surface
 )
 
 # Enable automoc for Qt meta-object compilation
