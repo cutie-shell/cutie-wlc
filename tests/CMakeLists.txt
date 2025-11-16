@@ -59,3 +59,7 @@ add_cutie_test(test-render-texture
     test-render-texture.cpp
     ${CMAKE_SOURCE_DIR}/src/rendering/render-texture.cpp
 )
+
+add_cutie_test(test-input-events
+    test-input-events.cpp
+)
