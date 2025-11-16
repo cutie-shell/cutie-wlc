@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Cutie Shell Contributors
+// SPDX-FileCopyrightText: 2026 Cutie Shell Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #ifndef RENDERING_API_H
@@ -33,6 +33,10 @@
 class IRenderingAPI : public QObject {
 	Q_OBJECT
     public:
+	explicit IRenderingAPI(QObject *parent = nullptr)
+		: QObject(parent)
+	{
+	}
 	virtual ~IRenderingAPI() = default;
 
 	/**

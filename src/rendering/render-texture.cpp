@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Cutie Shell Contributors
+// SPDX-FileCopyrightText: 2026 Cutie Shell Contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "render-texture.h"
