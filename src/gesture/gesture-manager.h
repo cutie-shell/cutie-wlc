@@ -174,14 +174,17 @@ class CwlGestureManager : public QObject {
 
 	CwlCompositor *m_compositor;
 
-	// Legacy action objects (for backward compatibility during transition)
+	// Legacy action objects (single owners for concrete actions)
 	std::unique_ptr<IGestureAction> m_leftEdgeAction;
 	std::unique_ptr<IGestureAction> m_rightEdgeAction;
 	std::unique_ptr<IGestureAction> m_topEdgeAction;
 	std::unique_ptr<IGestureAction> m_bottomEdgeAction;
-	QHash<int, IGestureAction *> m_cornerActions;
+	// Corner actions are stored as shared_ptr so they can be copied into
+	// Qt containers safely. The registry holds non-owning raw pointers.
+	QHash<int, std::shared_ptr<IGestureAction>> m_cornerActions;
 
-	// New gesture mapping registry
+	// New gesture mapping registry: holds non-owning pointers to actions
+	// The actual ownership is held by the concrete action unique_ptrs above
 	QHash<GestureKey, IGestureAction *> m_gestureRegistry;
 
 	// Gesture state management

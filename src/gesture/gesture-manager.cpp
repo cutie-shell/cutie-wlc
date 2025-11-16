@@ -27,17 +27,9 @@ CwlGestureManager::~CwlGestureManager()
 	// Cancel all active gestures before cleanup
 	cancelAllGestures();
 
-	// Clean up corner actions (they are raw pointers in the hash)
-	for (auto it = m_cornerActions.begin(); it != m_cornerActions.end();
-	     ++it) {
-		delete it.value();
-	}
-
-	// Clean up gesture registry actions
-	for (auto it = m_gestureRegistry.begin(); it != m_gestureRegistry.end();
-	     ++it) {
-		delete it.value();
-	}
+	// m_cornerActions and edge action unique_ptr members own the actions and
+	// will be cleaned up automatically. The m_gestureRegistry holds
+	// non-owning pointers and therefore should not delete the targets here.
 }
 
 void CwlGestureManager::initializeActions()
@@ -48,11 +40,11 @@ void CwlGestureManager::initializeActions()
 	m_topEdgeAction = std::make_unique<TopEdgeGestureAction>(this);
 	m_bottomEdgeAction = std::make_unique<BottomEdgeGestureAction>(this);
 
-	// Initialize corner gesture actions (using raw pointers in hash)
+	// Initialize corner gesture actions (owned by unique_ptr in the hash)
 	m_cornerActions[CORNER_BR] =
-		new BottomCornerGestureAction(CORNER_BR, this);
+		std::make_unique<BottomCornerGestureAction>(CORNER_BR, this);
 	m_cornerActions[CORNER_BL] =
-		new BottomCornerGestureAction(CORNER_BL, this);
+		std::make_unique<BottomCornerGestureAction>(CORNER_BL, this);
 }
 
 bool CwlGestureManager::handleGesture(QPointerEvent *ev, int edge, int corner)
@@ -203,13 +195,13 @@ bool CwlGestureManager::handleCornerGesture(QPointerEvent *ev, int corner)
 		return false;
 	}
 
-	// Legacy fallback
+	// Legacy fallback: corner actions are owned as unique_ptrs in m_cornerActions
 	auto it = m_cornerActions.find(corner);
 	if (it == m_cornerActions.end()) {
 		return false;
 	}
 
-	IGestureAction *legacyAction = it.value();
+	IGestureAction *legacyAction = it.value().get();
 	if (!legacyAction->canExecute(m_compositor)) {
 		return false;
 	}
@@ -221,20 +213,22 @@ void CwlGestureManager::initializeGestureMapping()
 {
 	// Initialize the gesture registry with default mappings
 	// Edge gesture mappings
+	// Point the registry at the owned action objects to avoid duplicated
+	// instances. The registry stores non-owning pointers.
 	m_gestureRegistry[createGestureKey(GestureType::LEFT_EDGE)] =
-		new LeftEdgeGestureAction(this);
+		m_leftEdgeAction.get();
 	m_gestureRegistry[createGestureKey(GestureType::RIGHT_EDGE)] =
-		new RightEdgeGestureAction(this);
+		m_rightEdgeAction.get();
 	m_gestureRegistry[createGestureKey(GestureType::TOP_EDGE)] =
-		new TopEdgeGestureAction(this);
+		m_topEdgeAction.get();
 	m_gestureRegistry[createGestureKey(GestureType::BOTTOM_EDGE)] =
-		new BottomEdgeGestureAction(this);
+		m_bottomEdgeAction.get();
 
-	// Corner gesture mappings
+	// Corner gesture mappings - use the unique_ptr-owned corner actions
 	m_gestureRegistry[createGestureKey(GestureType::CORNER_BR, CORNER_BR)] =
-		new BottomCornerGestureAction(CORNER_BR, this);
+		m_cornerActions[CORNER_BR].get();
 	m_gestureRegistry[createGestureKey(GestureType::CORNER_BL, CORNER_BL)] =
-		new BottomCornerGestureAction(CORNER_BL, this);
+		m_cornerActions[CORNER_BL].get();
 }
 
 GestureType CwlGestureManager::convertEdgeToGestureType(int edge) const
@@ -297,12 +291,30 @@ void CwlGestureManager::setGestureAction(GestureType type,
 					 IGestureAction *action)
 {
 	GestureKey key = createGestureKey(type);
-	// Delete existing action if present
-	auto it = m_gestureRegistry.find(key);
-	if (it != m_gestureRegistry.end()) {
-		delete it.value();
+	// For edge types we take ownership into the corresponding unique_ptr
+	// so ownership is clear. For other types we store a non-owning pointer
+	// in the registry.
+	switch (type) {
+	case GestureType::LEFT_EDGE:
+		m_leftEdgeAction.reset(action);
+		m_gestureRegistry[key] = m_leftEdgeAction.get();
+		break;
+	case GestureType::RIGHT_EDGE:
+		m_rightEdgeAction.reset(action);
+		m_gestureRegistry[key] = m_rightEdgeAction.get();
+		break;
+	case GestureType::TOP_EDGE:
+		m_topEdgeAction.reset(action);
+		m_gestureRegistry[key] = m_topEdgeAction.get();
+		break;
+	case GestureType::BOTTOM_EDGE:
+		m_bottomEdgeAction.reset(action);
+		m_gestureRegistry[key] = m_bottomEdgeAction.get();
+		break;
+	default:
+		m_gestureRegistry[key] = action;
+		break;
 	}
-	m_gestureRegistry[key] = action;
 }
 
 void CwlGestureManager::setCornerGestureAction(int cornerPosition,
@@ -327,12 +339,10 @@ void CwlGestureManager::setCornerGestureAction(int cornerPosition,
 	}
 
 	GestureKey key = createGestureKey(cornerType, cornerPosition);
-	// Delete existing action if present
-	auto it = m_gestureRegistry.find(key);
-	if (it != m_gestureRegistry.end()) {
-		delete it.value();
-	}
-	m_gestureRegistry[key] = action;
+	// Take ownership of the provided action into the corner actions map
+	m_cornerActions[cornerPosition].reset(action);
+	// Update registry to point to the owned action
+	m_gestureRegistry[key] = m_cornerActions[cornerPosition].get();
 }
 
 IGestureAction *CwlGestureManager::getGestureAction(GestureType type) const
@@ -375,16 +385,9 @@ void CwlGestureManager::remapGesture(GestureType fromType, GestureType toType)
 
 	auto fromIt = m_gestureRegistry.find(fromKey);
 	if (fromIt != m_gestureRegistry.end()) {
-		// Move the action from fromType to toType
+		// Move the mapping (non-owning pointer) from one key to another.
 		IGestureAction *action = fromIt.value();
 		m_gestureRegistry.remove(fromKey);
-
-		// Delete existing action at target if present
-		auto toIt = m_gestureRegistry.find(toKey);
-		if (toIt != m_gestureRegistry.end()) {
-			delete toIt.value();
-		}
-
 		m_gestureRegistry[toKey] = action;
 	}
 }
@@ -404,10 +407,27 @@ void CwlGestureManager::remapCornerGesture(int fromCorner, int toCorner)
 void CwlGestureManager::clearGestureMapping(GestureType type)
 {
 	GestureKey key = createGestureKey(type);
+	// For edges, also clear owned action. For other gestures, simply remove
+	// the non-owning registry entry.
 	auto it = m_gestureRegistry.find(key);
 	if (it != m_gestureRegistry.end()) {
-		delete it.value();
 		m_gestureRegistry.remove(key);
+	}
+	switch (type) {
+	case GestureType::LEFT_EDGE:
+		m_leftEdgeAction.reset();
+		break;
+	case GestureType::RIGHT_EDGE:
+		m_rightEdgeAction.reset();
+		break;
+	case GestureType::TOP_EDGE:
+		m_topEdgeAction.reset();
+		break;
+	case GestureType::BOTTOM_EDGE:
+		m_bottomEdgeAction.reset();
+		break;
+	default:
+		break;
 	}
 }
 
@@ -434,8 +454,13 @@ void CwlGestureManager::clearCornerGestureMapping(int cornerPosition)
 	GestureKey key = createGestureKey(cornerType, cornerPosition);
 	auto it = m_gestureRegistry.find(key);
 	if (it != m_gestureRegistry.end()) {
-		delete it.value();
 		m_gestureRegistry.remove(key);
+	}
+
+	// Reset the owned corner action (if any)
+	auto cornerIt = m_cornerActions.find(cornerPosition);
+	if (cornerIt != m_cornerActions.end()) {
+		cornerIt.value().reset();
 	}
 }
 
