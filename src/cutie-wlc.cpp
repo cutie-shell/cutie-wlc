@@ -590,6 +590,9 @@ void CwlCompositor::triggerRender()
 
 void CwlCompositor::onToplevelDamaged(CwlView *view)
 {
+	if (!m_homeOpen)
+        return;
+
 	m_cutieshell->onThumbnailDamage(view);
 }
 
