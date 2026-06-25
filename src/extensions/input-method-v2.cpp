@@ -13,7 +13,9 @@ InputMethodManagerV2::InputMethodManagerV2(CwlCompositor *compositor)
 void InputMethodManagerV2::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	init(m_compositor->display(), 1);
+	if (m_compositor) {
+		init(m_compositor->display(), 1);
+	}
 }
 
 void InputMethodManagerV2::zwp_input_method_manager_v2_bind_resource(
@@ -34,14 +36,15 @@ void InputMethodManagerV2::zwp_input_method_manager_v2_destroy_resource(
 void InputMethodManagerV2::zwp_input_method_manager_v2_get_input_method(
 	Resource *resource, struct ::wl_resource *seat, uint32_t input_method)
 {
-	if (m_inputmethod == nullptr) {
-		m_inputmethod =
-			new InputMethodV2(resource->client(), input_method,
-					  resource->version(), m_compositor);
+	if (m_inputmethod == nullptr && m_compositor) {
+		m_inputmethod = new InputMethodV2(resource->client(),
+						  input_method,
+						  resource->version(),
+						  m_compositor.data());
 
-		m_textinputV1 = new TextInputManagerV1(m_compositor);
-		m_textinputV2 = new TextInputManagerV2(m_compositor);
-		m_textinputV3 = new TextInputManagerV3(m_compositor);
+		m_textinputV1 = new TextInputManagerV1(m_compositor.data());
+		m_textinputV2 = new TextInputManagerV2(m_compositor.data());
+		m_textinputV3 = new TextInputManagerV3(m_compositor.data());
 
 		connect(m_textinputV1, &TextInputManagerV1::showInputPanel,
 			m_inputmethod, &InputMethodV2::onShowInputPanel);

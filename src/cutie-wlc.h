@@ -7,8 +7,9 @@
 #include <cutie-shell.h>
 #include <QEventPoint>
 #include <QProcess>
-#include <QPropertyAnimation>
 #include <QWaylandXdgDecorationManagerV1>
+#include <QScopedPointer>
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 
@@ -21,6 +22,9 @@ class ScreencopyManagerV1;
 class ForeignToplevelManagerV1;
 class ForeignToplevelHandleV1;
 class InputMethodManagerV2;
+class CwlProcessManager;
+class CwlGestureManager;
+class CwlAnimationController;
 
 class CwlCompositor : public QWaylandCompositor {
 	Q_OBJECT
@@ -48,8 +52,6 @@ class CwlCompositor : public QWaylandCompositor {
 	void handleMouseReleaseEvent(QList<QEventPoint> points,
 				     Qt::MouseButton btn);
 
-	bool handleGesture(QPointerEvent *ev, int edge, int corner);
-
 	void handleKeyPress(quint32 nativeScanCode);
 	void handleKeyRelease(quint32 nativeScanCode);
 
@@ -62,6 +64,8 @@ class CwlCompositor : public QWaylandCompositor {
 	CwlView *getTopPanel();
 	GlWindow *glWindow();
 	ForeignToplevelManagerV1 *foreignTlManagerV1();
+	CwlGestureManager *gestureManager();
+	CwlAnimationController *animationController();
 
 	CwlView *m_launcherView = nullptr;
 	CwlWorkspace *m_workspace = nullptr;
@@ -73,6 +77,20 @@ class CwlCompositor : public QWaylandCompositor {
 
 	double launcherPosition();
 	void setLauncherPosition(double position);
+
+	// Animation control methods for gesture manager
+	void startBlurAnimation();
+	void startUnblurAnimation();
+	void startLauncherOpenAnimation();
+	void startLauncherCloseAnimation();
+
+	// Home state management
+	bool isHomeOpen() const;
+	void setHomeOpen(bool open);
+
+	// Panel and input method access
+	CwlView *getPanelView() const;
+	InputMethodManagerV2 *getInputMethodManager() const;
 
 	void grabSurface(QWaylandSurfaceGrabber *grabber,
 			 const QWaylandBufferRef &buffer) override;
@@ -96,42 +114,44 @@ class CwlCompositor : public QWaylandCompositor {
 	void onLayerShellSurfaceCreated(LayerSurfaceV1 *layerSurface);
 	void viewSurfaceDestroyed();
 	void initInputMethod();
-	void animationValueChanged(const QVariant &value);
 
     private:
 	CwlView *findView(const QWaylandSurface *s) const;
+	void setupEnvironmentVariables();
+	void setupSignalConnections();
+	void setupWorkspaceConnections();
+
 	GlWindow *m_glwindow = nullptr;
-	QWaylandXdgShell *m_xdgShell = nullptr;
+	QScopedPointer<QWaylandXdgShell> m_xdgShell;
 	QPointer<CwlView> m_mouseView;
-	LayerShellV1 *m_layerShell = nullptr;
-	QPointF *m_appPointStart = nullptr;
+	QScopedPointer<LayerShellV1> m_layerShell;
+	std::unique_ptr<QPointF> m_appPointStart;
 	CwlView *m_appView = nullptr;
-	CutieShell *m_cutieshell = nullptr;
-	OutputManagerV1 *m_outputManager = nullptr;
-	OutputPowerManagerV1 *m_outputPowerManager = nullptr;
-	ScreencopyManagerV1 *m_screencopyManager = nullptr;
-	ForeignToplevelManagerV1 *m_foreignTlManagerV1 = nullptr;
-	QWaylandOutput *m_output = nullptr;
-	QWaylandXdgDecorationManagerV1 *m_xdgdecoration = nullptr;
-	InputMethodManagerV2 *m_inputMngr = nullptr;
+	std::unique_ptr<CutieShell> m_cutieshell;
+	std::unique_ptr<OutputManagerV1> m_outputManager;
+	std::unique_ptr<OutputPowerManagerV1> m_outputPowerManager;
+	std::unique_ptr<ScreencopyManagerV1> m_screencopyManager;
+	std::unique_ptr<ForeignToplevelManagerV1> m_foreignTlManagerV1;
+	QScopedPointer<QWaylandOutput> m_output;
+	QScopedPointer<QWaylandXdgDecorationManagerV1> m_xdgdecoration;
+	std::unique_ptr<InputMethodManagerV2> m_inputMngr;
 	CwlView *m_homeView = nullptr;
 	CwlView *m_panelView = nullptr;
-
-	QPropertyAnimation *blurAnim =
-		new QPropertyAnimation(this, "blur", this);
-	QPropertyAnimation *unblurAnim =
-		new QPropertyAnimation(this, "blur", this);
-
-	QPropertyAnimation *launcherCloseAnim =
-		new QPropertyAnimation(this, "launcherPosition", this);
-	QPropertyAnimation *launcherOpenAnim =
-		new QPropertyAnimation(this, "launcherPosition", this);
 
 	int m_scaleFactor = 1;
 	double m_blur = 0.0;
 	double m_launcherPosition = 1.0;
 	bool m_homeOpen = true;
 	QString launcher = "cutie-launcher";
+
+	// Process management
+	std::unique_ptr<CwlProcessManager> m_processManager;
+
+	// Gesture management
+	std::unique_ptr<CwlGestureManager> m_gestureManager;
+
+	// Animation management
+	std::unique_ptr<CwlAnimationController> m_animationController;
 };
 
 QT_END_NAMESPACE

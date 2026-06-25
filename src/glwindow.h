@@ -2,10 +2,14 @@
 
 #include <QOpenGLWindow>
 #include <QOpenGLTextureBlitter>
+#include <QOpenGLTexture>
 #include <QEventPoint>
+#include <QPointer>
+#include <QScopedPointer>
 
 #include <cutie-wlc.h>
-#include <gesture.h>
+#include "gesture/gesture.h"
+#include "opengl/opengl-guards.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -18,7 +22,7 @@ class GlWindow : public QOpenGLWindow {
 	void setDisplayOff(bool displayOff);
 	inline CwlGesture *gesture()
 	{
-		return m_gesture;
+		return m_gesture.data();
 	}
 
     signals:
@@ -39,15 +43,20 @@ class GlWindow : public QOpenGLWindow {
     private:
 	void renderView(CwlView *view);
 
-	QOpenGLTextureBlitter m_textureBlitter;
+	// Helper methods for rendering pipeline
+	void setupRenderingContext(OpenGLStateGuard *stateGuard);
+	qreal calculateViewOpacity(CwlView *view) const;
+	void renderViews(const QList<CwlView *> &views);
+
+	QScopedPointer<OpenGLTextureBlitterGuard> m_textureBlitter;
 	GLenum m_currentTarget;
-	QOpenGLTexture *m_wallpaper = nullptr;
+	QScopedPointer<QOpenGLTexture> m_wallpaper;
 
 	QList<QEventPoint *> m_evPoint;
 	bool m_displayOff = false;
 
-	CwlCompositor *m_cwlcompositor = nullptr;
-	CwlGesture *m_gesture = nullptr;
+	QPointer<CwlCompositor> m_cwlcompositor;
+	QScopedPointer<CwlGesture> m_gesture;
 };
 
 QT_END_NAMESPACE

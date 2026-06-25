@@ -3,6 +3,7 @@
 
 #include "wayland-util.h"
 
+#include <QPointer>
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandSurface>
@@ -39,7 +40,7 @@ class ForeignToplevelManagerV1
 	void zwlr_foreign_toplevel_manager_v1_stop(Resource *resource) override;
 
     private:
-	CwlCompositor *m_compositor;
+	QPointer<CwlCompositor> m_compositor;
 	QMap<struct ::wl_client *, QList<ForeignToplevelHandleV1 *> >
 		m_toplevelMap;
 };
@@ -86,8 +87,8 @@ class ForeignToplevelHandleV1
 		Resource *resource) override;
 
     private:
-	CwlView *m_view = nullptr;
-	CwlCompositor *m_compositor = nullptr;
+	QPointer<CwlView> m_view;
+	QPointer<CwlCompositor> m_compositor;
 };
 
 #endif //FOREIGNTOPLEVEL

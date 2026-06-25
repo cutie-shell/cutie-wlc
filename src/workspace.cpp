@@ -3,11 +3,14 @@
 CwlWorkspace::CwlWorkspace(CwlCompositor *compositor)
 	: m_compositor(compositor)
 {
-	m_outputGeometry = compositor->defaultOutput()->geometry();
-	m_outputGeometry =
-		QRect(m_outputGeometry.topLeft() / compositor->scaleFactor(),
-		      m_outputGeometry.size() / compositor->scaleFactor());
-	m_availableGeometry = m_outputGeometry;
+	if (m_compositor) {
+		m_outputGeometry = m_compositor->defaultOutput()->geometry();
+		m_outputGeometry = QRect(m_outputGeometry.topLeft() /
+						 m_compositor->scaleFactor(),
+					 m_outputGeometry.size() /
+						 m_compositor->scaleFactor());
+		m_availableGeometry = m_outputGeometry;
+	}
 }
 
 QRect CwlWorkspace::availableGeometry()
@@ -82,11 +85,13 @@ void CwlWorkspace::updateViewList()
 	m_viewList = m_viewLayerList[CwlViewLayer::BACKGROUND] +
 		     m_viewLayerList[CwlViewLayer::BOTTOM];
 
-	if (!m_showDesktop && !m_viewLayerList[CwlViewLayer::TOP].isEmpty())
-		if (m_singleView)
+	if (!m_showDesktop && !m_viewLayerList[CwlViewLayer::TOP].isEmpty()) {
+		if (m_singleView) {
 			m_viewList << m_viewLayerList[CwlViewLayer::TOP].last();
-		else
+		} else {
 			m_viewList << m_viewLayerList[CwlViewLayer::TOP];
+		}
+	}
 
 	m_viewList << m_viewLayerList[CwlViewLayer::OVERLAY];
 	updateAvailableGeometry();
@@ -132,9 +137,8 @@ void CwlWorkspace::onLayerSurfaceDataChanged(LayerSurfaceV1 *surface)
 {
 	if (!surface->initialized)
 		return;
-	surface->send_configure(surface->ls_serial,
-		surface->size.width(),
-		surface->size.height());
+	surface->send_configure(surface->ls_serial, surface->size.width(),
+				surface->size.height());
 	updateAvailableGeometry();
 }
 

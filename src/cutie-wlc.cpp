@@ -5,6 +5,10 @@
 #include <screencopy.h>
 #include <foreign-toplevel-management.h>
 #include <input-method-v2.h>
+#include "process-manager.h"
+#include "gesture/gesture-manager.h"
+#include "animation-controller.h"
+#include "opengl-guards.h"
 
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QWaylandPointer>
@@ -12,42 +16,18 @@
 #include <QTouchEvent>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLTexture>
+#include <QTimer>
+#include <QStandardPaths>
 
 CwlCompositor::CwlCompositor(GlWindow *glwindow)
 	: m_glwindow(glwindow)
 	, m_xdgShell(new QWaylandXdgShell(this))
 	, m_layerShell(new LayerShellV1(this))
 	, m_xdgdecoration(new QWaylandXdgDecorationManagerV1())
+	, m_processManager(std::make_unique<CwlProcessManager>(this))
 {
 	m_glwindow->setCompositor(this);
-	connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
-
-	connect(m_xdgShell, &QWaylandXdgShell::toplevelCreated, this,
-		&CwlCompositor::onXdgToplevelCreated);
-	connect(m_xdgShell, &QWaylandXdgShell::popupCreated, this,
-		&CwlCompositor::onXdgPopupCreated);
-	connect(m_layerShell, &LayerShellV1::layerShellSurfaceCreated, this,
-		&CwlCompositor::onLayerShellSurfaceCreated);
-
-	blurAnim->setDuration(250);
-	unblurAnim->setDuration(250);
-	launcherOpenAnim->setDuration(250);
-	launcherCloseAnim->setDuration(250);
-	blurAnim->setEndValue(1.0);
-	unblurAnim->setEndValue(0.0);
-	launcherOpenAnim->setEndValue(1.0);
-	launcherCloseAnim->setEndValue(0.0);
-
-	connect(blurAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(unblurAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(unblurAnim, &QVariantAnimation::finished, this,
-		[this]() { m_workspace->showDesktop(true); });
-	connect(launcherOpenAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
-	connect(launcherCloseAnim, &QVariantAnimation::valueChanged, this,
-		&CwlCompositor::animationValueChanged);
+	setupSignalConnections();
 }
 
 CwlCompositor::~CwlCompositor()
@@ -56,7 +36,7 @@ CwlCompositor::~CwlCompositor()
 
 void CwlCompositor::create()
 {
-	m_output = new QWaylandOutput(this, m_glwindow);
+	m_output.reset(new QWaylandOutput(this, m_glwindow));
 	QWaylandOutputMode mode(m_glwindow->size(), 60000);
 	m_output->addMode(mode, true);
 	QWaylandCompositor::create();
@@ -69,74 +49,22 @@ void CwlCompositor::create()
 		QWaylandXdgToplevel::ServerSideDecoration);
 
 	m_workspace = new CwlWorkspace(this);
-	m_cutieshell = new CutieShell(this);
-	m_outputManager = new OutputManagerV1(this);
-	m_outputPowerManager = new OutputPowerManagerV1(this);
-	m_screencopyManager = new ScreencopyManagerV1(this);
+	m_gestureManager = std::make_unique<CwlGestureManager>(this, this);
+	m_animationController =
+		std::make_unique<CwlAnimationController>(this, this);
+	m_cutieshell = std::make_unique<CutieShell>(this);
+	m_outputManager = std::make_unique<OutputManagerV1>(this);
+	m_outputPowerManager = std::make_unique<OutputPowerManagerV1>(this);
+	m_screencopyManager = std::make_unique<ScreencopyManagerV1>(this);
 
-	m_foreignTlManagerV1 = new ForeignToplevelManagerV1(this);
-	connect(m_workspace, &CwlWorkspace::toplevelCreated,
-		m_foreignTlManagerV1,
-		&ForeignToplevelManagerV1::onToplevelCreated);
-	connect(m_workspace, &CwlWorkspace::toplevelDestroyed,
-		m_foreignTlManagerV1,
-		&ForeignToplevelManagerV1::onToplevelDestroyed);
+	m_foreignTlManagerV1 = std::make_unique<ForeignToplevelManagerV1>(this);
+	setupWorkspaceConnections();
 
 	initInputMethod();
+	setupEnvironmentVariables();
 
-	qputenv("CUTIE_SHELL", QByteArray("true"));
-	qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
-	qputenv("EGL_PLATFORM", QByteArray("wayland"));
-	qputenv("QT_IM_MODULE", QByteArray("textinputv3"));
-	qunsetenv("QT_QPA_GENERIC_PLUGINS");
-	qunsetenv("QT_SCALE_FACTOR");
-	qputenv("WAYLAND_DISPLAY", socketName());
-
-	/*
-		Setting QSG_NO_VSYNC and QSG_RENDER_LOOP makes resizing QtQuick apps
-		much smoother. There is a QTBUG-51112 which MIGHT be related to our issue.
-		But the bug describes actually a slightly different issue.
-
-		Might also be the hwcomposer issue https://doc.qt.io/qt-6/qtquick-visualcanvas-scenegraph.html
-	*/
-	qputenv("QSG_NO_VSYNC", QByteArray("1"));
-	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
-
-	QStringList args = QStringList();
-	args.append("-c");
-	args.append("cutie-home");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append(launcher);
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("cutie-panel");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("cutie-keyboard");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("env XDG_CURRENT_DESKTOP=GNOME /usr/libexec/feedbackd");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
-
-	args = QStringList();
-	args.append("-c");
-	args.append("loginctl activate");
-	if (!QProcess::startDetached("bash", args))
-		qDebug() << "Failed to run";
+	// Launch Cutie shell components using process manager
+	m_processManager->launchEssentialComponents(launcher);
 }
 
 QList<CwlView *> CwlCompositor::getViews() const
@@ -151,24 +79,76 @@ QList<CwlView *> CwlCompositor::getToplevelViews()
 
 CwlView *CwlCompositor::viewAt(const QPoint &position)
 {
+	// Validate input position
+	if (position.isNull()) {
+		qDebug() << "CwlCompositor::viewAt: Invalid position (null)";
+		return nullptr;
+	}
+
+	// Validate scale factor
+	int scale = scaleFactor();
+	if (scale <= 0) {
+		qWarning() << "CwlCompositor::viewAt: Invalid scale factor:"
+			   << scale;
+		scale = 1; // Safe fallback
+	}
+
 	CwlView *ret = nullptr;
-	for (auto it = getViews().crbegin(); it != getViews().crend(); ++it) {
+	const QList<CwlView *> views = getViews();
+
+	for (auto it = views.crbegin(); it != views.crend(); ++it) {
 		CwlView *view = *it;
-		QRectF geom(view->getPosition(), view->size() * scaleFactor());
+		if (!view) {
+			qWarning()
+				<< "CwlCompositor::viewAt: Null view in views list";
+			continue;
+		}
+
+		// Validate view size before calculations
+		QSize viewSize = view->size();
+		if (viewSize.isEmpty() || !viewSize.isValid()) {
+			qDebug()
+				<< "CwlCompositor::viewAt: View has invalid size:"
+				<< viewSize;
+			continue;
+		}
+
+		QRectF geom(view->getPosition(), viewSize * scale);
 		QPoint checkPoint = position;
 
-		if (view->getAppId() == "cutie-keyboard")
-			checkPoint = position / scaleFactor();
+		// Safe string comparison for app ID
+		QString appId = view->getAppId();
+		if (appId == "cutie-keyboard") {
+			checkPoint = position / scale;
+		}
 
 		if (geom.contains(checkPoint)) {
-			if (view->getChildViews().size() > 0) {
-				for (CwlView *childView :
-				     view->getChildViews()) {
-					checkPoint = position / scaleFactor();
-					QRectF geom(childView->getPosition(),
-						    childView->size() *
-							    scaleFactor());
-					if (geom.contains(checkPoint)) {
+			// Check child views with validation
+			const QList<CwlView *> &childViews =
+				view->getChildViews();
+			if (!childViews.isEmpty()) {
+				for (CwlView *childView : childViews) {
+					if (!childView) {
+						qWarning()
+							<< "CwlCompositor::viewAt: Null child view detected";
+						continue;
+					}
+
+					// Validate child view size
+					QSize childSize = childView->size();
+					if (childSize.isEmpty() ||
+					    !childSize.isValid()) {
+						qDebug()
+							<< "CwlCompositor::viewAt: Child view has invalid size:"
+							<< childSize;
+						continue;
+					}
+
+					checkPoint = position / scale;
+					QRectF childGeom(
+						childView->getPosition(),
+						childSize * scale);
+					if (childGeom.contains(checkPoint)) {
 						ret = childView;
 						return ret;
 					}
@@ -183,21 +163,55 @@ CwlView *CwlCompositor::viewAt(const QPoint &position)
 
 CwlView *CwlCompositor::findView(QWaylandSurface *s)
 {
-	for (CwlView *view : getViews()) {
-		if (view->surface() == s)
+	if (!s) {
+		qWarning() << "CwlCompositor::findView: Null surface provided";
+		return nullptr;
+	}
+
+	const QList<CwlView *> views = getViews();
+	for (CwlView *view : views) {
+		if (!view) {
+			qWarning()
+				<< "CwlCompositor::findView: Null view in views list";
+			continue;
+		}
+
+		if (view->surface() == s) {
 			return view;
+		}
 	}
 	return nullptr;
 }
 
 CwlView *CwlCompositor::findTlView(QWaylandSurface *s)
 {
+	if (!s) {
+		qWarning()
+			<< "CwlCompositor::findTlView: Null surface provided";
+		return nullptr;
+	}
+
+	if (!m_workspace) {
+		qWarning()
+			<< "CwlCompositor::findTlView: No workspace available";
+		return nullptr;
+	}
+
 	CwlView *ret = nullptr;
-	for (CwlView *view : m_workspace->getToplevelViews()) {
-		if (view->surface() == s)
+	const QList<CwlView *> toplevelViews = m_workspace->getToplevelViews();
+
+	for (CwlView *view : toplevelViews) {
+		if (!view) {
+			qWarning()
+				<< "CwlCompositor::findTlView: Null view in toplevel views list";
+			continue;
+		}
+
+		if (view->surface() == s) {
 			ret = view;
-		else if (view->getChildViews().size() > 0)
+		} else if (!view->getChildViews().isEmpty()) {
 			ret = findTreeView(s, view);
+		}
 	}
 	return ret;
 }
@@ -224,7 +238,7 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
 	view->setTopLevel(toplevel);
 
 	if (m_launcherView != nullptr)
-		launcherCloseAnim->start();
+		m_animationController->startLauncherCloseAnimation();
 
 	connect(m_workspace, &CwlWorkspace::availableGeometryChanged, view,
 		&CwlView::onAvailableGeometryChanged);
@@ -236,17 +250,10 @@ void CwlCompositor::onXdgToplevelCreated(QWaylandXdgToplevel *toplevel,
 
 void CwlCompositor::initInputMethod()
 {
-	if (m_inputMngr != nullptr)
-		delete m_inputMngr;
-
-	m_inputMngr = new InputMethodManagerV2(this);
-	connect(m_inputMngr, &InputMethodManagerV2::imDestroyed, this,
+	m_inputMngr.reset();
+	m_inputMngr = std::make_unique<InputMethodManagerV2>(this);
+	connect(m_inputMngr.get(), &InputMethodManagerV2::imDestroyed, this,
 		&CwlCompositor::initInputMethod);
-}
-
-void CwlCompositor::animationValueChanged(const QVariant &value)
-{
-	triggerRender();
 }
 
 void CwlCompositor::onHideKeyboard()
@@ -335,10 +342,10 @@ void CwlCompositor::raise(CwlView *view)
 
 	if (view == m_homeView) {
 		m_homeOpen = true;
-		unblurAnim->start();
+		m_animationController->startUnblurAnimation();
 	} else {
 		m_homeOpen = false;
-		blurAnim->start();
+		m_animationController->startBlurAnimation();
 	}
 
 	triggerRender();
@@ -384,181 +391,6 @@ void CwlCompositor::handleMouseReleaseEvent(QList<QEventPoint> points,
 {
 	handleMouseMoveEvent(points);
 	defaultSeat()->sendMouseReleaseEvent(btn);
-}
-
-bool CwlCompositor::handleGesture(QPointerEvent *ev, int edge, int corner)
-{
-	if (edge == EDGE_LEFT) {
-		if (ev->isBeginEvent()) {
-			return (launcherPosition() == 0.0) && (blur() != 0.0);
-		}
-
-		if (ev->isUpdateEvent()) {
-			if ((ev->points().first().globalPosition() -
-			     m_glwindow->gesture()->startingPoint())
-				    .x() > GESTURE_MINIMUM_THRESHOLD) {
-				m_glwindow->gesture()->confirmGesture();
-			}
-			setBlur(1.0 -
-				1.0 * ev->points().first().globalPosition().x() /
-					m_glwindow->width());
-			return true;
-		}
-
-		if (ev->isEndEvent()) {
-			if (ev->points().first().globalPosition().x() >
-			    GESTURE_ACCEPT_THRESHOLD) {
-				raise(m_homeView);
-				return true;
-			}
-			blurAnim->start();
-			m_homeOpen = false;
-			return true;
-		}
-	}
-
-	if (edge == EDGE_RIGHT) {
-		if (ev->isBeginEvent()) {
-			return (launcherPosition() == 0.0) && (blur() != 0.0);
-		}
-
-		if (ev->isUpdateEvent()) {
-			if ((-ev->points().first().globalPosition() +
-			     m_glwindow->gesture()->startingPoint())
-				    .x() > GESTURE_MINIMUM_THRESHOLD) {
-				m_glwindow->gesture()->confirmGesture();
-			}
-			setBlur(1.0 *
-				ev->points().first().globalPosition().x() /
-				m_glwindow->width());
-			return true;
-		}
-
-		if (ev->isEndEvent()) {
-			if (ev->points().first().globalPosition().x() <
-			    m_glwindow->width() - GESTURE_ACCEPT_THRESHOLD) {
-				raise(m_homeView);
-				return true;
-			}
-			blurAnim->start();
-			m_homeOpen = false;
-			return true;
-		}
-	}
-
-	if (edge == EDGE_BOTTOM) {
-		if (ev->isBeginEvent() || ev->isUpdateEvent()) {
-			if (m_panelView != nullptr)
-				if (m_panelView->panelState > 1)
-					return false;
-			if (m_inputMngr->getInputMethod() != nullptr)
-				if (!m_inputMngr->getInputMethod()
-					     ->isPanelHidden())
-					return false;
-			if ((-ev->points().first().globalPosition() +
-			     m_glwindow->gesture()->startingPoint())
-				    .y() > GESTURE_MINIMUM_THRESHOLD) {
-				m_glwindow->gesture()->confirmGesture();
-				setLauncherPosition(qMin(
-					1.0,
-					1.0 - (ev->points().first()
-							       .globalPosition()
-							       .y() /
-						       scaleFactor() -
-					       m_workspace->outputGeometry()
-						       .y()) /
-							m_workspace
-								->outputGeometry()
-								.height()));
-			}
-			return true;
-		}
-
-		if (ev->isEndEvent()) {
-			if (m_panelView != nullptr) {
-				if (m_panelView->panelState > 1) {
-					return false;
-				}
-			}
-			if (ev->points().first().globalPosition().y() <
-			    m_glwindow->height() * 0.8)
-				launcherOpenAnim->start();
-			else
-				launcherCloseAnim->start();
-			return true;
-		}
-	}
-
-	if (edge == EDGE_TOP) {
-		if (launcherPosition() > 0.0) {
-			if (ev->isBeginEvent() || ev->isUpdateEvent()) {
-				if ((ev->points().first().globalPosition() -
-				     m_glwindow->gesture()->startingPoint())
-					    .y() > GESTURE_MINIMUM_THRESHOLD) {
-					m_glwindow->gesture()->confirmGesture();
-				}
-				setLauncherPosition(qMin(
-					1.0,
-					1.0 - (ev->points().first()
-							       .globalPosition()
-							       .y() /
-						       scaleFactor() -
-					       m_workspace->outputGeometry()
-						       .y()) /
-							m_workspace
-								->outputGeometry()
-								.height()));
-			}
-
-			if (ev->isEndEvent()) {
-				if (ev->points().first().globalPosition().y() <
-				    m_glwindow->height() * 0.2)
-					launcherOpenAnim->start();
-				else
-					launcherCloseAnim->start();
-			}
-			return true;
-		}
-	}
-
-	if (corner == CORNER_BR || corner == CORNER_BL) {
-		if (launcherPosition() > 0.0) {
-			return false;
-		}
-
-		if (m_panelView != nullptr)
-			if (m_panelView->panelState > 1)
-				return false;
-
-		if (ev->isBeginEvent() || ev->isUpdateEvent()) {
-			if (m_inputMngr->getInputMethod() != nullptr)
-				if (!m_inputMngr->getInputMethod()
-					     ->isPanelHidden()) {
-					return false;
-				}
-			if ((-ev->points().first().globalPosition() +
-			     m_glwindow->gesture()->startingPoint())
-				    .y() > GESTURE_MINIMUM_THRESHOLD) {
-				m_glwindow->gesture()->confirmGesture();
-			}
-			return true;
-		}
-
-		if (ev->isEndEvent()) {
-			if (m_panelView != nullptr) {
-				if (m_panelView->panelState > 1) {
-					return false;
-				}
-			}
-			if (ev->points().first().globalPosition().y() <
-			    m_glwindow->height() * 0.8) {
-				m_inputMngr->getInputMethod()->showPanel();
-				return true;
-			}
-		}
-	}
-
-	return false;
 }
 
 void CwlCompositor::viewSurfaceDestroyed()
@@ -667,9 +499,59 @@ void CwlCompositor::setLauncherPosition(double position)
 	emit launcherPositionChanged(m_launcherPosition);
 }
 
+void CwlCompositor::startBlurAnimation()
+{
+	m_animationController->startBlurAnimation();
+}
+
+void CwlCompositor::startUnblurAnimation()
+{
+	m_animationController->startUnblurAnimation();
+}
+
+void CwlCompositor::startLauncherOpenAnimation()
+{
+	m_animationController->startLauncherOpenAnimation();
+}
+
+void CwlCompositor::startLauncherCloseAnimation()
+{
+	m_animationController->startLauncherCloseAnimation();
+}
+
+bool CwlCompositor::isHomeOpen() const
+{
+	return m_homeOpen;
+}
+
+void CwlCompositor::setHomeOpen(bool open)
+{
+	m_homeOpen = open;
+}
+
+CwlView *CwlCompositor::getPanelView() const
+{
+	return m_panelView;
+}
+
+InputMethodManagerV2 *CwlCompositor::getInputMethodManager() const
+{
+	return m_inputMngr.get();
+}
+
 ForeignToplevelManagerV1 *CwlCompositor::foreignTlManagerV1()
 {
-	return m_foreignTlManagerV1;
+	return m_foreignTlManagerV1.get();
+}
+
+CwlGestureManager *CwlCompositor::gestureManager()
+{
+	return m_gestureManager.get();
+}
+
+CwlAnimationController *CwlCompositor::animationController()
+{
+	return m_animationController.get();
 }
 
 void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
@@ -679,15 +561,27 @@ void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
 		emit grabber->success(buffer.image());
 	} else {
 		if (QOpenGLContext::currentContext()) {
-			QOpenGLFramebufferObject fbo(buffer.size());
-			fbo.bind();
-			QOpenGLTextureBlitter blitter;
-			blitter.create();
+			// Use RAII wrappers for exception safety and automatic cleanup
+			OpenGLFramebufferGuard fboGuard(buffer.size());
+			if (!fboGuard.isValid()) {
+				emit grabber->failed(QWaylandSurfaceGrabber::
+							     UnknownBufferType);
+				return;
+			}
 
-			glViewport(0, 0, buffer.size().width(),
-				   buffer.size().height());
-			glClearColor(0.f, 0.f, 0.f, 0.f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			OpenGLTextureBlitterGuard blitterGuard;
+			if (!blitterGuard.isValid()) {
+				emit grabber->failed(QWaylandSurfaceGrabber::
+							     UnknownBufferType);
+				return;
+			}
+
+			OpenGLStateGuard stateGuard;
+			stateGuard.setViewport(0, 0, buffer.size().width(),
+					       buffer.size().height());
+			stateGuard.setClearColor(0.f, 0.f, 0.f, 0.f);
+			stateGuard.clear(GL_COLOR_BUFFER_BIT |
+					 GL_DEPTH_BUFFER_BIT);
 
 			QOpenGLTextureBlitter::Origin surfaceOrigin =
 				buffer.origin() ==
@@ -696,14 +590,64 @@ void CwlCompositor::grabSurface(QWaylandSurfaceGrabber *grabber,
 					QOpenGLTextureBlitter::OriginBottomLeft;
 
 			auto texture = buffer.toOpenGLTexture();
-			blitter.bind(texture->target());
-			blitter.blit(texture->textureId(), QMatrix4x4(),
-				     surfaceOrigin);
-			blitter.release();
+			blitterGuard.bind(texture->target());
+			blitterGuard.blit(texture->textureId(), QMatrix4x4(),
+					  surfaceOrigin);
 
-			emit grabber->success(fbo.toImage());
-		} else
+			emit grabber->success(fboGuard.toImage());
+			// RAII destructors automatically handle cleanup
+		} else {
 			emit grabber->failed(
 				QWaylandSurfaceGrabber::UnknownBufferType);
+		}
 	}
+}
+
+void CwlCompositor::setupEnvironmentVariables()
+{
+	// Set up environment variables for Cutie shell and Wayland
+	qputenv("CUTIE_SHELL", QByteArray("true"));
+	qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
+	qputenv("EGL_PLATFORM", QByteArray("wayland"));
+	qputenv("QT_IM_MODULE", QByteArray("textinputv3"));
+	qunsetenv("QT_QPA_GENERIC_PLUGINS");
+	qunsetenv("QT_SCALE_FACTOR");
+	qputenv("WAYLAND_DISPLAY", socketName());
+
+	/*
+		Setting QSG_NO_VSYNC and QSG_RENDER_LOOP makes resizing QtQuick apps
+		much smoother. There is a QTBUG-51112 which MIGHT be related to our issue.
+		But the bug describes actually a slightly different issue.
+
+		Might also be the hwcomposer issue https://doc.qt.io/qt-6/qtquick-visualcanvas-scenegraph.html
+	*/
+	qputenv("QSG_NO_VSYNC", QByteArray("1"));
+	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
+}
+
+void CwlCompositor::setupSignalConnections()
+{
+	// Core compositor signal connections
+	connect(m_glwindow, &GlWindow::glReady, this, &CwlCompositor::create);
+
+	// XDG Shell signal connections
+	connect(m_xdgShell.get(), &QWaylandXdgShell::toplevelCreated, this,
+		&CwlCompositor::onXdgToplevelCreated);
+	connect(m_xdgShell.get(), &QWaylandXdgShell::popupCreated, this,
+		&CwlCompositor::onXdgPopupCreated);
+
+	// Layer Shell signal connections
+	connect(m_layerShell.get(), &LayerShellV1::layerShellSurfaceCreated,
+		this, &CwlCompositor::onLayerShellSurfaceCreated);
+}
+
+void CwlCompositor::setupWorkspaceConnections()
+{
+	// Workspace and foreign toplevel connections (requires objects from create())
+	connect(m_workspace, &CwlWorkspace::toplevelCreated,
+		m_foreignTlManagerV1.get(),
+		&ForeignToplevelManagerV1::onToplevelCreated);
+	connect(m_workspace, &CwlWorkspace::toplevelDestroyed,
+		m_foreignTlManagerV1.get(),
+		&ForeignToplevelManagerV1::onToplevelDestroyed);
 }

@@ -9,5 +9,12 @@ export QT_SELECT := qt6
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
+# Enable building tests
+export DEB_CMAKE_EXTRA_FLAGS = -DBUILD_TESTING=ON
+
 %:
 	dh $@ --buildsystem=cmake --with pkgkde_symbolshelper
+
+# Override to run tests during build
+override_dh_auto_test:
+	dh_auto_test -- ARGS="--output-on-failure"

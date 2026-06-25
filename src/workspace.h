@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QPointer>
 #include <cutie-wlc.h>
 
 class CwlWorkspace : public QObject {
@@ -29,7 +30,7 @@ class CwlWorkspace : public QObject {
 	void toplevelDestroyed(CwlView *view);
 
     private:
-	CwlCompositor *m_compositor = nullptr;
+	QPointer<CwlCompositor> m_compositor;
 	QRect m_availableGeometry;
 	QRect m_outputGeometry;
 	bool m_showDesktop = false;

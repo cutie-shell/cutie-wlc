@@ -76,12 +76,41 @@ void ScreencopyFrameV1::zwlr_screencopy_frame_v1_copy(
 		return;
 	}
 
-	uchar *data = static_cast<uchar *>(wl_shm_buffer_get_data(shmBuffer));
-	if (!data) {
+	// Get data pointer with validation before static cast
+	void *rawData = wl_shm_buffer_get_data(shmBuffer);
+	if (!rawData) {
+		qWarning()
+			<< "ScreencopyFrameV1::zwlr_screencopy_frame_v1_copy: Failed to get buffer data";
 		send_failed();
 		return;
 	}
-	memcpy(data, m_frameBuffer.bits(), m_frameBuffer.sizeInBytes());
+
+	uchar *data = static_cast<uchar *>(rawData);
+	if (!data) {
+		qWarning()
+			<< "ScreencopyFrameV1::zwlr_screencopy_frame_v1_copy: Failed to cast buffer data to uchar*";
+		send_failed();
+		return;
+	}
+
+	// Validate frame buffer before copying
+	if (m_frameBuffer.isNull() || m_frameBuffer.bits() == nullptr) {
+		qWarning()
+			<< "ScreencopyFrameV1::zwlr_screencopy_frame_v1_copy: Invalid frame buffer";
+		send_failed();
+		return;
+	}
+
+	// Perform safe memory copy with size validation
+	size_t copySize = m_frameBuffer.sizeInBytes();
+	if (copySize == 0) {
+		qWarning()
+			<< "ScreencopyFrameV1::zwlr_screencopy_frame_v1_copy: Frame buffer has zero size";
+		send_failed();
+		return;
+	}
+
+	memcpy(data, m_frameBuffer.bits(), copySize);
 
 	send_flags(0);
 	send_ready((m_tv_sec >> 32) & 0xFFFFFFFF, m_tv_sec, m_tv_nsec);

@@ -43,7 +43,8 @@ class LayerSurfaceV1
 	: public QWaylandCompositorExtensionTemplate<LayerSurfaceV1>,
 	  public QtWaylandServer::zwlr_layer_surface_v1 {
 	Q_OBJECT
-	Q_PROPERTY(int32_t targetZone READ targetZone WRITE setTargetZone NOTIFY targetZoneChanged)
+	Q_PROPERTY(int32_t targetZone READ targetZone WRITE setTargetZone NOTIFY
+			   targetZoneChanged)
 
     public:
 	LayerSurfaceV1(struct ::wl_client *client, uint32_t id, int version);
@@ -79,12 +80,12 @@ class LayerSurfaceV1
     public slots:
 	void onCommit();
 
-	private slots:
+    private slots:
 	void animationValueChanged(const QVariant &value);
-	
+
     private:
-    int32_t m_targetZone;
-    QPropertyAnimation *targetZoneAnim =
+	int32_t m_targetZone;
+	QPropertyAnimation *targetZoneAnim =
 		new QPropertyAnimation(this, "targetZone", this);
 
     protected:

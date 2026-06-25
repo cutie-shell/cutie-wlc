@@ -10,7 +10,9 @@ ForeignToplevelManagerV1::ForeignToplevelManagerV1(CwlCompositor *compositor)
 void ForeignToplevelManagerV1::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
-	init(m_compositor->display(), 3);
+	if (m_compositor) {
+		init(m_compositor->display(), 3);
+	}
 }
 
 void ForeignToplevelManagerV1::zwlr_foreign_toplevel_manager_v1_bind_resource(
@@ -108,27 +110,37 @@ ForeignToplevelHandleV1::ForeignToplevelHandleV1(wl_client *client, uint32_t id,
 	m_view = view;
 	m_compositor = compositor;
 
-	connect(m_view->getTopLevel(), &QWaylandXdgToplevel::titleChanged, this,
-		&ForeignToplevelHandleV1::onToplevelTitleChanged);
-	connect(m_view->getTopLevel(), &QWaylandXdgToplevel::appIdChanged, this,
-		&ForeignToplevelHandleV1::onToplevelAppIdChanged);
+	if (m_view && m_view->getTopLevel()) {
+		connect(m_view->getTopLevel(),
+			&QWaylandXdgToplevel::titleChanged, this,
+			&ForeignToplevelHandleV1::onToplevelTitleChanged);
+		connect(m_view->getTopLevel(),
+			&QWaylandXdgToplevel::appIdChanged, this,
+			&ForeignToplevelHandleV1::onToplevelAppIdChanged);
+	}
 }
 
 CwlView *ForeignToplevelHandleV1::view()
 {
-	return m_view;
+	return m_view.data();
 }
 
 void ForeignToplevelHandleV1::onToplevelTitleChanged()
 {
-	this->send_title(m_view->getTitle());
-	this->send_done();
+	if (!m_view) {
+		return;
+	}
+	send_title(m_view->getTitle());
+	send_done();
 }
 
 void ForeignToplevelHandleV1::onToplevelAppIdChanged()
 {
-	this->send_app_id(m_view->getAppId());
-	this->send_done();
+	if (!m_view) {
+		return;
+	}
+	send_app_id(m_view->getAppId());
+	send_done();
 }
 
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_bind_resource(
@@ -164,6 +176,10 @@ void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_unset_minimized(
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_activate(
 	Resource *resource, struct ::wl_resource *seat)
 {
+	if (!m_view || !m_compositor) {
+		return;
+	}
+
 	if (m_view->parentView())
 		m_compositor->raise(m_view->parentView());
 	else
@@ -180,6 +196,9 @@ void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_activate(
 void ForeignToplevelHandleV1::zwlr_foreign_toplevel_handle_v1_close(
 	Resource *resource)
 {
+	if (!m_view) {
+		return;
+	}
 	m_view->getTopLevel()->sendClose();
 }
 

@@ -20,8 +20,23 @@ CutieShell::CutieShell(CwlCompositor *compositor)
 void CutieShell::initialize()
 {
 	QWaylandCompositorExtensionTemplate::initialize();
+
+	// Validate extension container before casting
+	QObject *container = extensionContainer();
+	if (!container) {
+		qWarning()
+			<< "CutieShell::initialize: No extension container available";
+		return;
+	}
+
 	QWaylandCompositor *compositor =
-		static_cast<QWaylandCompositor *>(extensionContainer());
+		static_cast<QWaylandCompositor *>(container);
+	if (!compositor) {
+		qWarning()
+			<< "CutieShell::initialize: Failed to cast extension container to QWaylandCompositor";
+		return;
+	}
+
 	init(compositor->display(), 1);
 }
 
@@ -44,14 +59,55 @@ void CutieShell::cutie_shell_private_exec_app(Resource *resource,
 void CutieShell::cutie_shell_private_get_thumbnail(
 	Resource *resource, uint32_t id, struct ::wl_resource *toplevel)
 {
+	// Validate resource parameters first
+	if (!resource) {
+		qWarning()
+			<< "CutieShell::cutie_shell_private_get_thumbnail: Invalid resource";
+		return;
+	}
+
+	if (!toplevel) {
+		qWarning()
+			<< "CutieShell::cutie_shell_private_get_thumbnail: Invalid toplevel resource";
+		return;
+	}
+
 	auto *r = std::remove_pointer<ForeignToplevelHandleV1 *>::type::
 		Resource::fromResource(toplevel);
+	if (!r) {
+		qWarning()
+			<< "CutieShell::cutie_shell_private_get_thumbnail: Failed to get resource from toplevel";
+		return;
+	}
+
+	// Get the object directly as ForeignToplevelHandleV1 - it should inherit from QObject
 	ForeignToplevelHandleV1 *toplevelHandle =
 		static_cast<ForeignToplevelHandleV1 *>(r->object());
+	if (!toplevelHandle) {
+		qWarning()
+			<< "CutieShell::cutie_shell_private_get_thumbnail: Failed to cast to ForeignToplevelHandleV1";
+		return;
+	}
+
+	// Validate view before proceeding
+	if (!toplevelHandle->view()) {
+		qWarning()
+			<< "CutieShell::cutie_shell_private_get_thumbnail: No view available for toplevel";
+		return;
+	}
+
 	ScreencopyFrameV1 *frame = new ScreencopyFrameV1(resource->client(), id,
 							 resource->version());
-	if (!toplevelHandle->view()->grabber())
+	if (!frame) {
+		qWarning()
+			<< "CutieShell::cutie_shell_private_get_thumbnail: Failed to create ScreencopyFrameV1";
 		return;
+	}
+
+	if (!toplevelHandle->view()->grabber()) {
+		delete frame;
+		return;
+	}
 
 	connect(toplevelHandle->view()->grabber(),
 		&QWaylandSurfaceGrabber::success, [=](const QImage &_fb) {
