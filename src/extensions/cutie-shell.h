@@ -5,6 +5,8 @@
 
 #include <QtWaylandCompositor/QWaylandCompositorExtensionTemplate>
 #include <QtWaylandCompositor/QWaylandCompositor>
+#include <QHash>
+#include <QString>
 
 #include "qwayland-server-cutie-shell-private.h"
 
@@ -45,6 +47,11 @@ class CutieShell : public QWaylandCompositorExtensionTemplate<CutieShell>,
 
     private:
 	CwlCompositor *m_compositor;
+
+	// exec string -> pid of the process we started, until its toplevel maps
+	QHash<QString, qint64> m_pendingPids;
+	// exec string -> app_id learned from the toplevel that process created
+	QHash<QString, QString> m_appIds;
 };
 
 #endif //CUTIE_SHELL

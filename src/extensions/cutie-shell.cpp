@@ -3,7 +3,11 @@
 #include <foreign-toplevel-management.h>
 #include <screencopy.h>
 
+#include <QtWaylandCompositor/QWaylandSeat>
+#include <QtWaylandCompositor/QWaylandClient>
+
 #include <QProcess>
+#include <QRegularExpression>
 #include <QDateTime>
 #include <QOpenGLTexture>
 
@@ -28,17 +32,63 @@ void CutieShell::initialize()
 void CutieShell::cutie_shell_private_exec_app(Resource *resource,
 					      const QString &path)
 {
+	// Learn the app id of apps we started, once their toplevel has mapped
+	for (CwlView *view : m_compositor->getToplevelViews()) {
+		QWaylandSurface *surface = view->surface();
+		if (!surface || !surface->client() || view->getAppId().isEmpty())
+			continue;
+		qint64 pid = surface->client()->processId();
+		for (auto it = m_pendingPids.begin(); it != m_pendingPids.end();
+		     ++it) {
+			if (it.value() != pid)
+				continue;
+			m_appIds.insert(it.key(), view->getAppId());
+			qDebug() << "cutie-shell: got app id" << view->getAppId()
+				 << "for" << it.key() << "(pid" << pid << ")";
+			m_pendingPids.erase(it);
+			break;
+		}
+	}
+
+	// Already running: focus it instead of starting a second instance
+	QString appId = m_appIds.value(path);
+	if (!appId.isEmpty()) {
+		for (CwlView *view : m_compositor->getToplevelViews()) {
+			if (view->getAppId() != appId)
+				continue;
+			CwlView *top = view->parentView() ? view->parentView() :
+							    view;
+			m_compositor->raise(top);
+			if (top->getChildViews().size() > 0)
+				m_compositor->defaultSeat()->setKeyboardFocus(
+					top->getChildViews().last()->surface());
+			qDebug() << "cutie-shell: focused running app" << appId;
+			return;
+		}
+	}
+
 	qputenv("CUTIE_SHELL", QByteArray("true"));
 	qputenv("QT_QPA_PLATFORM", QByteArray("wayland"));
 	qputenv("EGL_PLATFORM", QByteArray("wayland"));
 	qunsetenv("QT_QPA_GENERIC_PLUGINS");
 	qunsetenv("QT_SCALE_FACTOR");
 	qputenv("WAYLAND_DISPLAY", m_compositor->socketName());
+
+	// Let sh replace itself with the app so the pid we get is the app's.
+	// Skip it for env assignments / compound commands, where exec breaks.
+	bool simple = !path.trimmed().isEmpty() &&
+		      !path.trimmed().split(' ').first().contains('=') &&
+		      !path.contains(QRegularExpression("[;&|<>$`()]"));
 	QStringList args = QStringList();
 	args.append("-c");
-	args.append(path);
-	if (!QProcess::startDetached("/bin/sh", args))
+	args.append(simple ? "exec " + path : path);
+	qint64 pid = 0;
+	if (!QProcess::startDetached("/bin/sh", args, QString(), &pid)) {
 		qDebug() << "Failed to run";
+		return;
+	}
+	m_pendingPids.insert(path, pid);
+	qDebug() << "cutie-shell: launched" << path << "(pid" << pid << ")";
 }
 
 void CutieShell::cutie_shell_private_get_thumbnail(
