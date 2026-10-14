@@ -339,6 +339,10 @@ void CwlCompositor::raise(CwlView *view)
 	} else {
 		m_homeOpen = false;
 		blurAnim->start();
+		
+ 		// Close the launcher when switching focus to an app.
+		if (m_launcherView && launcherPosition() > 0.0)
+			launcherCloseAnim->start();
 	}
 
 	triggerRender();
