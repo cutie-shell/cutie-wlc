@@ -10,8 +10,35 @@
 #include <QWaylandPointer>
 #include <QWaylandTouch>
 #include <QTouchEvent>
+#include <QScreen>
+#include <QAnimationDriver>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLTexture>
+
+/*
+	Advances compositor animations once per painted frame instead of on Qt's
+	default 16 ms timer, so they run at the display refresh rate.
+*/
+class FrameAnimationDriver : public QAnimationDriver
+{
+    public:
+	explicit FrameAnimationDriver(CwlCompositor *compositor)
+		: QAnimationDriver(compositor), m_compositor(compositor)
+	{
+	}
+
+    protected:
+	void start() override
+	{
+		QAnimationDriver::start();
+		m_compositor->triggerRender();
+	}
+
+    private:
+	CwlCompositor *m_compositor;
+};
+
+static FrameAnimationDriver *s_animDriver = nullptr;
 
 CwlCompositor::CwlCompositor(GlWindow *glwindow)
 	: m_glwindow(glwindow)
@@ -57,9 +84,15 @@ CwlCompositor::~CwlCompositor()
 void CwlCompositor::create()
 {
 	m_output = new QWaylandOutput(this, m_glwindow);
-	QWaylandOutputMode mode(m_glwindow->size(), 60000);
+	qreal hz = m_glwindow->screen()->refreshRate();
+	qDebug() << "wlc - screen refresh rate:" << hz << "Hz";
+	
+	QWaylandOutputMode mode(m_glwindow->size(),
+				hz >= 1.0 ? qRound(hz * 1000) : 60000);
 	m_output->addMode(mode, true);
 	QWaylandCompositor::create();
+	s_animDriver = new FrameAnimationDriver(this);
+	s_animDriver->install();
 	m_output->setCurrentMode(mode);
 	m_output->setScaleFactor(m_scaleFactor);
 
@@ -93,15 +126,18 @@ void CwlCompositor::create()
 	qputenv("WAYLAND_DISPLAY", socketName());
 
 	/*
-		Setting QSG_NO_VSYNC and QSG_RENDER_LOOP makes resizing QtQuick apps
-		much smoother. There is a QTBUG-51112 which MIGHT be related to our issue.
-		But the bug describes actually a slightly different issue.
+		Clients must pace themselves on our frame callbacks (no
+		QSG_NO_VSYNC), otherwise they free-run and send clumps of frames
+		that are never shown. The basic render loop installs no animation
+		driver, so animations would tick on a 16 ms timer; use threaded.
 
-		Might also be the hwcomposer issue https://doc.qt.io/qt-6/qtquick-visualcanvas-scenegraph.html
+		Smoother resizing of QtQuick apps was the original reason for
+		QSG_NO_VSYNC and the basic loop (see QTBUG-51112). Revisit this if
+		resizing clients gets janky.
 	*/
-	qputenv("QSG_NO_VSYNC", QByteArray("1"));
-	qputenv("QSG_RENDER_LOOP", QByteArray("basic"));
-
+	qputenv("QSG_RENDER_LOOP", QByteArray("threaded"));
+	qDebug() << "wlc - render loop:" << qgetenv("QSG_RENDER_LOOP");
+	
 	QStringList args = QStringList();
 	args.append("-c");
 	args.append("cutie-home");
@@ -602,6 +638,9 @@ void CwlCompositor::onToplevelDamaged(CwlView *view)
 
 void CwlCompositor::startRender()
 {
+	if (s_animDriver && s_animDriver->isRunning())
+		s_animDriver->advance();
+
 	QWaylandOutput *out = defaultOutput();
 	if (out)
 		out->frameStarted();
